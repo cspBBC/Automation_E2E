@@ -1,0 +1,5 @@
+export enum UserRole {
+  SYSTEM_ADMIN = 'SYSTEM_ADMIN',
+  AREA_ADMIN = 'AREA_ADMIN',
+  VIEW_ONLY = 'VIEW_ONLY',
+}

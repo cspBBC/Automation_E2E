@@ -1,0 +1,23 @@
+{
+  "name": "poc_bbc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dbtest": "npx playwright test --project=db"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.58.1",
+    "@types/mssql": "^9.1.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "mssql": "^12.2.0"
+  }
+}
