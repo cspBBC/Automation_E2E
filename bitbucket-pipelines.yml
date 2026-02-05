@@ -8,6 +8,18 @@ pipelines:
           caches:
             - node
           script:
+            # Install dependencies
             - npm install
+            - npm install -D ts-node typescript
+            
+            # Decrypt .env.enc into process.env
+            - npx ts-node decrypt-env.ts
+            
+            # Install Playwright browsers
             - npx playwright install
+            
+            # Run DB tests
             - npm run dbtest
+            
+            # Run Playwright tests
+            - npm run test
