@@ -1,15 +1,22 @@
-image: mcr.microsoft.com/playwright:v1.58.0 
+image: mcr.microsoft.com/playwright:v1.58.0
 
 pipelines:
   branches:
     develop:
       - step:
-          name: Run Playwright Tests (Develop)
+          name: Run Playwright UI Tests
           caches:
             - node
           script:
             # Install Node dependencies
             - npm install
 
-            # Run Playwright tests
+            # Run only UI tests
             - npm run uitest
+
+          artifacts:
+            # Save HTML report and traces/screenshots/videos
+            - playwright-report/**
+            - tests/**/test-results/**
+
+          services: []
