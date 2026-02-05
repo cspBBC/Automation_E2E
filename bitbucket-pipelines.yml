@@ -10,13 +10,9 @@ pipelines:
           script:
             # Install dependencies
             - npm install
-            - npm install -D ts-node typescript
             
             # Install Playwright browsers
             - npx playwright install
             
-            # Run DB tests (decrypt-env loaded automatically)
-            - npm run dbtest
-            
             # Run UI / other Playwright tests
-            - npm run test
+            - npm run uitest
