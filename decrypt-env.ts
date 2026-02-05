@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const algorithm = 'aes-256-cbc';
-const secret = 'myPoCSecretKey'; // Same as encryption
+const secret = 'myPoCSecretKey'; // Same key used for encryption
 const key = crypto.scryptSync(secret, 'salt', 32);
 
 const envEncPath = path.resolve(__dirname, '.env.enc');
@@ -20,8 +20,20 @@ decrypted += decipher.final('utf8');
 
 // Load into process.env
 decrypted.split('\n').forEach(line => {
-  const [k, v] = line.split('=');
-  if (k && v) process.env[k] = v;
+  line = line.trim();
+  // Ignore empty lines and comments
+  if (!line || line.startsWith('#')) return;
+
+  const index = line.indexOf('=');
+  if (index === -1) return; // Skip malformed lines
+
+  const k = line.slice(0, index).trim();
+  const v = line.slice(index + 1).trim();
+
+  process.env[k] = v;
 });
 
 console.log('Env vars loaded into process.env ✅');
+
+// Optional: debug check (remove in real runs)
+// console.log(process.env.DB_HOST, process.env.DB_USER);

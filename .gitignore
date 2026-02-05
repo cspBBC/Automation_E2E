@@ -4,6 +4,7 @@ node_modules
 playwright-report
 test-results
 dist/
+verify-env.ts
 
 # Compiled Java class files
 *.class
