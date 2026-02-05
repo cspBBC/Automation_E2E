@@ -1,0 +1,13 @@
+image: node:20
+
+pipelines:
+  branches:
+    develop:
+      - step:
+          name: Run Playwright Tests (Develop)
+          caches:
+            - node
+          script:
+            - npm install
+            - npx playwright install
+            - npm run dbtest
