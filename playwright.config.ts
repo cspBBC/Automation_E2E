@@ -38,6 +38,7 @@ export default defineConfig({
       testMatch: /.*\.ui\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
+        headless:true
       },
     },
 
