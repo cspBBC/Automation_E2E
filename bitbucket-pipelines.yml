@@ -1,4 +1,4 @@
-image: node:20
+image: mcr.microsoft.com/playwright:focal
 
 pipelines:
   branches:
@@ -8,11 +8,8 @@ pipelines:
           caches:
             - node
           script:
-            # Install dependencies
+            # Install Node dependencies
             - npm install
-            
-            # Install Playwright browsers
-            - npx playwright install
-            
-            # Run UI / other Playwright tests
+
+            # Run Playwright tests
             - npm run uitest
