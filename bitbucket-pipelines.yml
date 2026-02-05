@@ -1,4 +1,4 @@
-image: mcr.microsoft.com/playwright:focal
+image: mcr.microsoft.com/playwright:v1.58.1-focal 
 
 pipelines:
   branches:
