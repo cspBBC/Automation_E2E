@@ -1,4 +1,4 @@
-import { test, expect } from "../fixtures/test.fixtures";
+import { test, expect } from "../../tests/fixtures/test.fixture";
 import { createSchedulingGroup } from "../../workflows/schd-group/api/schd-group.api";
 import { SchedulingGroupQueries } from "../../workflows/schd-group/db/schd-group.queries";
 import { assertGroupExists } from "../../workflows/schd-group/invariants/db.invariants";

@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/test.fixtures';
+import { test, expect } from '../../tests/fixtures/test.fixture';
 import { listTables } from '../../core/db/queries';
 
 test('Tables exist', async ({ db }) => {
