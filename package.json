@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dbtest": "npx playwright test --project=db",
-    "uitest": "npx playwright test --project=ui --headed"
+    "uitest": "npx bddgen & npx playwright test --project=ui --headed"
+
     
   },
   "keywords": [],

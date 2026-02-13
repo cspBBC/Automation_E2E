@@ -1,4 +1,4 @@
-@ui
+@smoke
 Feature: Booking navigation
 
   Scenario: Navigate to Facility Catalogue

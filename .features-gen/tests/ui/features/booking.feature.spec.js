@@ -1,10 +1,10 @@
 // Generated from: tests\ui\features\booking.feature
-import { test } from "playwright-bdd";
+import { test } from "../../../../tests/fixtures/pages.fixture.ts";
 
 test.describe('Booking navigation', () => {
 
-  test('Navigate to Facility Catalogue', { tag: ['@ui'] }, async ({ Given, page }) => { 
-    await Given('user opens the Allocate application', null, { page }); 
+  test('Navigate to Facility Catalogue', { tag: ['@smoke'] }, async ({ Given, homePage }) => { 
+    await Given('user opens the Allocate application', null, { homePage }); 
   });
 
 });
@@ -18,5 +18,5 @@ test.use({
 });
 
 const bddFileData = [ // bdd-data-start
-  {"pwTestLine":6,"pickleLine":4,"tags":["@ui"],"steps":[{"pwStepLine":7,"gherkinStepLine":5,"keywordType":"Context","textWithKeyword":"Given user opens the Allocate application","stepMatchArguments":[]}]},
+  {"pwTestLine":6,"pickleLine":4,"tags":["@smoke"],"steps":[{"pwStepLine":7,"gherkinStepLine":5,"keywordType":"Context","textWithKeyword":"Given user opens the Allocate application","stepMatchArguments":[]}]},
 ]; // bdd-data-end

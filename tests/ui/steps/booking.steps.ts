@@ -1,11 +1,10 @@
-import { createBdd } from 'playwright-bdd'
+import { createBdd } from 'playwright-bdd';
+import { test } from '../../fixtures/pages.fixture';
 
-const { Given, When, Then } = createBdd();
+const { Given, When, Then } = createBdd(test);
 
-Given('user opens the Allocate application', async ({ page }) => {
+Given('user opens the Allocate application', async ({ homePage }) => {
+  await homePage.open();
+  await homePage.isLoaded();
 
-  page.goto('https://allocate-systest-dbr.national.core.bbc.co.uk/', { waitUntil: 'domcontentloaded' });
-
-  // await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
 });
-

@@ -3,9 +3,12 @@ import { defineConfig, devices } from '@playwright/test';
 import { defineBddConfig } from 'playwright-bdd';
 
 // BDD config for UI tests
-const bddConfig = defineBddConfig({
-  features: ['tests/ui/features/**/*.feature'],  // fixed glob
-  steps: ['tests/ui/steps/**/*.steps.ts'],       // fixed glob
+export const bddConfig = defineBddConfig({
+  features: ['tests/ui/features/**/*.feature'],
+  steps: [
+    'tests/ui/steps/**/*.steps.ts',
+    'tests/fixtures/pages.fixture.ts',
+  ],
 });
 
 export default defineConfig({
@@ -20,15 +23,9 @@ export default defineConfig({
     ['list'],
   ],
   use: {
-    baseURL: process.env.API_BASE_URL,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
-    extraHTTPHeaders: {
-      'Content-Type': 'application/json',
-    },
-    actionTimeout: 60 * 1000,      // max time per action like click, fill
-    navigationTimeout: 60 * 2000,  // max time for page.goto
+    video: 'retain-on-failure'
   },
 
   projects: [
@@ -37,11 +34,14 @@ export default defineConfig({
     // =======================
     {
       name: 'ui',
-      testDir: bddConfig, // ← Playwright runs .steps.ts files
+      testDir: './.features-gen',       // folder where Playwright-BDD generates .feature.spec.ts
+      testMatch: '**/*.feature.spec.*', // match .ts or .js files
       use: {
         ...devices['Desktop Chrome'],
         headless: true,
+        baseURL: process.env.UI_BASE_URL,
       },
+
     },
 
     // =======================
@@ -52,6 +52,10 @@ export default defineConfig({
       testMatch: /.*\.api\.spec\.ts/,
       use: {
         browserName: undefined,
+        baseURL: process.env.API_BASE_URL,
+        extraHTTPHeaders: {
+          'Content-Type': 'application/json',
+        },
       },
     },
 
