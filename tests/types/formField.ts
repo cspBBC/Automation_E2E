@@ -8,7 +8,8 @@ export type FieldType =
   | 'checkbox'
   | 'date'
   | 'facilityModal'
-  | 'weeklyAvailability'; // for full-week selection
+  | 'dualListboxModal'      // multiple dual listboxes inside a modal
+  | 'weeklyAvailability';   // for full-week selection
 
 // Interface for each day's availability in weeklyAvailability
 export interface WeekDayAvailability {
@@ -23,8 +24,13 @@ export interface FormField {
   value:
     | string
     | number
-    | string[]                     // for multiDropdown or subValues
-    | Record<string, WeekDayAvailability>; // for weeklyAvailability
+    | string[]                                      // multiDropdown or subValues
+    | Record<string, WeekDayAvailability>          // weeklyAvailability
+    | {                                            // dualListboxModal
+        sourceId: string;
+        targetId: string;
+        selectedValues: string[];
+      }[];
   optional?: boolean;
-  subValues?: string[];           // for facilityModal or multiDropdown
+  subValues?: string[];                            // facilityModal or multiDropdown
 }

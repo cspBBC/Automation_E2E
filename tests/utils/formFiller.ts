@@ -121,6 +121,38 @@ async function handleWeeklyAvailability(
   await doneBtn.click();
 }
 
+async function handleDualListbox(
+  page: Page,
+  fieldId: string,  // e.g., 'technical_setup_open_frm'
+  dualListboxes: { sourceId: string; targetId: string; selectedValues: string[] }[]
+) {
+  // 1. Click to open the modal dynamically
+  await page.click(`#${fieldId}`);
+
+  // 2. Wait for modal/section to appear
+  await page.waitForSelector('#service_list_select', { state: 'visible' });
+
+  // 3. Loop through each dual listbox
+  for (const box of dualListboxes) {
+    for (const val of box.selectedValues) {
+      const option = page.locator(`#${box.sourceId} option`, { hasText: val }).first();
+      await option.scrollIntoViewIfNeeded();
+      await option.click();
+      await page.click(`#${box.sourceId}_rightSelected`);
+    }
+  }
+
+  // next button
+  const nextBtn = page.locator('#facility-technical-setup-selection-next-page-quantity');
+  await nextBtn.waitFor({ state: 'visible' });
+  await nextBtn.click();
+  //done
+
+  const doneBtn = page.locator('#facility-technical-setup-complete');
+  await doneBtn.waitFor({ state: 'visible' });
+  await doneBtn.click();
+}
+
 // ---------- MAIN GENERIC FORM FILLER ----------
 export async function fillForm(page: Page, formData: Record<string, FormField>) {
   for (const [fieldId, field] of Object.entries(formData)) {
@@ -148,8 +180,10 @@ export async function fillForm(page: Page, formData: Record<string, FormField>) 
         break;
 
       case 'radio':
-        await page.check(`input[name="${fieldId}"][value="${value}"]`);
+
+        await page.locator(`label[for="${fieldId}"]`).click();
         break;
+
 
       case 'checkbox': {
         const checked = await page.isChecked(`#${fieldId}`);
@@ -173,6 +207,16 @@ export async function fillForm(page: Page, formData: Record<string, FormField>) 
           value as Record<string, WeekDayAvailability>
         );
         break;
+      case 'dualListboxModal': {
+        const dualListboxes = value as {
+          sourceId: string;
+          targetId: string;
+          selectedValues: string[];
+        }[];
+
+        await handleDualListbox(page, fieldId, dualListboxes);
+        break;
+      }
 
       default:
         console.warn(`Unknown field type: ${type}`);

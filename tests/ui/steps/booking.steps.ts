@@ -12,5 +12,11 @@ Given('user opens the Allocate application', async ({ homePage }) => {
 When('user create new facility', async ({homePage}) => {
 
   await homePage.createFacility()
+
+  await homePage.verifyFacilityAdded()
+
+  await homePage.assertViewFacility()
+
+  await homePage.deleteFacility()
   
 });
