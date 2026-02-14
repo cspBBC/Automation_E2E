@@ -5,7 +5,8 @@ playwright-report
 test-results
 dist/
 verify-env.ts
-.features-gen/
+.features-gen
+screenshots
 
 # Compiled Java class files
 *.class
