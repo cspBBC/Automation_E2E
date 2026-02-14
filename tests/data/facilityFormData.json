@@ -1,0 +1,4 @@
+{
+  "facility_frm": { "type": "text", "value": "Test Facility" },
+  "location_notes_frm": { "type": "textarea", "value": "Near the main entrance", "optional": true }
+}
