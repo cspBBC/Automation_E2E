@@ -1,5 +1,5 @@
 import { Page } from "@playwright/test";
-import { FormField, WeekDayAvailability } from "../types/formField";
+import { FormField, WeekDayAvailability } from "@feildtypes/formField";
 
 // ---------- Chosen Dropdown ----------
 async function selectChosenDropdown(

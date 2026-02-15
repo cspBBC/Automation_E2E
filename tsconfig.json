@@ -6,6 +6,13 @@
     "strict": true,
     "esModuleInterop": true,
     "types": ["node", "@playwright/test"],
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@fixtures/*": ["tests/fixtures/*"],
+      "@helpers/*": ["tests/utils/*"],
+      "@data/*":["tests/data/*"],
+      "@feildtypes/*":["tests/types/*"]
+
+    }
   }
 }

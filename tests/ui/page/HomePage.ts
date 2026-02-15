@@ -1,7 +1,7 @@
 import { expect, Page } from '@playwright/test';
-import { FormField } from '../../types/formField';
-import { fillForm } from '../../utils/formFiller';
-import { readJSON } from '../../utils/readJson';
+import { FormField } from '@feildtypes/formField'
+import { fillForm } from '@helpers/formFiller';
+import { readJSON } from '@helpers/readJson';
 
 export class HomePage {
   private formData?: Record<string, FormField>; // store JSON once
