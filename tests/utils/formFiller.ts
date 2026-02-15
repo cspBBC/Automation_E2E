@@ -1,89 +1,116 @@
-import { Page } from '@playwright/test';
-import { FormField, WeekDayAvailability } from '../types/formField';
+import { Page } from "@playwright/test";
+import { FormField, WeekDayAvailability } from "../types/formField";
 
 // ---------- Chosen Dropdown ----------
-async function selectChosenDropdown(page: Page, fieldId: string, value: string) {
+async function selectChosenDropdown(
+  page: Page,
+  fieldId: string,
+  value: string,
+) {
   const container = page.locator(`#${fieldId}_chosen`);
   await container.click();
 
-  const searchInput = container.locator('.chosen-search input');
+  const searchInput = container.locator(".chosen-search input");
   if (await searchInput.count()) {
     await searchInput.fill(value);
   }
 
   const option = container
-    .locator('.chosen-results li.active-result')
+    .locator(".chosen-results li.active-result")
     .filter({ hasText: value })
     .first();
 
-  await option.waitFor({ state: 'visible' });
+  await option.waitFor({ state: "visible" });
   await option.click();
 }
 
 // ---------- Multi Dropdown ----------
-async function selectMultiDropdown(page: Page, fieldId: string, values: string[]) {
+async function selectMultiDropdown(
+  page: Page,
+  fieldId: string,
+  values: string[],
+) {
   const container = page.locator(`#${fieldId}_chosen`);
   await container.click();
 
-  const input = container.locator('input');
+  const input = container.locator("input");
 
   for (const val of values) {
     await input.fill(val);
-    await page.keyboard.press('Enter');
+    await page.keyboard.press("Enter");
   }
 }
 
 // ---------- Date Picker ----------
 async function pickDate(page: Page, fieldId: string, dateStr: string) {
-  const [year, month, day] = dateStr.split('-').map(Number);
+  const [year, month, day] = dateStr.split("-").map(Number);
 
   await page.click(`#${fieldId}`);
-  await page.selectOption('.ui-datepicker-year', `${year}`);
-  await page.selectOption('.ui-datepicker-month', `${month - 1}`);
+  await page.selectOption(".ui-datepicker-year", `${year}`);
+  await page.selectOption(".ui-datepicker-month", `${month - 1}`);
 
   const dayLocator = page
-    .locator('.ui-datepicker-calendar td:not(.ui-datepicker-other-month)')
+    .locator(".ui-datepicker-calendar td:not(.ui-datepicker-other-month)")
     .getByText(String(day), { exact: true });
 
   await dayLocator.click();
 }
 
-// ---------- Facility Modal ----------
-async function handleFacilityModal(
+// ---------- GENERIC MODAL HANDLER ----------
+async function handleGenericModal(
   page: Page,
   fieldId: string,
-  value: string,
-  subValues: string[] = []
+  data: { value: string; subValues?: string[] },
 ) {
-  await page.click(`#${fieldId}`);
-  await page.waitForSelector('#facility-type-modal', { state: 'visible' });
+  const { value, subValues = [] } = data;
 
-  const mainLabel = page.locator('#facility-type-modal label', { hasText: value });
-  const mainId = await mainLabel.getAttribute('for');
-  if (!mainId) throw new Error(`Facility type "${value}" not found`);
+  // Open modal dynamically
+  await page.click(`#${fieldId}, #${fieldId}_open_frm`);
+
+  // Wait for any visible modal ending with '-modal'
+  const modal = page.locator(`[id$="-modal"]:visible`).first();
+  await modal.waitFor({ state: "visible" });
+
+  // Select main option by label
+  const mainLabel = modal.locator("label", { hasText: value });
+  const mainId = await mainLabel.getAttribute("for");
+  if (!mainId) throw new Error(`Option "${value}" not found in modal`);
   await page.check(`#${mainId}`);
 
+  // Select sub-options if any
   for (const sub of subValues) {
-    const subLabel = page.locator('#facility-type-modal label', { hasText: sub });
-    const subId = await subLabel.getAttribute('for');
-    if (!subId) throw new Error(`Subtype "${sub}" not found`);
+    const subLabel = modal.locator("label", { hasText: sub });
+    const subId = await subLabel.getAttribute("for");
+    if (!subId) throw new Error(`Sub-option "${sub}" not found in modal`);
     await page.check(`#${subId}`);
   }
 
-  await page.click('#facility-type-save-btn');
-  await page.waitForSelector('#facility-type-modal', { state: 'hidden' });
+  // Click visible save/done button inside modal
+  const doneBtn = modal
+    .locator("button:visible")
+    .filter({ hasText: /save|done/i })
+    .first();
+  await doneBtn.click();
+
+  // Wait for modal to disappear
+  await modal.waitFor({ state: "hidden" });
 }
 
 // ---------- Weekly Availability ----------
+
 async function handleWeeklyAvailability(
   page: Page,
   fieldId: string,
   weekData: Record<string, WeekDayAvailability>
 ) {
-  await page.click(`#${fieldId}`);
+  // Open modal dynamically
+  const openSelector = page.locator(`#${fieldId}_open_frm, #${fieldId}_frm`).first();
+  if (!(await openSelector.count())) throw new Error(`Weekly availability element not found for "${fieldId}"`);
+  await openSelector.click();
 
-  const prefix = 'facility_availability';
+  const prefix = fieldId;
 
+  // Fill each day's availability
   for (const [day, config] of Object.entries(weekData)) {
     const row = page.locator(`.plain-table__row:has-text("${day}")`);
 
@@ -96,46 +123,47 @@ async function handleWeeklyAvailability(
       continue;
     }
 
-    // FROM
+    // FROM time
     await fromChosen.click();
-    await fromChosen
-      .locator('.chosen-results li')
-      .filter({ hasText: config.from })
-      .first()
-      .click();
+    await fromChosen.locator('.chosen-results li').filter({ hasText: config.from }).first().click();
 
-    // TO
+    // TO time
     await toChosen.click();
-    await toChosen
-      .locator('.chosen-results li')
-      .filter({ hasText: config.to })
-      .first()
-      .click();
+    await toChosen.locator('.chosen-results li').filter({ hasText: config.to }).first().click();
 
+    // Uncheck unavailable if previously checked
     if (await checkbox.isChecked()) await checkbox.uncheck();
   }
 
-  // single Done click
-  const doneBtn = page.locator('#facility-availability-save-btn');
-  await doneBtn.waitFor({ state: 'visible' });
-  await doneBtn.click();
-}
+  // ---------------- Click the Done button ----------------
+  // Prefer ID first, fallback to any visible Save/Done button
+  const doneBtn = page.locator(`#${fieldId}-save-btn, button:visible`).filter({ hasText: /save|done/i }).first();
+  if (!(await doneBtn.count())) throw new Error(`Done/Save button not found for "${fieldId}"`);
 
+  await doneBtn.click();}
+
+// list box from > to list
 async function handleDualListbox(
   page: Page,
-  fieldId: string,  // e.g., 'technical_setup_open_frm'
-  dualListboxes: { sourceId: string; targetId: string; selectedValues: string[] }[]
+  fieldId: string, // e.g., 'technical_setup_open_frm'
+  dualListboxes: {
+    sourceId: string;
+    targetId: string;
+    selectedValues: string[];
+  }[],
 ) {
   // 1. Click to open the modal dynamically
   await page.click(`#${fieldId}`);
 
   // 2. Wait for modal/section to appear
-  await page.waitForSelector('#service_list_select', { state: 'visible' });
+  await page.waitForSelector("#service_list_select", { state: "visible" });
 
   // 3. Loop through each dual listbox
   for (const box of dualListboxes) {
     for (const val of box.selectedValues) {
-      const option = page.locator(`#${box.sourceId} option`, { hasText: val }).first();
+      const option = page
+        .locator(`#${box.sourceId} option`, { hasText: val })
+        .first();
       await option.scrollIntoViewIfNeeded();
       await option.click();
       await page.click(`#${box.sourceId}_rightSelected`);
@@ -143,71 +171,80 @@ async function handleDualListbox(
   }
 
   // next button
-  const nextBtn = page.locator('#facility-technical-setup-selection-next-page-quantity');
-  await nextBtn.waitFor({ state: 'visible' });
+  const nextBtn = page.locator(
+    "#facility-technical-setup-selection-next-page-quantity",
+  );
+  await nextBtn.waitFor({ state: "visible" });
   await nextBtn.click();
   //done
 
-  const doneBtn = page.locator('#facility-technical-setup-complete');
-  await doneBtn.waitFor({ state: 'visible' });
+  const doneBtn = page.locator("#facility-technical-setup-complete");
+  await doneBtn.waitFor({ state: "visible" });
   await doneBtn.click();
 }
 
 // ---------- MAIN GENERIC FORM FILLER ----------
-export async function fillForm(page: Page, formData: Record<string, FormField>) {
+export async function fillForm(
+  page: Page,
+  formData: Record<string, FormField>,
+) {
   for (const [fieldId, field] of Object.entries(formData)) {
     const { type, value, optional, subValues } = field;
 
-    const exists = await page.locator(`#${fieldId}`).count();
+    const exists = await page
+      .locator(`#${fieldId}, #${fieldId}_frm, #${fieldId}_open_frm`)
+      .count();
+
     if (!exists) {
       if (!optional) console.warn(`Field "${fieldId}" not found`);
       continue;
     }
 
     switch (type) {
-      case 'text':
-      case 'number':
-      case 'textarea':
+      case "text":
+      case "number":
+      case "textarea":
         await page.fill(`#${fieldId}`, String(value));
         break;
 
-      case 'dropdown':
+      case "dropdown":
         await selectChosenDropdown(page, fieldId, value as string);
         break;
 
-      case 'multiDropdown':
+      case "multiDropdown":
         await selectMultiDropdown(page, fieldId, value as string[]);
         break;
 
-      case 'radio':
-
+      case "radio":
         await page.locator(`label[for="${fieldId}"]`).click();
         break;
 
-
-      case 'checkbox': {
+      case "checkbox": {
         const checked = await page.isChecked(`#${fieldId}`);
         if (value && !checked) await page.check(`#${fieldId}`);
         if (!value && checked) await page.uncheck(`#${fieldId}`);
         break;
       }
 
-      case 'date':
+      case "date":
         await pickDate(page, fieldId, value as string);
         break;
 
-      case 'facilityModal':
-        await handleFacilityModal(page, fieldId, value as string, subValues);
+      case "facilityModal":
+        await handleGenericModal(page, fieldId, {
+          value: value as string,
+          subValues,
+        });
         break;
 
-      case 'weeklyAvailability':
+      case "weeklyAvailability":
         await handleWeeklyAvailability(
           page,
           fieldId,
-          value as Record<string, WeekDayAvailability>
+          value as Record<string, WeekDayAvailability>,
         );
         break;
-      case 'dualListboxModal': {
+      case "dualListboxModal": {
         const dualListboxes = value as {
           sourceId: string;
           targetId: string;
