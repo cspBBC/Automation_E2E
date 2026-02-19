@@ -40,6 +40,10 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         headless: true,
         baseURL: process.env.UI_BASE_URL,
+        // httpCredentials: {
+        //   username: process.env.UI_USERNAME,
+        //   password: process.env.UI_PASSWORD,
+        // },
       },
 
     },

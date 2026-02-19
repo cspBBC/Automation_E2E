@@ -3,25 +3,25 @@ import { FormField } from '@feildtypes/formField'
 import { fillForm } from '@helpers/formFiller';
 import { readJSON } from '@helpers/readJson';
 
-export class HomePage {
+export class FacilityPage {
   private formData?: Record<string, FormField>; // store JSON once
 
   constructor(private page: Page) { }
 
   // Open home page
   async open() {
-    await this.page.goto('/');
+    await this.page.goto('/mvc-app/facility');
   }
 
   // Check if BBC menu loaded
-  async isBbcMenuLoaded() {
-    const menuItems = this.page.locator("ul.sm.sm-clean.nav.bbcMenu > li.drop");
-    const count = await menuItems.count();
-    for (let i = 0; i < count; i++) {
-      if (!(await menuItems.nth(i).isVisible())) return false;
-    }
-    return true;
-  }
+  // async isBbcMenuLoaded() {
+  //   const menuItems = this.page.locator("ul.sm.sm-clean.nav.bbcMenu > li.drop");
+  //   const count = await menuItems.count();
+  //   for (let i = 0; i < count; i++) {
+  //     if (!(await menuItems.nth(i).isVisible())) return false;
+  //   }
+  //   return true;
+  // }
 
   // Store formData and fill form
   async fill(formData: Record<string, FormField>) {
@@ -32,11 +32,11 @@ export class HomePage {
   // Navigate to Facility Catalogue and create facility
   async createFacility() {
     // 1. Navigate to submenu
-    const parentItem = this.page.locator(`ul.sm.sm-clean.nav.bbcMenu > li.drop:has-text("Booking")`);
-    await parentItem.click();
-    const childItem = parentItem.locator(`ul > li:has-text("Facility Catalogue")`);
-    await childItem.waitFor({ state: 'visible' });
-    await childItem.click();
+    // const parentItem = this.page.locator(`ul.sm.sm-clean.nav.bbcMenu > li.drop:has-text("Booking")`);
+    // await parentItem.click();
+    // const childItem = parentItem.locator(`ul > li:has-text("Facility Catalogue")`);
+    // await childItem.waitFor({ state: 'visible' });
+    // await childItem.click();
 
     // 2. Verify tab
     const facilityCatalogueTab = this.page.locator("ul[role='tablist'] li a").filter({ hasText: "Facility Catalogue" });
@@ -62,19 +62,31 @@ export class HomePage {
 
     const facilityName = this.formData['facility_frm'].value as string;
 
-    // Locate row with exact match in <th>
-    const facilityRow = this.page.locator(
-      `#facility-list-table tbody tr:has(th:has-text("${facilityName}"))`
-    );
+    // Wait for DataTable to render
+    await this.page.locator('.dt-scroll-head').waitFor({ state: 'visible' });
 
-    // Use exact-match regex to avoid duplicates
-    const facilityRowExact = facilityRow.locator('th').filter({
-      hasText: new RegExp(`^${facilityName}$`),
-    }).locator('..'); // back to <tr>
+    // Click the visible (cloned) header inside scroll container
+    await this.page
+      .locator('.dt-scroll-head th', { hasText: 'Facility Name' })
+      .click();
 
-    await expect(facilityRowExact).toHaveCount(1, { timeout: 10000 });
+    // Wait for sorting redraw
+    await this.page.waitForTimeout(500);
+
+    // Locate exact row match
+    const facilityRow = this.page.locator('#facility-list-table tbody tr').filter({
+      has: this.page.locator('th', {
+        hasText: new RegExp(`^${facilityName}$`)
+      })
+    });
+
+    await expect(facilityRow).toHaveCount(1, { timeout: 10000 });
+
     console.log(`✅ Facility "${facilityName}" verified with exact match`);
   }
+
+
+
 
   // Delete the facility that was just created
   async deleteFacility() {

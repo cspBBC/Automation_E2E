@@ -1,11 +1,15 @@
 {
   "facility_frm": {
     "type": "text",
-    "value": "Test Facility"
+    "value": "Test Facility_19"
   },
   "active_from_frm": {
     "type": "date",
     "value": "2026-03-14"
+  },
+  "area_owner_frm": {
+    "type": "dropdown",
+    "value": "Automation"
   },
   "restrict_bookers_frm": {
     "type": "dropdown",

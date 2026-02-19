@@ -1,16 +1,16 @@
 import { test as bddTest } from 'playwright-bdd';
 import { expect } from '@playwright/test';
-import { HomePage } from '../ui/page/HomePage'; 
+import { FacilityPage } from '../ui/page/FacilityPage'; 
 
 export type PageFixtures = {
-  homePage: HomePage;
+  facilityPage: FacilityPage;
 };
 
 
 export const test = bddTest.extend<PageFixtures>({
-  homePage: async ({ page }, use) => {
-    const homePage = new HomePage(page);
-    await use(homePage);
+  facilityPage: async ({ page }, use) => {
+    const facilityPage = new FacilityPage(page);
+    await use(facilityPage);
   },
 });
 
