@@ -1,6 +1,23 @@
 import sql from 'mssql';
 
 export class SchedulingGroupQueries {
+
+// first check if table scheduling_groups exists
+
+ static async tableExists(db: sql.ConnectionPool): Promise<boolean> {
+    const result = await db
+      .request()  
+      .query(`
+        SELECT *
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_NAME = 'scheduling_groups'
+      `);
+
+    return result.recordset.length > 0;
+  }
+
+
+
   static async getByName(
     db: sql.ConnectionPool,
     name: string

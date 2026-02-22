@@ -55,11 +55,11 @@ export default defineConfig({
       name: 'api',
       testMatch: /.*\.api\.spec\.ts/,
       use: {
-        browserName: undefined,
+      
         baseURL: process.env.API_BASE_URL,
-        extraHTTPHeaders: {
-          'Content-Type': 'application/json',
-        },
+        // extraHTTPHeaders: {
+        //   'Content-Type': 'application/json',
+        // },
       },
     },
 

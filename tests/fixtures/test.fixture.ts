@@ -5,33 +5,25 @@ import {
   APIRequestContext,
 } from '@playwright/test';
 import sql from 'mssql';
-import { getDbPool } from '../../core/db/connection';
+import { getDbPool } from '@core/db/connection'
+import { ApiClient } from '@core/api/apiClient';
 
 type TestFixtures = {
-  apiAsSystemAdmin: APIRequestContext;
-  apiAsAreaAdmin: APIRequestContext;
+  request: APIRequestContext;
+  apiClient: ApiClient;
   db: sql.ConnectionPool;
 };
 
 export const test = base.extend<TestFixtures>({
-  apiAsSystemAdmin: async ({}, use) => {
-    const api = await request.newContext({
+  // Base API client - use with X-User-Id header for authentication
+  apiClient: async ({}, use) => {
+    const ctx = await request.newContext({
       baseURL: process.env.API_BASE_URL,
-      storageState: 'storage/system-admin.json',
     });
 
-    await use(api);
-    await api.dispose();
-  },
-
-  apiAsAreaAdmin: async ({}, use) => {
-    const api = await request.newContext({
-      baseURL: process.env.API_BASE_URL,
-      storageState: 'storage/area-admin.json',
-    });
-
-    await use(api);
-    await api.dispose();
+    const client = new ApiClient(ctx);
+    await use(client);
+    await ctx.dispose();
   },
 
   db: async ({}, use) => {
@@ -42,3 +34,4 @@ export const test = base.extend<TestFixtures>({
 });
 
 export { expect };
+export { ApiClient };

@@ -30,7 +30,7 @@ export class FacilityPage {
   }
 
   // Navigate to Facility Catalogue and create facility
-  async createFacility() {
+  async createFacility(filename: string = 'facilityFormData') {
     // 1. Navigate to submenu
     // const parentItem = this.page.locator(`ul.sm.sm-clean.nav.bbcMenu > li.drop:has-text("Booking")`);
     // await parentItem.click();
@@ -47,7 +47,8 @@ export class FacilityPage {
     await this.page.locator('div[aria-describedby="facility-form-dialog"]').waitFor({ state: 'visible' });
 
     // 4. Fill form
-    const jsonData = await readJSON('facilityFormData.json');
+    const jsonPath = `workflows/facilities/data/${filename}.json`;
+    const jsonData = await readJSON(jsonPath);
     await this.fill(jsonData);
 
     // 5. Submit

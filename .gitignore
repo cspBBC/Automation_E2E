@@ -7,6 +7,7 @@ dist/
 verify-env.ts
 .features-gen
 screenshots
+.bitbucket
 
 # Compiled Java class files
 *.class

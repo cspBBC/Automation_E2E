@@ -1,0 +1,9 @@
+{
+  "default": {
+    "areaId": 10,
+    "nameTemplate": "AUTO_SG_{{TS}}",
+    "teamIds": [2001],
+    "allocationsMenu": true,
+    "notes": "Created by automation"
+  }
+}

@@ -10,9 +10,14 @@
     "paths": {
       "@fixtures/*": ["tests/fixtures/*"],
       "@helpers/*": ["tests/utils/*"],
-      "@data/*":["tests/data/*"],
-      "@feildtypes/*":["tests/types/*"]
-
+      "@data/*": ["tests/data/*"],
+      "@feildtypes/*": ["tests/types/*"],
+      "@core/*": ["core/*"],
+      "@db/*": ["core/db/*"],
+      "@pages/*": ["tests/ui/page/*"],
+      "@steps/*": ["tests/ui/steps/*"],
+      "@features/*": ["tests/ui/features/*"],
+      "@workflows/*": ["workflows/*"]
     }
   }
 }
