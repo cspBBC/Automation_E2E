@@ -1,4 +1,4 @@
-# @smoke @scheduling-groups
+# @schd-group @smoke @scheduling-groups
 # Feature: Scheduling Groups Management
 
 #   @system-admin

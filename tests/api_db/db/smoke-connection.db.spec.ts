@@ -4,7 +4,6 @@ import { listAllTables, listTables, listTableCountsByPattern, listTableByName } 
 
 test('Tables exist', async ({ db }) => {
   const tables = await listTableByName(db,'SummerLeave');
-  console.log(tables);
   expect(tables.length).toBeGreaterThan(0);
 });
 

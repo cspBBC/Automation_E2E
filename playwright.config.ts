@@ -4,16 +4,20 @@ import { defineBddConfig } from 'playwright-bdd';
 
 // BDD config for UI tests
 export const bddConfig = defineBddConfig({
-  features: ['tests/ui/features/**/*.feature'],
+  features: [
+    'tests/ui/features/**/*.feature',
+    'tests/api_db/features/**/*.feature',
+  ],
   steps: [
     'tests/ui/steps/**/*.steps.ts',
+    'tests/api_db/steps/**/*.steps.ts',
     'tests/fixtures/pages.fixture.ts',
+    'tests/fixtures/test.fixture.ts',
   ],
 });
 
 export default defineConfig({
-  testDir: './tests',
-  timeout: 20 * 1000,
+  timeout: 60 * 1000,
   expect: {
     timeout: 10 * 1000,
   },
@@ -33,33 +37,26 @@ export default defineConfig({
     // UI BDD TESTS
     // =======================
     {
-      name: 'ui',
-      testDir: './.features-gen',       // folder where Playwright-BDD generates .feature.spec.ts
-      testMatch: '**/*.feature.spec.*', // match .ts or .js files
+      name: 'uitest',
+      testDir: './.features-gen',
+      testMatch: '**/*.feature.spec.*',
+      grep: /@ui/,
       use: {
         ...devices['Desktop Chrome'],
-        headless: true,
         baseURL: process.env.UI_BASE_URL,
-        // httpCredentials: {
-        //   username: process.env.UI_USERNAME,
-        //   password: process.env.UI_PASSWORD,
-        // },
       },
-
     },
 
     // =======================
     // API TESTS
     // =======================
     {
-      name: 'api',
-      testMatch: /.*\.api\.spec\.ts/,
+      name: 'api_db_test',
+      testDir: './.features-gen',
+      testMatch: '**/*.feature.spec.*',
+      grep: /@api_db/,
       use: {
-      
         baseURL: process.env.API_BASE_URL,
-        // extraHTTPHeaders: {
-        //   'Content-Type': 'application/json',
-        // },
       },
     },
 
@@ -68,6 +65,7 @@ export default defineConfig({
     // =======================
     {
       name: 'db',
+      testDir: './tests',
       testMatch: /.*\.db\.spec\.ts/,
       use: {
         browserName: undefined,

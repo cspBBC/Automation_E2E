@@ -25,11 +25,11 @@ export async function listAllTables(db: ConnectionPool) {
 // list a table by name and console top 2 records
 export async function listTableByName(db: ConnectionPool, tableName: string) {
   const result = await db.request().query(`
-    SELECT TOP 2 *
+    SELECT TOP 1 *
     FROM [${tableName}]
   `);   
     
-  console.log(`Top 2 records from ${tableName}:`, result.recordset);
+  console.log(`Top 1 record(s) from ${tableName}:`, result.recordset);
   return result.recordset;
 }
 

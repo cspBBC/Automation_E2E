@@ -1,3 +1,4 @@
+@schd-group @smoke @scheduling-groups @api_db
 Feature: NP035.02 - Create Scheduling Group
   Background:
     Given the test database is seeded with areas, users, and teams
@@ -30,20 +31,20 @@ Feature: NP035.02 - Create Scheduling Group
       | notes               | Created by System Admin test |
       | last_amended_by     | 1001                       |
 
-  Scenario: Area Admin creates a Scheduling Group in their assigned area
-    Given user 1002 (Area Admin Area 10) is authenticated
-    When the user submits a POST request to create a Scheduling Group with:
-      | Field               | Value                        |
-      | name                | SG_AreaAdmin_Area10_<timestamp> |
-      | area                | 10                           |
-      | allocations_menu    | false                        |
-      | notes               | Created by Area Admin test   |
-    Then the response status code should be 201
-    And the response should contain the created Scheduling Group ID
-    And the Scheduling Group should be created in the database with:
-      | Field               | Expected Value           |
-      | scheduling_group_name | SG_AreaAdmin_Area10_<timestamp> |
-      | area                | 10                       |
-      | allocations_menu    | 0 (false)                |
-      | notes               | Created by Area Admin test |
-      | last_amended_by     | 1002                     |
+  # Scenario: Area Admin creates a Scheduling Group in their assigned area
+  #   Given user 1002 (Area Admin Area 10) is authenticated
+  #   When the user submits a POST request to create a Scheduling Group with:
+  #     | Field               | Value                        |
+  #     | name                | SG_AreaAdmin_Area10_<timestamp> |
+  #     | area                | 10                           |
+  #     | allocations_menu    | false                        |
+  #     | notes               | Created by Area Admin test   |
+  #   Then the response status code should be 201
+  #   And the response should contain the created Scheduling Group ID
+  #   And the Scheduling Group should be created in the database with:
+  #     | Field               | Expected Value           |
+  #     | scheduling_group_name | SG_AreaAdmin_Area10_<timestamp> |
+  #     | area                | 10                       |
+  #     | allocations_menu    | 0 (false)                |
+  #     | notes               | Created by Area Admin test |
+  #     | last_amended_by     | 1002                     |

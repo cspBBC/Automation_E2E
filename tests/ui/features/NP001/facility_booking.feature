@@ -1,4 +1,4 @@
-@smoke
+@facility @smoke @ui
 Feature: Facility CRUD
 
   Scenario: create facility as system admin

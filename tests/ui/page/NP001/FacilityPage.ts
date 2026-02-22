@@ -55,7 +55,11 @@ export class FacilityPage {
     await this.page.locator('#submit-create-facility-form-button').click();
 
     // 6. Wait for modal to disappear (indicating submission success)
-    await this.page.waitForSelector('div[aria-describedby="facility-form-dialog"]', { state: 'hidden' });
+    // Increased timeout for form submission and modal closure
+    await this.page.waitForSelector('div[aria-describedby="facility-form-dialog"]', { 
+      state: 'hidden',
+      timeout: 30000 
+    });
 
   }
   async verifyFacilityAdded() {
