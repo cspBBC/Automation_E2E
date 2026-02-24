@@ -2,11 +2,11 @@ import sql from 'mssql';
 
 export class SchedulingGroupQueries {
 
-// first check if table SchedulingGroups exists
+  // first check if table SchedulingGroups exists
 
- static async tableExists(db: sql.ConnectionPool): Promise<boolean> {
+  static async tableExists(db: sql.ConnectionPool): Promise<boolean> {
     const result = await db
-      .request()  
+      .request()
       .query(`
         SELECT *
         FROM INFORMATION_SCHEMA.TABLES
@@ -89,5 +89,93 @@ export class SchedulingGroupQueries {
       `);
 
     return result.recordset;
+  }
+
+  /**
+   * Get scheduling group by ID with permission check for specific user
+   * 
+   * Permission Rules:
+   * - System Admin: area is NULL (can access all groups in any area)
+   * - Area Admin: area is specific value (can access only groups in their area)
+   * - Creator: Can access groups they created
+   * 
+   * @param db - Database connection pool
+   * @param groupId - Scheduling group ID to retrieve
+   * @param userId - User ID to check permissions for
+   * @returns Scheduling group if user has access, undefined otherwise
+   */
+  static async getByIdForUser(
+    db: sql.ConnectionPool,
+    groupId: number,
+    userId: number
+  ) {
+    // First, get the group with division info
+    const result = await db
+      .request()
+      .input('groupId', sql.Int, groupId)
+      .query(`
+        SELECT g.*, d.DivisionName
+        FROM SchedulingGroups g
+        LEFT JOIN Divisions d ON d.DivisionID = g.DivisionID
+        WHERE g.SchedulingGroupsID = @groupId
+      `);
+
+    const group = result.recordset[0];
+    if (!group) {
+      return undefined;
+    }
+
+    // Check if user created this group
+    if (group.CreatedBy === userId) {
+      return group;
+    }
+
+    // Check permission based on user's area
+    // System Admin: area is NULL (can access any area)
+    // Area Admin: area is specific value (can access only their area)
+    const userArea = await this.getUserArea(db, userId);
+    if (userArea === null || group.DivisionName === userArea) {
+      return group;
+    }
+
+    // No permission
+    return undefined;
+  }
+
+  /**
+   * Get user's area (division)
+   * 
+   * - System Admin (UR_RoleID = 1): Returns NULL (can access all areas)
+   * - Area Admin (UR_RoleID = 2+): Returns their assigned Division
+   */
+  static async getUserArea(
+    db: sql.ConnectionPool,
+    userId: number
+  ): Promise<string | null> {
+    const result = await db
+      .request()
+      .input('userId', sql.Int, userId)
+      .query(`
+        SELECT TOP 1 d.DivisionName, r.UR_RoleID
+        FROM UserRoles r
+        INNER JOIN Divisions d ON d.DivisionID = r.UR_DivisionId
+        WHERE r.UR_UserID = @userId
+        AND r.UR_EndDate >= CAST(GETDATE() AS DATE)
+        ORDER BY r.UR_EndDate DESC
+      `);
+
+    if (result.recordset.length === 0) {
+      return null;
+    }
+
+    const record = result.recordset[0];
+    
+    // System Admin has NULL area (can access all areas)
+    if (record.UR_RoleID === 1) {
+      return null;
+    }
+
+    // Area Admin returns their division
+    return record.DivisionName;
   }
 }

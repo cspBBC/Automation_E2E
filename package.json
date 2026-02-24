@@ -9,7 +9,8 @@
     "integratedtest": "npx bddgen && npx playwright test --project=api_db_test",
     "all": "npx bddgen && npx playwright test",
     "report": "npx playwright show-report",
-    "allure:report":"npx allure serve allure-results"
+    "allure:report": "http-server allure-results -p 8080 -o",
+    "all:report": "npx bddgen && npx playwright test && npm run allure:report"
   },
   "keywords": [],
   "author": "",
