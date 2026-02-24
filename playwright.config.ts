@@ -25,7 +25,6 @@ export default defineConfig({
   reporter: [
     ['html', { open: 'never' }],
     ['list'],
-    ['allure-playwright', { outputFolder: 'allure-results', details: true }],
   ],
   use: {
     trace: 'retain-on-failure',
