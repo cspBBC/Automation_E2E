@@ -290,9 +290,491 @@ Report: Pass/Fail
 ### **3. API/DB Tests** (`@api_db` tag)
 - **API calls** - REST endpoint testing
 - **Database verification** - Verify data persistence
+- **User verification** - Automated user validation before test runs
 - **Test isolation** - Transaction rollback cleanup
 - **Purpose**: E2E integration testing
 - **Command**: `npm run integratedtest`
+
+---
+
+## 🧪 Database User Verification
+
+The framework automatically verifies test users exist in the database before tests run.
+
+### **Core Files**
+- `core/db/dbseed.ts` - User verification utilities
+- `core/data/users.json` - Test user definitions
+- `tests/fixtures/test.fixture.ts` - Fixture that uses verification
+
+### **User Configuration** (`core/data/users.json`)
+
+```json
+{
+  "systemAdmin": { "id": 10752, "username": "sys_admin_test", "envKey": "SYS_ADMIN" },
+  "areaAdminCandidate": { "id": 1002, "username": "area_admin_10", "envKey": "AREA_ADMIN" },
+  "areaAdmin11": { "id": 1003, "username": "area_admin_11", "envKey": "AREA_ADMIN1" },
+  "regularUser": { "id": 1004, "username": "regular_user", "envKey": "REGULAR_USER" }
+}
+```
+
+### **How User Verification Works**
+
+**Step 1: Feature File**
+```gherkin
+Given user 'systemAdmin' is authenticated
+```
+
+**Step 2: Step Definition** (`tests/api_db/steps/NP035/schd_grp_create.steps.ts`)
+```typescript
+Given('user {string} is authenticated', async ({ authenticateAs, ensureUserExists }, userAlias: string) => {
+  // Verify user exists in database first
+  const user = await ensureUserExists(userAlias);
+  
+  // Then authenticate
+  await authenticateAs(user.id);
+});
+```
+
+**Step 3: Fixture** (`tests/fixtures/test.fixture.ts`)
+```typescript
+ensureUserExists: async ({ db }, use) => {
+  await use(async (userAlias: string) => {
+    // Load user from users.json
+    const user = usersData[userAlias];
+    
+    // Verify user exists in database using dbseed utility
+    await verifyUser(db, user);
+    return user;
+  });
+}
+```
+
+**Step 4: Database Verification** (`core/db/dbseed.ts`)
+```typescript
+// Verifies user exists in database
+export async function verifyUser(pool: sql.ConnectionPool, user: UserData): Promise<void> {
+  const exists = await userExists(pool, user.id);
+  
+  if (!exists) {
+    throw new Error(`User ${user.id} (${user.username}) not found in database`);
+  }
+}
+```
+
+### **Test Execution Flow**
+
+```
+BDD Scenario: "System Admin creates Scheduling Group"
+    ↓
+Given user 'systemAdmin' is authenticated
+    ├── Load: systemAdmin from users.json (ID: 10752)
+    ├── Verify: Query database SELECT * FROM users WHERE id = 10752
+    ├── If found: ✅ Proceed to authentication
+    └── If NOT found: ❌ Throw error "User 10752 not found in database"
+    ↓
+Authenticate: Set Authorization header with user credentials
+    ↓
+When/Then: Execute API calls and database assertions
+```
+
+### **Before Each Test Runs**
+
+```
+✅ Database connection established
+  ↓
+✅ User alias resolved from users.json
+  ↓
+✅ Database query verifies user exists
+  ↓
+❌ If user missing → Test fails immediately with clear error
+  ✓ If user found → Test proceeds with authentication
+```
+
+### **API Test Example**
+
+```typescript
+test('creates scheduling group and validates DB state', async ({ db, ensureUserExists }) => {
+  // Verify system admin exists and get ID
+  const user = await ensureUserExists('systemAdmin');
+  const systemAdminId = user.id;
+  
+  // Now safe to proceed knowing user exists in database
+  console.log('Using system admin ID:', systemAdminId);
+  
+  // ... rest of test
+});
+```
+
+---
+
+## 🧪 Writing a Database Test - Step by Step
+
+This section explains how to write database tests using the framework. Perfect for beginners!
+
+### **Test File Example: `mock-schd-group-create.db.spec.ts`**
+
+```typescript
+/**
+ * DB-DRIVEN TEST EXAMPLE
+ * 
+ * TEST PURPOSE:
+ * - Verify that a Scheduling Group can be read from database
+ * - Validate all database fields have correct values
+ * - Ensure business rules (invariants) are satisfied
+ */
+```
+
+### **What is a Database Test?**
+
+A database test is a **test that verifies data directly in the database** without using a browser or API.
+
+| Test Type | Purpose | Access |
+|-----------|---------|--------|
+| **DB Test** | Verify data integrity | Direct SQL queries |
+| **API Test** | Verify API logic | HTTP requests |
+| **UI Test** | Verify user workflows | Browser automation |
+
+---
+
+### **Step 1: Understand Fixtures**
+
+**What are Fixtures?**
+
+Fixtures are **dependencies automatically provided by the test framework** before each test runs.
+
+```typescript
+test('my test', async ({ db, ensureUserExists }) => {
+  //                        ↓ ↓ These are FIXTURES
+  // ...
+});
+```
+
+**Fixtures Used in DB Tests:**
+
+```
+1. "db" fixture
+   └─ What: Database connection pool
+   └─ Created: Automatically before test starts
+   └─ Special: Runs in TRANSACTION (changes auto-rollback)
+   └─ Cleanup: Automatically after test ends
+
+2. "ensureUserExists" fixture
+   └─ What: Function to verify user exists in database
+   └─ How it works:
+      ├─ Takes user alias: 'systemAdmin'
+      ├─ Loads from: core/data/users.json → ID: 10752
+      ├─ Queries: SELECT * FROM users WHERE id=10752
+      ├─ If found: ✅ Returns {id, username}
+      └─ If NOT: ❌ Throws error
+   └─ Why: Ensure test prerequisites are met
+```
+
+---
+
+### **Step 2: Verify User Exists**
+
+```typescript
+const user = await ensureUserExists('systemAdmin');
+const systemAdminId = user.id;
+
+console.log('Using system admin ID:', systemAdminId);
+```
+
+**What Happens:**
+
+1. **Load User Definition**
+   ```json
+   // core/data/users.json
+   {
+     "systemAdmin": { "id": 10752, "username": "sys_admin_test", "envKey": "SYS_ADMIN" }
+   }
+   ```
+
+2. **Query Database**
+   ```sql
+   SELECT 1 FROM users WHERE id = 10752
+   ```
+
+3. **Result**
+   - ✅ If found: test continues with user data
+   - ❌ If NOT found: test fails immediately with error
+
+**Why?** Database might not have test users set up yet. This catches missing prerequisite data early.
+
+---
+
+### **Step 3: Query Database**
+
+```typescript
+const schdGrpCreatedID = 19;  // ID to search for
+const row = await SchedulingGroupQueries.getById(db, schdGrpCreatedID);
+```
+
+**What This Does:**
+
+1. **Calls Query Helper**
+   - Location: `workflows/schd-group/db/queries/schedulingGroup.queries.ts`
+   - Why: Reusable, maintainable, avoids raw SQL
+
+2. **Executes SQL Behind the Scenes**
+   ```sql
+   SELECT * FROM SchedulingGroups WHERE SchedulingGroupsID = 19
+   ```
+
+3. **Returns Object or Null**
+   ```typescript
+   // If found:
+   {
+     SchedulingGroupsID: 19,
+     SchedulingGroupsName: 'Test_Ankur_Group',
+     SchedulingGroupsNotes: 'Created for POC, Editing',
+     ...
+   }
+   
+   // If NOT found:
+   null
+   ```
+
+**Why Use Query Helper Instead of Raw SQL?**
+- ✅ Reusable: Use same query in many tests
+- ✅ Maintainable: If columns change, update one place
+- ✅ Readable: `getById()` clearer than SELECT statement
+- ✅ Error handling: Handles null/errors automatically
+
+---
+
+### **Step 4: Assert Record Exists**
+
+```typescript
+expect(row).toBeTruthy();
+```
+
+**What This Checks:**
+
+| Check | Meaning | If Fails |
+|-------|---------|----------|
+| `row !== null` | Record was found | "Expected null to be truthy" |
+| `row !== undefined` | Record is defined | "Expected undefined to be truthy" |
+| Record has data | Row is not empty | "Expected [] to be truthy" |
+
+**Error Message if Fails:**
+```
+Expected null to be truthy
+→ Means: Database query returned no results
+→ Debug: Check if record ID is correct
+```
+
+---
+
+### **Step 5: Assert Field Values**
+
+```typescript
+expect(row.SchedulingGroupsID).toBe(schdGrpCreatedID);
+expect(row.SchedulingGroupsName).toBe(name);
+```
+
+**Check 1: ID Matches**
+```typescript
+expect(row.SchedulingGroupsID).toBe(19)
+// If fails: "Expected 20 but got 19"
+// Means: Wrong record was returned
+```
+
+**Check 2: Name Matches**
+```typescript
+expect(row.SchedulingGroupsName).toBe('Test_Ankur_Group')
+// If fails: "Expected 'Old_Name' but got 'Test_Ankur_Group'"
+// Means: Database has wrong value (data corruption)
+```
+
+**Pattern to Remember:**
+```typescript
+expect(actual_from_database).toBe(expected_value)
+```
+
+---
+
+### **Step 6: Business Logic Validation (Invariants)**
+
+```typescript
+assertNotes(row, 'Created for POC, Editing');
+```
+
+**What is an Invariant?**
+
+An **invariant** is a **business rule that MUST ALWAYS be true**.
+
+| Rule | Example | Validates |
+|------|---------|-----------|
+| Database field | "Notes field must exist" | Schema/format |
+| Business rule | "Notes must contain 'Created for POC'" | Business logic |
+
+**How assertNotes Works:**
+
+1. **Locate Function**
+   - File: `workflows/schd-group/invariants/db.invariants.ts`
+
+2. **Execute Check**
+   ```typescript
+   // Inside assertNotes():
+   expect(row.SchedulingGroupsNotes).toContain('Created for POC, Editing')
+   ```
+
+3. **Result**
+   - ✅ If contains text: test passes
+   - ❌ If missing: test fails
+
+**Why Separate Function?**
+
+```typescript
+// Instead of repeating in every test:
+expect(row.notes).toContain('Created for POC');  // Test 1
+expect(row.notes).toContain('Created for POC');  // Test 2
+expect(row.notes).toContain('Created for POC');  // Test 3
+
+// Use imported function:
+assertNotes(row, 'Created for POC');  // All tests
+
+// Benefits:
+// ✅ Reusable across tests
+// ✅ Centralized business logic
+// ✅ Easy to update all tests at once
+// ✅ Self-documenting (clear intent)
+```
+
+---
+
+### **Complete Test Execution Flow**
+
+```
+═══════════════════════════════════════════════════
+  STEP 1: BEFORE TEST RUNS
+═══════════════════════════════════════════════════
+  ✅ Framework creates database connection pool ('db' fixture)
+  ✅ Framework starts database TRANSACTION
+     └─ Any changes will automatically rollback after test
+  ✅ Framework prepares other fixtures (apiClient, etc.)
+
+═══════════════════════════════════════════════════
+  STEP 2: DURING TEST EXECUTION
+═══════════════════════════════════════════════════
+  ✅ Verify user 'systemAdmin' exists in database
+     └─ Query: SELECT 1 FROM users WHERE id=10752
+     
+  ✅ Query scheduling group record
+     └─ Query: SELECT * FROM SchedulingGroups WHERE id=19
+     
+  ✅ Assert record exists (not null)
+  ✅ Assert ID matches expected value
+  ✅ Assert name matches expected value
+  ✅ Run business logic validation (invariants)
+
+═══════════════════════════════════════════════════
+  STEP 3: IF ASSERTION FAILS
+═══════════════════════════════════════════════════
+  ❌ Test stops immediately at failed assertion
+  ❌ Shows error message: "Expected X but got Y"
+  ❌ Records screenshot/video (if enabled)
+  ❌ Marks test as FAILED
+
+═══════════════════════════════════════════════════
+  STEP 4: IF ALL PASS OR AFTER FAILURE
+═══════════════════════════════════════════════════
+  ✅ Framework rolls back database transaction
+     └─ All test changes are UNDONE
+     └─ Database returns to clean state
+     └─ Prevents tests from interfering
+     
+  ✅ Framework closes database connection
+  
+  ✅ Test result reported: PASS or FAIL
+  ✅ Results saved to: playwright-report/
+
+═══════════════════════════════════════════════════
+```
+
+**Why Transaction & Rollback?**
+
+```
+Test 1 inserts 5 records
+  ↓
+Transaction rolls back
+  ↓
+Test 2 starts with clean database ✅
+  └─ No leftover data from Test 1
+
+✅ Tests don't interfere with each other
+✅ Database stays clean for next test
+✅ Test order doesn't matter
+```
+
+---
+
+### **Typical Issues and Solutions**
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| "Expected null to be truthy" | Record not found | Check ID/query parameters |
+| "Expected 'X' but got 'Y'" | Wrong field value | Verify data was created correctly |
+| "User 10752 not found in database" | User missing | Seed user in database first |
+| "Cannot find module" | Import path wrong | Check path aliases in tsconfig.json |
+| Transaction timeout | Test takes too long | Increase timeout, optimize queries |
+
+---
+
+### **Next Steps: Add API Call**
+
+Current flow only **reads** from database (data already exists).
+
+**To test full flow** (create + verify):
+
+```typescript
+test('create and verify scheduling group', 
+  async ({ db, ensureUserExists, apiClient, authenticateAs }) => {
+    
+    // 1️⃣ Verify user exists
+    const user = await ensureUserExists('systemAdmin');
+    
+    // 2️⃣ Authenticate
+    await authenticateAs(user.id);
+    
+    // 3️⃣ CALL API TO CREATE (new step)
+    const payload = {
+      name: 'Test_Ankur_Group',
+      notes: 'Created for POC, Editing'
+    };
+    const response = await apiClient.post('/scheduling-groups', payload);
+    const createdId = response.id;
+    
+    // 4️⃣ Verify via database (read)
+    const row = await SchedulingGroupQueries.getById(db, createdId);
+    expect(row).toBeTruthy();
+    assertNotes(row, 'Created for POC, Editing');
+});
+```
+
+**Benefits of Full Flow:**
+- ✅ Tests API → Database integration
+- ✅ Catches bugs in API data handling
+- ✅ Ensures database persistence
+- ✅ Real-world test scenario
+
+---
+
+## 🔐 Authentication Flow
+
+Located in `tests/fixtures/test.fixture.ts`:
+
+```typescript
+// AuthenticatedApiClient wrapper
+├── Purpose: Automatically include auth headers with every API request
+├── Implementation: Header-based (currently X-User-Id)
+│
+└── Supported methods (uncomment as needed):
+    ├── Bearer Token (JWT)
+    ├── Basic Auth (username:password)
+    └── API Key headers
+```
 
 ---
 
@@ -335,19 +817,6 @@ npx playwright show-report
 ```
 
 ---
-
-## 🔐 Authentication Flow
-
-Located in `tests/fixtures/test.fixture.ts`:
-
-```typescript
-// AuthenticatedApiClient wrapper
-├── Purpose: Automatically include auth headers with every API request
-├── Implementation: Header-based (currently X-User-Id)
-│
-└── Supported methods (uncomment as needed):
-    ├── Bearer Token (JWT)
-    ├── Basic Auth (username:password)
     ├── Login endpoint (get token first)
     └── Custom headers (X-User-Id, etc.)
 ```
