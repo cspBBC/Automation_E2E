@@ -18,7 +18,7 @@ export function assertAllocationsMenu(record: any, expected: boolean) {
 }
 
 export function assertNotes(record: any, expected: string | null) {
-  const val = record.notes === undefined ? null : record.notes;
+  const val = record.Notes === undefined ? null : record.Notes;
   if ((val || null) !== (expected || null)) {
     throw new Error(`Expected notes '${expected}', got '${val}'`);
   }

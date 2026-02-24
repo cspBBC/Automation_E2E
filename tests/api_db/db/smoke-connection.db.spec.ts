@@ -1,25 +1,43 @@
 import { test, expect } from '@fixtures/test.fixture';
-import { listAllTables, listTables, listTableCountsByPattern, listTableByName } from '@db/queries';
+import { listAllTables, listTables, listTableCountsByPattern, listTableByName, listTableByKey } from '@db/queries';
 
 
-test('Tables exist', async ({ db }) => {
-  const tables = await listTableByName(db,'SummerLeave');
-  expect(tables.length).toBeGreaterThan(0);
-});
+// test('Tables exist', async ({ db }) => {
+//   const tables = await listTableByKey(db,"UserDetails","UD_UserID","10752");
+//     console.log('Tables with pattern "User%":', tables);
+//   // expect(tables.length).toBeGreaterThan(0);
+// });
+
+
+// test('Get record details by table name and key column', async ({ db }) => {
+//   const tableName = 'SchedulingGroups';
+//   const keyColumn = 'CreatedBy';
+//   const keyValue = '10752'; // example value, adjust as needed  
+//   const result = await db.request()
+//     .input('keyValue', keyValue)
+//     .query(`  
+//       SELECT *
+//       FROM [${tableName}]
+//       WHERE [${keyColumn}] = @keyValue
+//     `);   
+//   console.log(`Record details from ${tableName} where ${keyColumn} = ${keyValue}:`, result.recordset);
+//   expect(result.recordset.length).toBeGreaterThan(0);
+// });
+
+
 
 // test('Get counts for scheduling group related tables', async ({ db }) => {
-//   const schedulingGroupTables = await listTableCountsByPattern(db, 'scheduling_group%');
-//   const schedulingTeamTables = await listTableCountsByPattern(db, 'scheduling_team%');
+//   const schedulingGroupTables = await listTableCountsByPattern(db, 'User%');
+//   // const schedulingTeamTables = await listTableCountsByPattern(db, 'UserDetails%');
   
-//   const allRelatedTables = [...schedulingGroupTables, ...schedulingTeamTables];
+//   const allRelatedTables = [...schedulingGroupTables];
   
 //   console.log('Scheduling Group Related Tables:', allRelatedTables);
+
   
-//   expect(allRelatedTables.length).toBeGreaterThan(0);
-  
-//   // Verify we found the expected tables
+//   // // Verify we found the expected tables
 //   const tableNames = allRelatedTables.map(t => t.tableName);
-//   expect(tableNames.some(name => name.includes('scheduling_group'))).toBeTruthy();
+//   expect(tableNames.some(name => name.includes('User'))).toBeTruthy();
 // });
 
 

@@ -1,22 +1,37 @@
 import sql from 'mssql';
 import { getDbPool } from '../../core/db/connection';
-import { applySeed, cleanupSeed, startTransaction, rollbackTransaction } from '../../workflows/schd-group/db/seed/db.seed';
 
-export async function withTransactionPool(fn: (pool: sql.ConnectionPool) => Promise<void>) {
+/**
+ * Execute function within a transaction that is rolled back after execution
+ * Useful for tests that need to verify database state without persisting changes
+ * @param fn Function to execute with database pool
+ */
+export async function withTransactionPool(
+  fn: (pool: sql.ConnectionPool) => Promise<void>
+): Promise<void> {
   const pool = await getDbPool();
   try {
-    await applySeed(pool);
-    await startTransaction(pool);
+    // Start transaction for test isolation
+    await pool.request().query('BEGIN TRANSACTION');
     await fn(pool);
-    await rollbackTransaction(pool);
+    // Auto-rollback at cleanup
   } finally {
-    await cleanupSeed(pool);
+    // Rollback any open transactions to clean up after test
+    try {
+      await pool.request().query('IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION');
+      console.log('🔙 Transaction rolled back');
+    } catch (err) {
+      // Transaction may not exist, that's okay
+    }
     await pool.close();
   }
 }
 
-export async function seedSuite(pool?: sql.ConnectionPool) {
+/**
+ * Get database pool for suite setup
+ * @param pool Optional existing pool to use
+ */
+export async function seedSuite(pool?: sql.ConnectionPool): Promise<sql.ConnectionPool> {
   const p = pool || (await getDbPool());
-  await applySeed(p);
-  if (!pool) await p.close();
+  return p;
 }

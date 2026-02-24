@@ -8,6 +8,9 @@ import {
 import sql from 'mssql';
 import { getDbPool } from '@core/db/connection'
 import { ApiClient, RequestOptions } from '@core/api/apiClient';
+import { readJSON } from '@helpers/readJson';
+import { verifyUser } from '@core/db/dbseed';
+import path from 'path';
 
 // Wrapper to maintain authentication headers across requests
 class AuthenticatedApiClient {
@@ -60,6 +63,7 @@ type TestFixtures = {
   apiClient: AuthenticatedApiClient;
   db: sql.ConnectionPool;
   authenticateAs: (userId: number) => Promise<void>;
+  ensureUserExists: (userAlias: string) => Promise<{ id: number; username: string }>;
 };
 
 export const test = bddTest.extend<TestFixtures>({
@@ -75,25 +79,31 @@ export const test = bddTest.extend<TestFixtures>({
     await ctx.dispose();
   },
 
-  // Authentication method - update based on PHP implementation
+  // Authentication method - Basic Auth using credentials from .env
   authenticateAs: async ({ apiClient }, use) => {
     await use(async (userId: number) => {
-      // Option 1: Bearer Token (JWT or similar)
-      // const token = await getTokenForUser(userId);
-      // apiClient.setAuthHeaders({ 'Authorization': `Bearer ${token}` });
+      // Load users data
+      const usersData = await readJSON(path.resolve(process.cwd(), 'core/data/users.json'));
+      
+      // Find user by ID
+      let user = Object.values(usersData).find((u: any) => u.id === userId);
+      
+      if (!user) {
+        throw new Error(`User with ID ${userId} not found in core/data/users.json`);
+      }
 
-      // Option 2: Basic Auth (username/password)
-      // const credentials = btoa(`${username}:${password}`);
-      // apiClient.setAuthHeaders({ 'Authorization': `Basic ${credentials}` });
+      // Get password from .env using envKey (e.g., SYS_ADMIN_PASSWORD)
+      const passwordEnvKey = `${user.envKey}_PASSWORD`;
+      const password = process.env[passwordEnvKey];
+      
+      if (!password) {
+        throw new Error(`Password not found in .env. Expected env variable: ${passwordEnvKey}`);
+      }
 
-      // Option 3: Login via endpoint
-      // const loginResponse = await apiClient.post('/auth/login', { userId, password });
-      // const token = loginResponse.token;
-      // apiClient.setAuthHeaders({ 'Authorization': `Bearer ${token}` });
-
-      // Fallback: X-User-Id header (update when PHP authentication is confirmed)
-      apiClient.setAuthHeaders({ 'X-User-Id': userId.toString() });
-      console.log(`🔐 Authenticated as user ${userId}`);
+      // Basic Auth: encode username:password in Base64
+      const credentials = btoa(`${user.username}:${password}`);
+      apiClient.setAuthHeaders({ 'Authorization': `Basic ${credentials}` });
+      console.log(`🔐 Authenticated as user ${userId} (${user.username})`);
     });
   },
 
@@ -111,6 +121,22 @@ export const test = bddTest.extend<TestFixtures>({
       }
       await pool.close();
     }
+  },
+
+  // Verify specific user exists by alias from users.json
+  ensureUserExists: async ({ db }, use) => {
+    await use(async (userAlias: string) => {
+      const usersData = await readJSON(path.resolve(process.cwd(), 'core/data/users.json'));
+      const user = usersData[userAlias];
+      
+      if (!user) {
+        throw new Error(`User '${userAlias}' not found in core/data/users.json`);
+      }
+
+      // Verify user exists in database using dbseed utility
+      await verifyUser(db, user);
+      return user;
+    });
   },
 });
 

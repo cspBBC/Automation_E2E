@@ -1,5 +1,0 @@
-{
-  "systemAdmin": { "id": 1001, "username": "sys_admin_test" },
-  "areaAdminCandidate": { "id": 1002, "username": "area_admin_candidate" },
-  "regularUser": { "id": 1003, "username": "regular_user" }
-}

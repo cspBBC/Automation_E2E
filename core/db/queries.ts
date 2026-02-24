@@ -25,14 +25,26 @@ export async function listAllTables(db: ConnectionPool) {
 // list a table by name and console top 2 records
 export async function listTableByName(db: ConnectionPool, tableName: string) {
   const result = await db.request().query(`
-    SELECT TOP 1 *
+    SeLECT TOP 1 *
     FROM [${tableName}]
-  `);   
-    
+  `);
+
   console.log(`Top 1 record(s) from ${tableName}:`, result.recordset);
   return result.recordset;
 }
 
+//same as listTableByName but with a where clause for a key column and value
+export async function listTableByKey(db: ConnectionPool, tableName: string, keyColumn: string, keyValue: string) {
+  const result = await db.request()
+
+    .input('keyValue', keyValue)
+    .query(`
+      SELECT *    
+      FROM [${tableName}]
+      WHERE [${keyColumn}] = @keyValue
+    `);
+    return result.recordset;
+}
 // List tables matching a pattern with record counts
 export async function listTableCountsByPattern(db: ConnectionPool, pattern: string) {
   const result = await db.request().query(`

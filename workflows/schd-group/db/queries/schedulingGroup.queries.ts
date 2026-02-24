@@ -2,7 +2,7 @@ import sql from 'mssql';
 
 export class SchedulingGroupQueries {
 
-// first check if table scheduling_groups exists
+// first check if table SchedulingGroups exists
 
  static async tableExists(db: sql.ConnectionPool): Promise<boolean> {
     const result = await db
@@ -10,7 +10,7 @@ export class SchedulingGroupQueries {
       .query(`
         SELECT *
         FROM INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_NAME = 'scheduling_groups'
+        WHERE TABLE_NAME = 'SchedulingGroups'
       `);
 
     return result.recordset.length > 0;
@@ -27,8 +27,8 @@ export class SchedulingGroupQueries {
       .input('name', sql.VarChar, name)
       .query(`
         SELECT *
-        FROM scheduling_groups
-        WHERE scheduling_group_name = @name
+        FROM SchedulingGroups
+        WHERE SchedulingGroupsName = @name
       `);
 
     return result.recordset[0];
@@ -43,8 +43,8 @@ export class SchedulingGroupQueries {
       .input('id', sql.Int, id)
       .query(`
         SELECT *
-        FROM scheduling_groups
-        WHERE id = @id
+        FROM SchedulingGroups
+        WHERE SchedulingGroupsID = @id
       `);
 
     return result.recordset[0];
@@ -67,7 +67,7 @@ export class SchedulingGroupQueries {
       .input('area', sql.VarChar, area)
       .query(`
         SELECT *
-        FROM scheduling_groups
+        FROM SchedulingGroups
         WHERE area = @area
       `);
 
