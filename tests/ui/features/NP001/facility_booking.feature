@@ -5,3 +5,4 @@ Feature: Facility CRUD
     Given user is on facility catalogue page
     When user creates a new facility using test data from "facilityFormData"
     Then the facility should be created successfully
+    And delete the created facility to clean up

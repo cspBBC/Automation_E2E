@@ -8,6 +8,15 @@ import { listAllTables, listTables, listTableCountsByPattern, listTableByName, l
 //   // expect(tables.length).toBeGreaterThan(0);
 // });
 
+//test for getting recoed from scheduling group table by procideing created by id which is foreign key in scheduling group table
+// test('Get record details by providing created by id', async ({ db }) => {
+//   const tables = await listTableByKey(db,"SchedulingGroups","CreatedBy","10752");
+//     console.log('Tables with pattern "User%":', tables);
+//   // expect(tables.length).toBeGreaterThan(0);
+// });
+
+
+
 
 // test('Get record details by table name and key column', async ({ db }) => {
 //   const tableName = 'SchedulingGroups';

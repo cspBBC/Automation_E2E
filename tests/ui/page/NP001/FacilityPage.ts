@@ -94,7 +94,7 @@ export class FacilityPage {
 
 
   // Delete the facility that was just created
-  async deleteFacility() {
+  async deleteCreatedFacility() {
     if (!this.formData) throw new Error('Form data not loaded');
 
     const facilityName = this.formData['facility_frm'].value as string;

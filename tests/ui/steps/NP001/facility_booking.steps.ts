@@ -16,3 +16,8 @@ When('user creates a new facility using test data from {string}', async ({ facil
 Then('the facility should be created successfully', async ({ facilityPage }) => {
   await facilityPage.verifyFacilityAdded();
 });
+
+Then('delete the created facility to clean up', async ({ facilityPage }) => {
+  await facilityPage.deleteCreatedFacility();
+  console.log('✅ Created facility deleted successfully');
+});

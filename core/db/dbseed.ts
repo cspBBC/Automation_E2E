@@ -9,6 +9,7 @@ interface UserData {
   id: number;
   username: string;
   envKey: string;
+  roleid: number;
 }
 
 /**
@@ -19,13 +20,17 @@ interface UserData {
  */
 export async function userExists(
   pool: sql.ConnectionPool,
-  userId: number
+  userId: number,
+  userNetLogin: string,
+  roleId: number
 ): Promise<boolean> {
   try {
     const result = await pool
       .request()
       .input('userId', sql.Int, userId)
-      .query('SELECT 1 FROM UserDetails WHERE UD_UserID = @userId');
+      .input('netLogin', sql.VarChar, userNetLogin)    
+      .input('roleId', sql.Int, roleId)
+      .query('SELECT * from UserDetails u inner join UserRoles r on u.UD_UserID = r.UR_UserID where UD_UserID = @userId and UD_NetLogin = @netLogin and UR_RoleID = @roleId');
     return result.recordset.length > 0;
   } catch (err) {
     console.error(`Error checking user ${userId}:`, err);
@@ -43,7 +48,7 @@ export async function verifyUser(
   pool: sql.ConnectionPool,
   user: UserData
 ): Promise<void> {
-  const exists = await userExists(pool, user.id);
+  const exists = await userExists(pool, user.id, user.username, user.roleid);
   
   if (!exists) {
     throw new Error(`User ${user.id} (${user.username}) not found in database`);

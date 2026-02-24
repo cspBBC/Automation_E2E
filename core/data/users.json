@@ -1,6 +1,6 @@
 {
-  "systemAdmin": { "id": 10752, "username": "sys_admin_test", "envKey": "SYS_ADMIN" },
-  "areaAdminCandidate": { "id": 1002, "username": "area_admin_10", "envKey": "AREA_ADMIN" },
-  "areaAdmin11": { "id": 1003, "username": "area_admin_11", "envKey": "AREA_ADMIN1" },
-  "regularUser": { "id": 1004, "username": "regular_user", "envKey": "REGULAR_USER" }
+  "systemAdmin": { "id": 10752, "roleid": 1, "username": "jaina15", "envKey": "SYS_ADMIN" }, 
+  "areaAdmin_News": { "id": 10769, "roleid": 2, "username": "pandec01", "envKey": "AREA_ADMIN" },
+  "areaAdmin_Area1": { "id": 1003, "roleid": 3, "username": "area_admin_11", "envKey": "AREA_ADMIN1" },
+  "regularUser": { "id": 1004, "roleid": 4, "username": "regular_user", "envKey": "REGULAR_USER" }
 }

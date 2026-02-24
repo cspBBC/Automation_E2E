@@ -25,6 +25,7 @@ export default defineConfig({
   reporter: [
     ['html', { open: 'never' }],
     ['list'],
+    ['allure-playwright', { outputFolder: 'allure-results', details: true }],
   ],
   use: {
     trace: 'retain-on-failure',
@@ -41,6 +42,7 @@ export default defineConfig({
       testDir: './.features-gen',
       testMatch: '**/*.feature.spec.*',
       grep: /@ui/,
+      workers: process.env.CI ? 2 : 2,  // Fewer workers for UI (heavier)
       use: {
         ...devices['Desktop Chrome'],
         baseURL: process.env.UI_BASE_URL,
@@ -55,6 +57,7 @@ export default defineConfig({
       testDir: './.features-gen',
       testMatch: '**/*.feature.spec.*',
       grep: /@api_db/,
+      workers: process.env.CI ? 4 : 2,  // More workers for API/DB (lighter)
       use: {
         baseURL: process.env.API_BASE_URL,
       },
@@ -67,6 +70,7 @@ export default defineConfig({
       name: 'db',
       testDir: './tests',
       testMatch: /.*\.db\.spec\.ts/,
+      workers: process.env.CI ? 6 : 2,  // Most workers for DB-only tests
       use: {
         browserName: undefined,
       },

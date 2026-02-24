@@ -8,6 +8,7 @@ verify-env.ts
 .features-gen
 screenshots
 .bitbucket
+allure-results
 
 # Compiled Java class files
 *.class
