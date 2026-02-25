@@ -226,39 +226,6 @@ AREA_ADMIN_1_PASSWORD=your_password_here
 
 ---
 
-## 📊 Test Execution
-
-### **UI Tests (Working Now)**
-
-```bash
-# Run all UI tests
-npm run uitest
-
-# Run specific test
-npx playwright test --project=uitest facility_booking.feature
-
-# Debug mode
-npx playwright test --debug
-
-# View report
-npx playwright show-report
-```
-
-### **API/DB Tests (Ready, Blocked on Backend)**
-
-```bash
-# Integration tests
-npm run integratedtest
-
-# Database tests
-npm run dbtest
-
-# All tests with report
-npm run all:report
-```
-
----
-
 ## 📝 Test Examples
 
 ### **UI Test Flow**
