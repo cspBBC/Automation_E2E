@@ -61,23 +61,15 @@ export const test = bddTest.extend<PageFixtures>({
       // Get password from .env using envKey
       const password = getPassword(user.envKey);
 
-      console.log(`\n${'='.repeat(60)}`);
-      console.log(`🔐 HTTP BASIC AUTH SETUP`);
-      console.log(`${'='.repeat(60)}`);
-      console.log(`User Alias: ${userAlias}`);
-      console.log(`Username: ${user.username}`);
-      console.log(`Password: ${password}`);
-      console.log(`${'='.repeat(60)}\n`);
-
-      // Set HTTP credentials on browser context BEFORE page navigation
-      // This handles the HTTP Basic Auth popup automatically
-      await page.context().setHTTPCredentials({
-        username: user.username,
-        password: password,
-      });
-
-      console.log(`✅ HTTP credentials set for ${userAlias} (${user.username})`);
-      console.log(`📍 Ready for page navigation - auth popup will be auto-filled\n`);
+      // Authenticate to base URL with embedded credentials
+      const baseURL = process.env.UI_BASE_URL || 'https://allocate-systest-dbr.national.core.bbc.co.uk';
+      const url = new URL(baseURL);
+      const urlWithAuth = `${url.protocol}//${user.username}:${password}@${url.host}${url.pathname}`;
+      
+      console.log(`Authenticating user: ${user.username}`);
+      // Navigate to base URL with embedded credentials for authentication
+      await page.goto(urlWithAuth);
+      console.log(`Authentication successful - session maintained for all future requests`);
     });
   },
 

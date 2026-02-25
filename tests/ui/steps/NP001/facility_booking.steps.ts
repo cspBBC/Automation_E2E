@@ -1,6 +1,7 @@
 import { createBdd } from 'playwright-bdd';
 import { test } from '@fixtures/pages.fixture';
 
+
 const { Given, When, Then } = createBdd(test);
 
 // ============================================
@@ -11,10 +12,9 @@ const { Given, When, Then } = createBdd(test);
  * Login as a specific user and navigate to facility catalogue
  * Step: Given user 'systemAdmin' is on facility catalogue page
  */
-Given('user {string} is on facility catalogue page', async ({ loginAs, facilityPage }, userAlias: string) => {
+Given('user {string} is on facility catalogue page', async ({  loginAs, facilityPage }, userAlias: string) => {
   // Login as the specified user
   await loginAs(userAlias);
-  
   // Navigate to facility catalogue page
   await facilityPage.open();
   console.log(`✅ User '${userAlias}' navigated to facility catalogue page`);
