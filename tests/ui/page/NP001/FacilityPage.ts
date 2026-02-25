@@ -10,18 +10,9 @@ export class FacilityPage {
 
   // Open home page
   async open() {
-    await this.page.goto('/mvc-app/facility');
+    await this.page.goto('mvc-app/facility');
   }
 
-  // Check if BBC menu loaded
-  // async isBbcMenuLoaded() {
-  //   const menuItems = this.page.locator("ul.sm.sm-clean.nav.bbcMenu > li.drop");
-  //   const count = await menuItems.count();
-  //   for (let i = 0; i < count; i++) {
-  //     if (!(await menuItems.nth(i).isVisible())) return false;
-  //   }
-  //   return true;
-  // }
 
   // Store formData and fill form
   async fill(formData: Record<string, FormField>) {
@@ -31,13 +22,7 @@ export class FacilityPage {
 
   // Navigate to Facility Catalogue and create facility
   async createFacility(filename: string = 'facilityFormData') {
-    // 1. Navigate to submenu
-    // const parentItem = this.page.locator(`ul.sm.sm-clean.nav.bbcMenu > li.drop:has-text("Booking")`);
-    // await parentItem.click();
-    // const childItem = parentItem.locator(`ul > li:has-text("Facility Catalogue")`);
-    // await childItem.waitFor({ state: 'visible' });
-    // await childItem.click();
-
+  
     // 2. Verify tab
     const facilityCatalogueTab = this.page.locator("ul[role='tablist'] li a").filter({ hasText: "Facility Catalogue" });
     expect(facilityCatalogueTab).toBeVisible();

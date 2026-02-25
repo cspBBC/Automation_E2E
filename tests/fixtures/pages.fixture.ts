@@ -66,10 +66,14 @@ export const test = bddTest.extend<PageFixtures>({
       const url = new URL(baseURL);
       const urlWithAuth = `${url.protocol}//${user.username}:${password}@${url.host}${url.pathname}`;
       
+      // Log WITHOUT password (safe for CI logs)
       console.log(`Authenticating user: ${user.username}`);
+      
       // Navigate to base URL with embedded credentials for authentication
       await page.goto(urlWithAuth);
-      console.log(`Authentication successful - session maintained for all future requests`);
+      
+      // Confirm without exposing credentials
+      console.log(`Authentication successful`);
     });
   },
 
