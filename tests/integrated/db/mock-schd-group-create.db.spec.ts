@@ -16,8 +16,8 @@ import { SchedulingGroupQueries } from '@workflows/schd-group/db/queries/schedul
 // SCENARIO 1: System Admin Creates Group
 // ============================================
 test.describe('System Admin Creates Scheduling Group (ID: 19)', () => {
-    const schdGrpCreatedID = 19;
-    const name = 'Test_Ankur_Group';
+    const schdGrpCreatedID = 25;
+    const name = 'Test_POC_MO';
     test('system admin can access the group', async ({ db, ensureUserExists }) => {
         const systemAdmin = await ensureUserExists('systemAdmin');
 
