@@ -1230,5 +1230,275 @@ workflows/schd-group/api/
 
 ---
 
-**Last Updated**: February 25, 2026
+### **February 25, 2026 - UI Tests & HTTP Basic Auth Implementation**
 
+#### **UI Login System - COMPLETED ✅**
+
+**Problem Solved:** Automated UI tests needed authentication to access protected pages.
+
+**Solution Implemented:** HTTP Basic Auth using Playwright's `setHTTPCredentials()` method.
+
+**Key Implementation Details:**
+
+**File**: [tests/fixtures/pages.fixture.ts](tests/fixtures/pages.fixture.ts) (86 lines)
+
+```typescript
+// Step 1: Define loginAs fixture
+loginAs: async ({ page }, use) => {
+  await use(async (userAlias: string) => {
+    // Step 2: Load users from core/data/users.json
+    const users = loadUsers();
+    const user = users[userAlias];
+    
+    // Step 3: Get password from .env using envKey
+    const password = getPassword(user.envKey);
+    
+    // Step 4: Set HTTP credentials on browser context
+    await page.context().setHTTPCredentials({
+      username: user.username,
+      password: password,
+    });
+  });
+}
+```
+
+**How It Works:**
+
+1. **Load User**: Maps userAlias (e.g., 'areaAdmin_News') to username from `core/data/users.json`
+2. **Get Password**: Retrieves password from `.env` using envKey (e.g., `AREA_ADMIN_PASSWORD`)
+3. **Set Browser Auth**: Calls Playwright's `setHTTPCredentials()` before page navigation
+4. **Auto-Fill Popup**: Browser automatically fills the HTTP Basic Auth popup when navigated to protected URL
+
+**Usage in Steps:**
+
+```typescript
+Given('user {string} is on facility catalogue page', 
+  async ({ loginAs, facilityPage }, userAlias: string) => {
+    await loginAs(userAlias);           // Set credentials
+    await facilityPage.open();           // Navigate (auth handled automatically)
+  }
+);
+```
+
+**Test Users Configured:**
+
+| User Alias | Username | Role | Env Key | Status |
+|-----------|----------|------|---------|--------|
+| systemAdmin | jaina15 | 1 (System Admin) | SYS_ADMIN_PASSWORD | ✅ Ready |
+| areaAdmin_News | pandec01 | 2 (Area Admin) | AREA_ADMIN_PASSWORD | ✅ Working |
+| areaAdmin_Area1 | area_admin_11 | 3 (Area Admin) | AREA_ADMIN_1_PASSWORD | ✅ Ready |
+
+**File Reference**: [core/data/users.json](core/data/users.json) (24 lines)
+
+```json
+{
+  "areaAdmin_News": {
+    "id": 10769,
+    "roleid": 2,
+    "username": "pandec01",
+    "area": "News",
+    "envKey": "AREA_ADMIN_PASSWORD"
+  }
+}
+```
+
+**Environment Configuration**: [.env](.env)
+
+```bash
+# Add actual passwords (replace with real credentials)
+SYS_ADMIN_PASSWORD=<your_actual_password>
+AREA_ADMIN_PASSWORD=BBC@2025@          # Currently working ✅
+AREA_ADMIN_1_PASSWORD=<your_actual_password>
+```
+
+#### **Facility Booking Feature - IMPLEMENTED ✅**
+
+**File**: [tests/ui/features/NP001/facility_booking.feature](tests/ui/features/NP001/facility_booking.feature) (14 lines)
+
+```gherkin
+@facility @smoke @ui
+Feature: Facility CRUD
+
+  Scenario: Area Admin creates and manages a facility
+    Given user 'areaAdmin_News' is on facility catalogue page
+    When user creates a new facility using test data from "facilityFormData"
+    Then the facility should be created successfully
+    And delete the created facility to clean up
+```
+
+**Steps Implementation**: [tests/ui/steps/NP001/facility_booking.steps.ts](tests/ui/steps/NP001/facility_booking.steps.ts) (41 lines)
+
+```typescript
+// Step 1: Login & Navigate
+Given('user {string} is on facility catalogue page', async ({ loginAs, facilityPage }, userAlias) => {
+  await loginAs(userAlias);              // HTTP Basic Auth
+  await facilityPage.open();             // Navigate to /mvc-app/facility
+});
+
+// Step 2: Create Facility
+When('user creates a new facility using test data from {string}', async ({ facilityPage }, filename) => {
+  await facilityPage.createFacility(filename);
+});
+
+// Step 3-4: Assertions & Cleanup
+Then('the facility should be created successfully', async ({ facilityPage }) => {
+  const success = await facilityPage.isFacilityCreated();
+  expect(success).toBe(true);
+});
+
+And('delete the created facility to clean up', async ({ facilityPage }) => {
+  await facilityPage.deleteLastCreatedFacility();
+});
+```
+
+**Page Object Model**: [tests/ui/page/NP001/FacilityPage.ts](tests/ui/page/NP001/FacilityPage.ts) (165 lines)
+
+- `open()` - Navigate to facility catalogue
+- `createFacility(filename)` - Fill form and submit using test data
+- `isFacilityCreated()` - Verify success message
+- `deleteLastCreatedFacility()` - Clean up created record
+
+#### **Test Execution Commands**
+
+```bash
+# Run UI tests with visible browser
+npm run uitest
+
+# Run specific feature file
+npx playwright test --project=uitest facility_booking.feature
+
+# Run with debugging
+npx playwright test --debug
+
+# View HTML report
+npx playwright show-report
+```
+
+#### **ES Module Support - FIXED ✅**
+
+**Issue**: `__dirname is not defined` in ES modules
+
+**Solution**: [tests/fixtures/pages.fixture.ts](tests/fixtures/pages.fixture.ts) (Lines 6-11)
+
+```typescript
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// Define __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+```
+
+#### **Status**
+
+| Item | Status | Notes |
+|------|--------|-------|
+| UI Login - HTTP Basic Auth | ✅ WORKING | setHTTPCredentials() implemented |
+| Facility Feature File | ✅ READY | 1 scenario with areaAdmin |
+| Step Implementations | ✅ READY | Given-When-Then complete |
+| Test Data Loading | ✅ READY | users.json + .env integrated |
+| ES Module Support | ✅ FIXED | __dirname issue resolved |
+| Facility Booking Scenario | ✅ EXECUTABLE | Ready for test run |
+
+#### **Architecture Diagram - Complete Flow**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                 Playwright BDD Test                     │
+└──────────┬──────────────────────────────────────────────┘
+           │
+           ├─ Fixture: loginAs (HTTP Basic Auth)
+           │  ├─ Load: users.json
+           │  ├─ Load: .env passwords
+           │  └─ Set: page.context().setHTTPCredentials()
+           │
+           ├─ Given: user 'areaAdmin_News' on facility page
+           │  ├─ Call: await loginAs('areaAdmin_News')
+           │  ├─ Credentials: pandec01:BBC@2025@
+           │  └─ Navigate: facilityPage.open()
+           │      └─ URL: /mvc-app/facility [PROTECTED]
+           │          └─ Browser Auth Popup [AUTO-FILLED]
+           │              └─ Browser Navigates ✅
+           │
+           ├─ When: user creates facility
+           │  ├─ Load: facilityFormData_area_admin.json
+           │  ├─ Fill: Form fields
+           │  └─ Submit: Create button
+           │
+           └─ Then: verify and cleanup
+              ├─ Assert: Success message shown
+              └─ Delete: Created facility
+```
+
+#### **Key Learnings**
+
+1. **HTTP Basic Auth Popup**: Not form-based login - browser native popup
+2. **setHTTPCredentials()**: Playwright method handles popup automatically
+3. **Timing**: Credentials must be set BEFORE page navigation
+4. **ES Modules**: __dirname not available in modern ES modules (need fileURLToPath)
+5. **Environment**: Real credentials must be in `.env` for tests to pass
+
+---
+
+**Last Updated**: February 25, 2026 (UI Tests Implementation Complete)
+
+
+```
+
+
+---
+
+##  PROJECT STATUS SUMMARY
+
+### **Phase 1: UI Testing Infrastructure -  COMPLETE**
+
+| Component | Status |
+|-----------|--------|
+| Playwright Setup |  TypeScript + BDD |
+| HTTP Basic Auth |  setHTTPCredentials() |
+| Page Object Model |  FacilityPage.ts |
+| UI Feature File |  facility_booking.feature |
+| Step Implementations |  facility_booking.steps.ts |
+| Test Execution |  npm run uitest WORKS |
+
+---
+
+### **Phase 2: API Modularization -  COMPLETE**
+
+-  view.api.ts (54 lines)
+-  create.api.ts (39 lines) 
+-  update.api.ts (38 lines)
+-  delete.api.ts (45 lines)
+-  schd_grp_view.steps.ts (98 lines)
+-  schd_grp_create_steps.ts (427 lines)
+
+---
+
+### **Phase 3: Database Testing -  READY**
+
+-  MSSQL connection pool
+-  Query builders (schedulingGroup.queries.ts)
+-  Auto-rollback transactions
+-  Database invariants & validations
+
+---
+
+### ** WORKING NOW**
+
+'npm run uitest' - UI tests with HTTP Basic Auth  
+Feature: Facility CRUD for areaAdmin_News (pandec01:BBC@2025@)
+
+---
+
+### ** BLOCKED (Awaiting Backend)**
+
+API/DB tests need PHP endpoints:
+- GET /api/scheduling-groups
+- POST /api/scheduling-groups
+- PUT /api/scheduling-groups/{id}
+- DELETE /api/scheduling-groups/{id}
+
+---
+
+**Last Updated**: February 25, 2026
+**Status**: UI Tests Working  | API/DB Ready | Backend Blocked

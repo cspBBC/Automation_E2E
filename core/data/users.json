@@ -4,20 +4,20 @@
     "roleid": 1,
     "username": "jaina15",
     "area": null,
-    "envKey": "SYS_ADMIN"
+    "envKey": "SYS_ADMIN_PASSWORD"
   },
   "areaAdmin_News": {
     "id": 10769,
     "roleid": 2,
     "username": "pandec01",
     "area": "News",
-    "envKey": "AREA_ADMIN"
+    "envKey": "AREA_ADMIN_PASSWORD"
   },
   "areaAdmin_Area1": {
     "id": 1003,
     "roleid": 3,
     "username": "area_admin_11",
     "area": "Area1",
-    "envKey": "AREA_ADMIN1"
+    "envKey": "AREA_ADMIN_1_PASSWORD"
   }
 }

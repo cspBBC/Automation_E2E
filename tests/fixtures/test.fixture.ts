@@ -114,6 +114,7 @@ export const test = bddTest.extend<TestFixtures>({
     } finally {
       // Rollback any open transactions to clean up after test
       try {
+        //only works if test inserted any data into the database, otherwise it will throw an error that there is no transaction to rollback
         await pool.request().query('IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION');
         console.log('🔙 Transaction cleaned up after test');
       } catch (err) {

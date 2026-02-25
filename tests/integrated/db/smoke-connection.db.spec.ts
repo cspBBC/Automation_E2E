@@ -92,5 +92,40 @@
 // // });
 
 
+//just add a test to retreive schd grp by system admin and areaadmin and conslole it
+//  whaterber id craeetd by "id": 10752, "id": 10769 in db 
+//no valdation just want see all data avaiable in db for those id
+
+//==================================================================================================
+// import { test } from '@fixtures/test.fixture';
+
+// test('Get scheduling groups created by system admin and area admin', async ({ db }) => {
+//   const systemAdminUserId = 10752; // Example System Admin user ID
+//   const areaAdminUserId = 10769; // Example Area Admin user ID  
+    
+//     const result = await db.request()
+
+//     .input('systemAdminUserId', systemAdminUserId)
+//     .input('areaAdminUserId', areaAdminUserId)
+//     .query(`        
+//         SELECT  
+//             g.SchedulingGroupsID,
+//             g.SchedulingGroupsName,
+//             g.CreatedBy,
+//             u.UD_DisplayName,
+
+//             u.UD_NetLogin
+//         FROM SchedulingGroups g
+//         INNER JOIN UserDetails u ON g.CreatedBy = u.UD_UserID
+//         WHERE g.CreatedBy IN (@systemAdminUserId, @areaAdminUserId)
+//     `); 
+
+//     console.log('Scheduling Groups created by System Admin and Area Admin:', result.recordset);
+
+// });
+
+
+
+
 
 
