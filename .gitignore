@@ -10,6 +10,7 @@ screenshots
 .bitbucket
 allure-results
 requirements
+tests/integrated/db/smoke-connection.db.spec.ts
 
 # Compiled Java class files
 *.class
