@@ -210,17 +210,19 @@ Given('user {string} is on facility catalogue page',
 }
 ```
 
-**File:** `.env`
+**File:** `.env` (Never commit this file!)
 
 ```bash
 UI_BASE_URL=https://allocate-systest-dbr.national.core.bbc.co.uk
 API_BASE_URL=https://allocate-systest-dbr.national.core.bbc.co.uk/api
 
-# Test user passwords
-SYS_ADMIN_PASSWORD=<password_for_jaina15>
-AREA_ADMIN_PASSWORD=BBC@2025@
-AREA_ADMIN_1_PASSWORD=<password_for_area_admin_11>
+# Test user passwords (DO NOT COMMIT - use actual passwords locally only)
+SYS_ADMIN_PASSWORD=your_password_here
+AREA_ADMIN_PASSWORD=your_password_here
+AREA_ADMIN_1_PASSWORD=your_password_here
 ```
+
+⚠️ **SECURITY:** Never commit `.env` file to git. Add to `.gitignore`
 
 ---
 
@@ -391,6 +393,39 @@ Waiting on PHP team for:
 
 ---
 
+## � Security & Environment Configuration
+
+### **.env File Setup**
+
+1. **Create `.env` file** in project root (DO NOT commit)
+2. **Add to `.gitignore`** to prevent accidental commit:
+
+```bash
+# .gitignore
+.env
+.env.local
+.env.*.local
+```
+
+3. **Configure with actual credentials**:
+
+```bash
+UI_BASE_URL=https://allocate-systest-dbr.national.core.bbc.co.uk
+API_BASE_URL=https://allocate-systest-dbr.national.core.bbc.co.uk/api
+
+SYS_ADMIN_PASSWORD=<ask_your_team>
+AREA_ADMIN_PASSWORD=<ask_your_team>
+AREA_ADMIN_1_PASSWORD=<ask_your_team>
+```
+
+⚠️ **Never:**
+- Commit `.env` to git
+- Share passwords via chat/email
+- Store credentials in source code
+- Use test passwords in production
+
+---
+
 ## 💡 Quick Start
 
 ### **1. Install Dependencies**
@@ -399,17 +434,19 @@ Waiting on PHP team for:
 npm install
 ```
 
-### **2. Configure Environment**
+### **2. Configure Environment Variables**
 
-Create `.env` file with actual credentials:
+Create `.env` file in project root:
 
 ```bash
 UI_BASE_URL=https://allocate-systest-dbr.national.core.bbc.co.uk
 API_BASE_URL=https://allocate-systest-dbr.national.core.bbc.co.uk/api
-SYS_ADMIN_PASSWORD=<actual_password>
-AREA_ADMIN_PASSWORD=<actual_password>
-AREA_ADMIN_1_PASSWORD=<actual_password>
+SYS_ADMIN_PASSWORD=ask_your_team_for_password
+AREA_ADMIN_PASSWORD=ask_your_team_for_password
+AREA_ADMIN_1_PASSWORD=ask_your_team_for_password
 ```
+
+✅ Make sure `.env` is in `.gitignore`
 
 ### **3. Run UI Tests**
 
@@ -417,7 +454,7 @@ AREA_ADMIN_1_PASSWORD=<actual_password>
 npm run uitest
 ```
 
-### **4. View Results**
+### **4. View HTML Report**
 
 ```bash
 npx playwright show-report
