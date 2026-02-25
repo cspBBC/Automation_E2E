@@ -10,22 +10,31 @@
 
 import { test, expect } from '@fixtures/test.fixture';
 import { SchedulingGroupQueries } from '@workflows/schd-group/db/queries/schedulingGroup.queries';
+import { SchedulingGroupSetup } from '@workflows/schd-group/db/queries/schedulingGroup.setup';
 import { 
   assertGroupExists, 
   assertGroupArea, 
   assertAllocationsMenu,
   assertNotes,
   assertAudit,
-  assertTeamsAssociated
 } from '@workflows/schd-group/invariants/db.invariants';
 
 
 // ============================================
 // SCENARIO 1: System Admin Creates Group
 // ============================================
-test.describe('System Admin Creates Scheduling Group (ID: 25)', () => {
-    const schdGrpCreatedID = 25;
-    const name = 'Test_POC_MO';
+test.describe('System Admin Creates Scheduling Group (ID: 26)', () => {
+    const schdGrpCreatedID = SchedulingGroupSetup.TEST_GROUPS.SYSTEM_ADMIN_GROUP.id;
+    const name = SchedulingGroupSetup.TEST_GROUPS.SYSTEM_ADMIN_GROUP.name;
+    
+    test.beforeAll(async ({ db, ensureUserExists }) => {
+      // Ensure users exist in database and get their IDs
+      const systemAdmin = await ensureUserExists('systemAdmin');
+      const areaAdmin = await ensureUserExists('areaAdmin_News');
+      // Setup test groups with actual user IDs from database
+      await SchedulingGroupSetup.setupTestGroups(db, systemAdmin.id, areaAdmin.id);
+    });
+    
     test('system admin can access the group', async ({ db, ensureUserExists }) => {
         const systemAdmin = await ensureUserExists('systemAdmin');
         const row = await SchedulingGroupQueries.getByIdForUser(db, schdGrpCreatedID, systemAdmin.id);
@@ -54,9 +63,17 @@ test.describe('System Admin Creates Scheduling Group (ID: 25)', () => {
 // SCENARIO 2: Area Admin Creates Group
 // ============================================
 test.describe('Area Admin Creates Scheduling Group (ID: 24)', () => {
-    const schdGrpCreatedID = 24;
-    const name = 'Area_Shekhar_POC';
-    const areaName = 'News';
+    const schdGrpCreatedID = SchedulingGroupSetup.TEST_GROUPS.AREA_ADMIN_GROUP.id;
+    const name = SchedulingGroupSetup.TEST_GROUPS.AREA_ADMIN_GROUP.name;
+    const areaName = SchedulingGroupSetup.TEST_GROUPS.AREA_ADMIN_GROUP.area;
+    
+    test.beforeAll(async ({ db, ensureUserExists }) => {
+      // Ensure users exist in database and get their IDs
+      const systemAdmin = await ensureUserExists('systemAdmin');
+      const areaAdmin = await ensureUserExists('areaAdmin_News');
+      // Setup test groups with actual user IDs from database
+      await SchedulingGroupSetup.setupTestGroups(db, systemAdmin.id, areaAdmin.id);
+    });
     
     test('system admin can access the group created by area admin', async ({ db, ensureUserExists }) => {
         const systemAdmin = await ensureUserExists('systemAdmin');
