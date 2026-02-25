@@ -9,6 +9,7 @@ verify-env.ts
 screenshots
 .bitbucket
 allure-results
+requirements
 
 # Compiled Java class files
 *.class

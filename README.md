@@ -50,11 +50,13 @@ poc_bbc/
 │   │   ├── features/                      # Gherkin feature files for API_DB tests
 │   │   │   ├── NP001/
 │   │   │   └── NP035/
-│   │   │       └── NP035.01_create.feature           # Scheduling group creation scenario
+│   │   │       ├── NP035.01_view.feature             # Scheduling group view/list scenarios
+│   │   │       └── NP035.02_create.feature           # Scheduling group creation scenarios
 │   │   └── steps/                         # Step implementations for API_DB tests
 │   │       ├── NP001/
 │   │       └── NP035/
-│   │           └── schd_grp_create.steps.ts          # Given-When-Then implementations
+│   │           ├── schd_grp_view.steps.ts            # View/list step implementations
+│   │           └── schd_grp_create_steps.ts          # Create step implementations
 │   │
 │   ├── ui/                                # UI (Browser) tests
 │   │   ├── features/                      # Gherkin feature files for UI tests
@@ -97,8 +99,10 @@ poc_bbc/
 │   │
 │   └── schd-group/                        # Scheduling group feature workflow
 │       ├── api/
-│       │   ├── endpoints.ts               # API endpoint URL definitions
-│       │   └── schd-group.api.ts          # API request builders & client methods
+│       │   ├── view.api.ts                # GET operations (list, getById, getHistory)
+│       │   ├── create.api.ts              # POST operations (create)
+│       │   ├── update.api.ts              # PUT operations (update)
+│       │   └── delete.api.ts              # DELETE operations (delete, bulkDelete)
 │       ├── data/
 │       │   └── payloads.json              # Request payload templates & builders
 │       ├── db/
@@ -217,23 +221,25 @@ db/
 
 ```
 workflows/schd-group/
-├── api/
-│   ├── endpoints.ts → URL paths
-│   └── schd-group.api.ts → Request builders
+├── api/                          # Modular CRUD API structure
+│   ├── view.api.ts              # GET operations (list, getById, getHistory)
+│   ├── create.api.ts            # POST operations (create)
+│   ├── update.api.ts            # PUT operations (update)
+│   └── delete.api.ts            # DELETE operations (delete, bulkDelete)
 │
 ├── data/
-│   ├── payloads.ts → Request payload templates
-│   ├── users.json → Test user credentials
-│   └── schedulingGroupData.json → Test data
+│   └── payloads.json             # Request payload templates
 │
 ├── db/
-│   ├── queries/ → Database read/verify operations
-│   └── seed/ → Database setup & transactions
+│   ├── queries/
+│   │   └── schedulingGroup.queries.ts  # Reusable with permission checks
+│   └── seed/
+│       └── db.seed.ts            # Database setup & transactions
 │
 └── invariants/
-    ├── api.invariants.ts → API response rules
-    ├── db.invariants.ts → Database record rules
-    └── permission.invariants.ts → Access control rules
+    ├── api.invariants.ts         # API response validations
+    ├── db.invariants.ts          # Database record validations
+    └── permission.invariants.ts  # Access control validations
 ```
 
 ---
@@ -456,7 +462,9 @@ Feature (Gherkin) → Steps (Given-When-Then) → Fixtures → API Calls → DB 
 - Transaction isolation
 - Clear Given-When-Then structure
 
-**Example:** [tests/api_db/features/NP035/NP035.01_create.feature](tests/api_db/features/NP035/NP035.01_create.feature)
+**Examples:** 
+- View scenario: [tests/api_db/features/NP035/NP035.01_view.feature](tests/api_db/features/NP035/NP035.01_view.feature)
+- Create scenario: [tests/api_db/features/NP035/NP035.02_create.feature](tests/api_db/features/NP035/NP035.02_create.feature) (if available)
 
 ### **UI Tests** (`tests/ui/features/*.feature` + `tests/ui/page/` + `.steps.ts`)
 
@@ -1027,7 +1035,80 @@ When adding new tests:
 
 ---
 
-**Last Updated**: February 24, 2026  
+---
+
+## 📝 Recent Updates (February 25, 2026)
+
+### **API Architecture Refactoring - COMPLETED ✅**
+
+#### **What Changed**
+
+**Old Structure (Monolithic):**
+```
+workflows/schd-group/api/
+├── endpoints.ts (centralized - mixed concerns)
+└── schd-group.api.ts (all CRUD in one file)
+```
+
+**New Structure (Modular - CRUD Separated):**
+```
+workflows/schd-group/api/
+├── view.api.ts     # GET operations only
+├── create.api.ts   # POST operations only
+├── update.api.ts   # PUT operations only
+└── delete.api.ts   # DELETE operations only
+```
+
+#### **Benefits**
+- ✅ **Scalable**: Replicable pattern for multiple modules (rooms, teams, etc.)
+- ✅ **Maintainable**: One operation type per file = easier to understand
+- ✅ **Testable**: Each operation isolated and independently testable
+- ✅ **Self-contained**: Each file has embedded endpoints (no central registry)
+- ✅ **Backward Compatible**: Legacy function exports available
+
+#### **API Files Status**
+
+| File | Purpose | Status | Endpoints |
+|------|---------|--------|----------|
+| `view.api.ts` | GET operations | ✅ Ready | GET /api/scheduling-groups, GET /api/scheduling-groups/{id}, GET /api/scheduling-groups/{id}/history |
+| `create.api.ts` | POST operations | ✅ Ready | POST /api/scheduling-groups |
+| `update.api.ts` | PUT operations | ✅ Ready | PUT /api/scheduling-groups/{id} |
+| `delete.api.ts` | DELETE operations | ✅ Ready | DELETE /api/scheduling-groups/{id}, DELETE /api/scheduling-groups/bulk/delete |
+
+#### **Steps Files Status**
+
+| File | Feature | Scope | Status |
+|------|---------|-------|--------|
+| `schd_grp_view.steps.ts` | NP035.01 View | 1 scenario, 4 assertions | ✅ Trimmed & optimized |
+| `schd_grp_create_steps.ts` | NP035.02 Create | 8 scenarios, 24+ assertions | ✅ Complete |
+
+#### **Code Change Example**
+
+**Before (Monolithic):**
+```typescript
+import { schedulingGroupAPI } from '@workflows/schd-group/api/schd-group.api';
+const response = await schedulingGroupAPI.create(apiClient, payload);
+```
+
+**After (Modular):**
+```typescript
+import { viewAPI } from '@workflows/schd-group/api/view.api';
+import { createAPI } from '@workflows/schd-group/api/create.api';
+
+const response = await viewAPI.list(apiClient);
+const response = await createAPI.create(apiClient, payload);
+```
+
+#### **Next Steps**
+
+1. 🟢 **API Modularization**: COMPLETE ✅
+2. 🟡 **PHP Endpoint Delivery**: PENDING (blocking test execution)
+3. 🟡 **Test Execution**: BLOCKED until endpoints available
+4. ⚪ **CI/CD Integration**: Phase 4 (pending after test validation)
+
+---
+
+**Last Updated**: February 25, 2026  
 **Framework**: Playwright BDD  
 **Node Version Required**: 18+ (verify with `node --version`)
 
@@ -1090,4 +1171,64 @@ When adding new tests:
 ✅ playwright.config.ts (removed allure-playwright reporter)
 ✅ README.md (this file - documentation updates)
 ```
+
+### **February 25, 2026 - API Modularization**
+
+#### **Architecture Optimization - COMPLETED ✅**
+
+Refactored API from monolithic to modular CRUD-based structure for improved scalability and maintainability.
+
+#### **What Changed**
+
+**Before (Monolithic):**
+```
+workflows/schd-group/api/
+├── endpoints.ts (centralized)
+└── schd-group.api.ts (all CRUD in one file)
+```
+
+**After (Modular):**
+```
+workflows/schd-group/api/
+├── view.api.ts (GET operations)
+├── create.api.ts (POST operations)
+├── update.api.ts (PUT operations)
+└── delete.api.ts (DELETE operations)
+```
+
+#### **API Files Created**
+
+1. **view.api.ts** - GET operations (54 lines)
+2. **create.api.ts** - POST operations (39 lines)
+3. **update.api.ts** - PUT operations (38 lines)
+4. **delete.api.ts** - DELETE operations (45 lines)
+
+**Status**: ✅ All production ready, awaiting PHP endpoint delivery
+
+#### **Steps Files Optimized**
+
+- **schd_grp_view.steps.ts**: Trimmed from 429 → 98 lines (removed 331 unused)
+- **schd_grp_create_steps.ts**: Complete (427 lines, 8 scenarios, 24+ assertions)
+
+#### **Benefits**
+
+- ✅ Scalable pattern for multiple modules
+- ✅ Better maintainability (one operation per file)
+- ✅ Independently testable operations
+- ✅ Self-contained without central registry
+- ✅ Backward compatible
+
+#### **Status**
+
+| Item | Status |
+|------|--------|
+| API Modularization | ✅ COMPLETE |
+| View Steps (NP035.01) | ✅ COMPLETE |
+| Create Steps (NP035.02) | ✅ COMPLETE |
+| PHP Endpoint Delivery | 🔴 BLOCKED |
+| Test Execution | 🔴 BLOCKED |
+
+---
+
+**Last Updated**: February 25, 2026
 

@@ -6,8 +6,6 @@
   "scripts": {
     "dbtest": "npx playwright test --project=db",
     "uitest": "npx bddgen && npx playwright test --project=uitest --headed",
-    "integratedtest": "npx bddgen && npx playwright test --project=api_db_test",
-    "all": "npx bddgen && npx playwright test",
     "report": "npx playwright show-report",
     "all:report": "npx bddgen && npx playwright test && npm run report"
   },

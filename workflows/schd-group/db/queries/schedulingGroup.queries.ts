@@ -178,4 +178,50 @@ export class SchedulingGroupQueries {
     // Area Admin returns their division
     return record.DivisionName;
   }
-}
+
+  /**
+   * List all Scheduling Groups accessible to a user based on their role
+   * 
+   * Permission Rules:
+   * - System Admin (UR_RoleID = 1): Returns ALL groups
+   * - Area Admin (UR_RoleID = 2+): Returns only groups in their assigned division
+   * 
+   * @param db - Database connection pool
+   * @param userId - User ID to retrieve groups for
+   * @returns Array of scheduling groups user has access to
+   */
+  static async listAllGroupsForUser(
+    db: sql.ConnectionPool,
+    userId: number
+  ) {
+    // Get user's area/division (null for System Admin, division name for Area Admin)
+    const userArea = await this.getUserArea(db, userId);
+
+    if (userArea === null) {
+      // System Admin: Get ALL groups from all divisions
+      const result = await db.request().query(`
+        SELECT sg.SchedulingGroupsID, sg.SchedulingGroupsName, 
+               sg.CreatedBy, sg.DivisionID, d.DivisionName
+        FROM SchedulingGroups sg
+        LEFT JOIN Divisions d ON d.DivisionID = sg.DivisionID
+        ORDER BY sg.SchedulingGroupsName
+      `);
+      return result.recordset;
+    } else {
+      // Area Admin: Get only groups in their division
+      const result = await db
+        .request()
+        .input('userId', userId)
+        .query(`
+          SELECT sg.SchedulingGroupsID, sg.SchedulingGroupsName, 
+                 sg.CreatedBy, sg.DivisionID, d.DivisionName
+          FROM SchedulingGroups sg
+          INNER JOIN Divisions d ON d.DivisionID = sg.DivisionID
+          INNER JOIN UserRoles ur ON d.DivisionID = ur.UR_DivisionId
+          WHERE ur.UR_UserID = @userId 
+          AND ur.UR_EndDate >= CAST(GETDATE() AS DATE)
+          ORDER BY sg.SchedulingGroupsName
+        `);
+      return result.recordset;
+    }
+  }}

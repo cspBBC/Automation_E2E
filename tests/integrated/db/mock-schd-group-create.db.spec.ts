@@ -46,7 +46,7 @@ test.describe('Area Admin Creates Scheduling Group (ID: 24)', () => {
     const schdGrpCreatedID = 24;
     const name = 'Area_Shekhar_POC';
     
-    test('system admin can access the group', async ({ db, ensureUserExists }) => {
+    test('system admin can access the group craeted by area admin', async ({ db, ensureUserExists }) => {
         const systemAdmin = await ensureUserExists('systemAdmin');
 
         const row = await SchedulingGroupQueries.getByIdForUser(db, schdGrpCreatedID, systemAdmin.id);

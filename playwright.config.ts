@@ -6,11 +6,11 @@ import { defineBddConfig } from 'playwright-bdd';
 export const bddConfig = defineBddConfig({
   features: [
     'tests/ui/features/**/*.feature',
-    'tests/api_db/features/**/*.feature',
+    'tests/integrated/features/**/*.feature',
   ],
   steps: [
     'tests/ui/steps/**/*.steps.ts',
-    'tests/api_db/steps/**/*.steps.ts',
+    'tests/integrated/steps/**/*.steps.ts',
     'tests/fixtures/pages.fixture.ts',
     'tests/fixtures/test.fixture.ts',
   ],
@@ -55,7 +55,7 @@ export default defineConfig({
       name: 'api_db_test',
       testDir: './.features-gen',
       testMatch: '**/*.feature.spec.*',
-      grep: /@api_db/,
+      grep: /@integrated/,
       workers: process.env.CI ? 4 : 2,  // More workers for API/DB (lighter)
       use: {
         baseURL: process.env.API_BASE_URL,
