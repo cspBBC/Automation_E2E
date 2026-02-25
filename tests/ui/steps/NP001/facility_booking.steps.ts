@@ -17,13 +17,13 @@ Given('user {string} is on facility catalogue page', async ({  loginAs, facility
   await loginAs(userAlias);
   // Navigate to facility catalogue page
   await facilityPage.open();
-  console.log(`✅ User '${userAlias}' navigated to facility catalogue page`);
+  console.log(`User '${userAlias}' navigated to facility catalogue page`);
 });
 
 
 When('user creates a new facility using test data from {string}', async ({ facilityPage }, filename: string) => {
   await facilityPage.createFacility(filename);
-  console.log(`✅ Facility creation initiated with test data from: ${filename}.json`);
+  console.log(`Facility creation initiated with test data from: ${filename}.json`);
 });
 
 // ============================================
@@ -32,10 +32,10 @@ When('user creates a new facility using test data from {string}', async ({ facil
 
 Then('the facility should be created successfully', async ({ facilityPage }) => {
   await facilityPage.verifyFacilityAdded();
-  console.log('✅ Facility created and verified successfully');
+  console.log('Facility created and verified successfully');
 });
 
 Then('delete the created facility to clean up', async ({ facilityPage }) => {
   await facilityPage.deleteCreatedFacility();
-  console.log('✅ Created facility deleted successfully');
+  console.log('Created facility deleted successfully');
 });

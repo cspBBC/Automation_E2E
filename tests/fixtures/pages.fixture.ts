@@ -65,14 +65,12 @@ export const test = bddTest.extend<PageFixtures>({
       const baseURL = process.env.UI_BASE_URL || 'https://allocate-systest-dbr.national.core.bbc.co.uk';
       const url = new URL(baseURL);
       const urlWithAuth = `${url.protocol}//${user.username}:${password}@${url.host}${url.pathname}`;
-      
-      // Log WITHOUT password (safe for CI logs)
+    
       console.log(`Authenticating user: ${user.username}`);
       
       // Navigate to base URL with embedded credentials for authentication
       await page.goto(urlWithAuth);
       
-      // Confirm without exposing credentials
       console.log(`Authentication successful`);
     });
   },

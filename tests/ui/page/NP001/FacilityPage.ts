@@ -22,28 +22,28 @@ export class FacilityPage {
 
   // Navigate to Facility Catalogue and create facility
   async createFacility(filename: string = 'facilityFormData') {
-  
-    // 2. Verify tab
+
+    // Verify tab
     const facilityCatalogueTab = this.page.locator("ul[role='tablist'] li a").filter({ hasText: "Facility Catalogue" });
     expect(facilityCatalogueTab).toBeVisible();
 
-    // 3. Click Add Facility
+    // Click Add Facility
     await this.page.locator('#create-facility-button').click();
     await this.page.locator('div[aria-describedby="facility-form-dialog"]').waitFor({ state: 'visible' });
 
-    // 4. Fill form
+    // Fill form
     const jsonPath = `workflows/facilities/data/${filename}.json`;
     const jsonData = await readJSON(jsonPath);
     await this.fill(jsonData);
 
-    // 5. Submit
+    // Submit
     await this.page.locator('#submit-create-facility-form-button').click();
 
-    // 6. Wait for modal to disappear (indicating submission success)
-    // Increased timeout for form submission and modal closure
-    await this.page.waitForSelector('div[aria-describedby="facility-form-dialog"]', { 
+    // Wait for modal to disappear (indicating submission success)
+
+    await this.page.waitForSelector('div[aria-describedby="facility-form-dialog"]', {
       state: 'hidden',
-      timeout: 30000 
+      timeout: 30000
     });
 
   }
@@ -84,7 +84,7 @@ export class FacilityPage {
 
     const facilityName = this.formData['facility_frm'].value as string;
 
-    // 1️Locate the exact row by facility name
+    // 1Locate the exact row by facility name
     const facilityRow = this.page.locator('#facility-list-table tbody tr', {
       has: this.page.locator('th', { hasText: new RegExp(`^${facilityName}$`) })
     });
@@ -97,17 +97,17 @@ export class FacilityPage {
       throw new Error(`Multiple rows found for facility "${facilityName}"`);
     }
 
-    // 2️Locate the delete icon inside that row and click
+    // Locate the delete icon inside that row and click
     const deleteIcon = facilityRow.locator('td div i.delete-facility-icon').first();
     await deleteIcon.click();
 
-    // 3️Wait for the delete confirmation modal to appear
+    // Wait for the delete confirmation modal to appear
     // The confirmation button is in a separate modal, not inside the row
     const confirmButton = this.page.locator('button.delete-popup:visible').first();
     await expect(confirmButton).toBeVisible();
     await confirmButton.click();
 
-    // 4️Wait until the facility row is removed
+    // Wait until the facility row is removed
     await expect(facilityRow).toHaveCount(0);
 
     console.log(`🗑️ Facility "${facilityName}" successfully deleted`);

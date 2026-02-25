@@ -92,6 +92,31 @@ export class SchedulingGroupQueries {
   }
 
   /**
+   * Get associated teams for a scheduling group
+   * 
+   * @param db - Database connection pool
+   * @param groupId - Scheduling group ID
+   * @returns Array of team IDs currently associated with the group
+   */
+  static async getAssociatedTeamIds(
+    db: sql.ConnectionPool,
+    groupId: number
+  ): Promise<number[]> {
+    const result = await db
+      .request()
+      .input('groupId', sql.Int, groupId)
+      .query(`
+        SELECT SchedulingTeamID
+        FROM SchedulingGroupsTeamsLinks
+        WHERE SchedulingGroupsID = @groupId
+        AND (EndDate IS NULL OR EndDate >= CAST(GETDATE() AS DATE))
+        ORDER BY SchedulingTeamID
+      `);
+
+    return result.recordset.map(r => r.SchedulingTeamID);
+  }
+
+  /**
    * Get scheduling group by ID with permission check for specific user
    * 
    * Permission Rules:
@@ -109,12 +134,14 @@ export class SchedulingGroupQueries {
     groupId: number,
     userId: number
   ) {
-    // First, get the group with division info
+    // First, get the group with division info, including IsIncludeINMenu and Notes
     const result = await db
       .request()
       .input('groupId', sql.Int, groupId)
       .query(`
-        SELECT g.*, d.DivisionName
+        SELECT g.SchedulingGroupsID, g.SchedulingGroupsName, g.DivisionID, 
+               g.IsIncludeINMenu, g.Notes, g.CreatedBy, g.CreatedDate, 
+               g.UpdatedBy, g.UpdatedDate, d.DivisionName
         FROM SchedulingGroups g
         LEFT JOIN Divisions d ON d.DivisionID = g.DivisionID
         WHERE g.SchedulingGroupsID = @groupId
@@ -127,6 +154,8 @@ export class SchedulingGroupQueries {
 
     // Check if user created this group
     if (group.CreatedBy === userId) {
+      // Attach associated team IDs
+      group.AssociatedTeamIds = await this.getAssociatedTeamIds(db, groupId);
       return group;
     }
 
@@ -135,6 +164,8 @@ export class SchedulingGroupQueries {
     // Area Admin: area is specific value (can access only their area)
     const userArea = await this.getUserArea(db, userId);
     if (userArea === null || group.DivisionName === userArea) {
+      // Attach associated team IDs
+      group.AssociatedTeamIds = await this.getAssociatedTeamIds(db, groupId);
       return group;
     }
 
@@ -200,8 +231,8 @@ export class SchedulingGroupQueries {
     if (userArea === null) {
       // System Admin: Get ALL groups from all divisions
       const result = await db.request().query(`
-        SELECT sg.SchedulingGroupsID, sg.SchedulingGroupsName, 
-               sg.CreatedBy, sg.DivisionID, d.DivisionName
+        SELECT sg.SchedulingGroupsID, sg.SchedulingGroupsName, sg.IsIncludeINMenu,
+               sg.Notes, sg.CreatedBy, sg.DivisionID, d.DivisionName
         FROM SchedulingGroups sg
         LEFT JOIN Divisions d ON d.DivisionID = sg.DivisionID
         ORDER BY sg.SchedulingGroupsName
@@ -213,8 +244,8 @@ export class SchedulingGroupQueries {
         .request()
         .input('userId', userId)
         .query(`
-          SELECT sg.SchedulingGroupsID, sg.SchedulingGroupsName, 
-                 sg.CreatedBy, sg.DivisionID, d.DivisionName
+          SELECT sg.SchedulingGroupsID, sg.SchedulingGroupsName, sg.IsIncludeINMenu,
+                 sg.Notes, sg.CreatedBy, sg.DivisionID, d.DivisionName
           FROM SchedulingGroups sg
           INNER JOIN Divisions d ON d.DivisionID = sg.DivisionID
           INNER JOIN UserRoles ur ON d.DivisionID = ur.UR_DivisionId
@@ -224,4 +255,5 @@ export class SchedulingGroupQueries {
         `);
       return result.recordset;
     }
-  }}
+  }
+}
