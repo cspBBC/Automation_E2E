@@ -15,7 +15,10 @@
     "schdtest:dev": "cross-env ENVIRONMENT=dev npm run schdtest",
     "schdtest:systest": "cross-env ENVIRONMENT=systest npm run schdtest",
     "uitest:dev": "cross-env ENVIRONMENT=dev npm run uitest",
-    "uitest:systest": "cross-env ENVIRONMENT=systest npm run uitest"
+    "uitest:systest": "cross-env ENVIRONMENT=systest npm run uitest",
+    "facilitytest:ci": "npx bddgen && ENVIRONMENT=$ENVIRONMENT npx playwright test --project=uitest --grep @facility",
+    "schdtest:ci": "npx bddgen && ENVIRONMENT=$ENVIRONMENT npx playwright test --project=uitest --grep @schdTeamUI",
+    "uitest:ci": "npx bddgen && ENVIRONMENT=$ENVIRONMENT npx playwright test --project=uitest"
   },
   "keywords": [],
   "author": "",
