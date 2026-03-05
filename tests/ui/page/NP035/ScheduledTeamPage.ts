@@ -50,4 +50,21 @@ export class ScheduledteamPage {
   }
 
 
+  async verifyScheduledTeamExists() {
+
+    if (!this.formData) throw new Error('Form data not loaded');
+    const teamName = this.formData['schedulingTeamName'].value as string;
+
+    // Filter the list by team name
+    const filterInput = this.page.getByRole('textbox', { name: 'Type to filter' }).first();
+    await filterInput.click();
+    await filterInput.fill(teamName);
+    //need to press enter to trigger the filter
+    await filterInput.press('Enter');
+    // Wait for the table to update and check for the team name
+    const tableWrapper = this.page.locator('#schedulingTeamDetails_wrapper');
+    await expect(tableWrapper).toContainText(teamName);
+  }
+
+
 }

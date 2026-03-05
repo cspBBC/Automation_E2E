@@ -27,3 +27,8 @@ When('user creates a new scheduling team using test data from {string}', async (
   await scheduledteamPage.createScheduledTeam(filename);
   console.log(`Scheduling Team creation initiated with test data from: ${filename}.json`);
 });
+
+Then('the scheduling team should be visible in the list', async ({ scheduledteamPage }) => {
+  await scheduledteamPage.verifyScheduledTeamExists();
+  console.log('Scheduling Team verified in the list');
+});
