@@ -1,6 +1,8 @@
 # Local / Node / Playwright
 node_modules
 .env
+.env.*
+!.env.example
 playwright-report
 test-results
 dist/
@@ -11,6 +13,12 @@ screenshots
 allure-results
 requirements
 tests/integrated/db/smoke-connection.db.spec.ts
+
+# Environment setup utilities
+check-urls.mjs
+test-urls.mjs
+test-urls.js
+checkUrls.js
 
 # Compiled Java class files
 *.class

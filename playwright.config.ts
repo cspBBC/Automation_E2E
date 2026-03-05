@@ -1,6 +1,16 @@
-import 'dotenv/config';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { config as dotenvConfig } from 'dotenv';
 import { defineConfig, devices } from '@playwright/test';
 import { defineBddConfig } from 'playwright-bdd';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Load environment-specific .env file
+const environment = process.env.ENVIRONMENT || 'systest';
+const envPath = path.resolve(__dirname, `.env.${environment}`);
+console.log(`Loading environment: ${environment} from ${envPath}`);
+dotenvConfig({ path: envPath });
 
 // BDD config for UI tests
 export const bddConfig = defineBddConfig({
