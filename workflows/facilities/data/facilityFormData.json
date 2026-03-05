@@ -8,8 +8,8 @@
     "value": "2026-03-14"
   },
   "restrict_bookers_frm": {
-    "type": "dropdown",
-    "value": "5 Live Auto"
+    "type": "multiDropdown",
+    "value": ["5 Live Auto"]
   },
   "provider_type_frm": {
     "type": "dropdown",

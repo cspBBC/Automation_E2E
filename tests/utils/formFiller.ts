@@ -57,11 +57,25 @@ async function selectMultiDropdown(
   const container = page.locator(`#${fieldId}_chosen`);
   await container.click();
 
-  const input = container.locator("input");
-
+  const searchInput = container.locator(".chosen-search input");
+  
   for (const val of values) {
-    await input.fill(val);
-    await page.keyboard.press("Enter");
+    if (await searchInput.count()) {
+      await searchInput.fill(val);
+    }
+
+    const option = container
+      .locator(".chosen-results li.active-result")
+      .filter({ hasText: val })
+      .first();
+
+    await option.waitFor({ state: "visible" });
+    await option.click();
+    
+    // Clear the search input for the next iteration
+    if (await searchInput.count()) {
+      await searchInput.clear();
+    }
   }
 }
 
@@ -232,14 +246,14 @@ export async function fillForm(
         break;
 
       case "dropdown": {
-        // Check if it's a standard HTML select or a Chosen dropdown
-        const isStandardSelect = await page.locator(`#${fieldId}`).count() > 0;
+        // Check if it's a Chosen dropdown FIRST (since it also has the hidden select)
         const isChosenDropdown = await page.locator(`#${fieldId}_chosen`).count() > 0;
+        const isStandardSelect = await page.locator(`#${fieldId}`).count() > 0 && !isChosenDropdown;
         
-        if (isStandardSelect) {
-          await selectStandardDropdown(page, fieldId, value as string);
-        } else if (isChosenDropdown) {
+        if (isChosenDropdown) {
           await selectChosenDropdown(page, fieldId, value as string);
+        } else if (isStandardSelect) {
+          await selectStandardDropdown(page, fieldId, value as string);
         } else {
           throw new Error(`No dropdown found for field "${fieldId}"`);
         }
