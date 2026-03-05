@@ -9,7 +9,8 @@ export type FieldType =
   | 'date'
   | 'facilityModal'
   | 'dualListboxModal'      // multiple dual listboxes inside a modal
-  | 'weeklyAvailability';   // for full-week selection
+  | 'weeklyAvailability'    // for full-week selection
+  | 'button';               // for buttons that trigger actions
 
 // Interface for each day's availability in weeklyAvailability
 export interface WeekDayAvailability {

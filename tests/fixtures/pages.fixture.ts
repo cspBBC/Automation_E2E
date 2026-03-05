@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { ScheduledteamPage } from '@pages/NP035/ScheduledTeamPage';
 
 // Define __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -12,6 +13,7 @@ const __dirname = dirname(__filename);
 
 export type PageFixtures = {
   facilityPage: FacilityPage;
+  scheduledteamPage: ScheduledteamPage;
   loginAs: (userAlias: string) => Promise<void>;
   page: Page;
 };
@@ -79,6 +81,13 @@ export const test = bddTest.extend<PageFixtures>({
     const facilityPage = new FacilityPage(page);
     await use(facilityPage);
   },
+
+  //craete Schd Team page ficture
+  scheduledteamPage: async ({ page }, use) => {
+    const scheduledteamPage = new ScheduledteamPage(page);
+    await use(scheduledteamPage);
+  }
+
 });
 
 export { expect };

@@ -1,6 +1,30 @@
 import { Page } from "@playwright/test";
 import { FormField, WeekDayAvailability } from "@feildtypes/formField";
 
+// ---------- Standard HTML Select Dropdown ----------
+async function selectStandardDropdown(
+  page: Page,
+  fieldId: string,
+  value: string,
+) {
+  // Select by value attribute (numeric) or by label text
+  const select = page.locator(`#${fieldId}`);
+  
+  // Try to select by value first (if value is numeric like "1", "2")
+  try {
+    await select.selectOption(value);
+  } catch {
+    // If value is text, find the option with matching text and select by its value
+    const option = select.locator(`option:has-text("${value}")`).first();
+    const optionValue = await option.getAttribute("value");
+    if (optionValue) {
+      await select.selectOption(optionValue);
+    } else {
+      throw new Error(`Option with text "${value}" not found in select #${fieldId}`);
+    }
+  }
+}
+
 // ---------- Chosen Dropdown ----------
 async function selectChosenDropdown(
   page: Page,
@@ -207,9 +231,20 @@ export async function fillForm(
         await page.fill(`#${fieldId}`, String(value));
         break;
 
-      case "dropdown":
-        await selectChosenDropdown(page, fieldId, value as string);
+      case "dropdown": {
+        // Check if it's a standard HTML select or a Chosen dropdown
+        const isStandardSelect = await page.locator(`#${fieldId}`).count() > 0;
+        const isChosenDropdown = await page.locator(`#${fieldId}_chosen`).count() > 0;
+        
+        if (isStandardSelect) {
+          await selectStandardDropdown(page, fieldId, value as string);
+        } else if (isChosenDropdown) {
+          await selectChosenDropdown(page, fieldId, value as string);
+        } else {
+          throw new Error(`No dropdown found for field "${fieldId}"`);
+        }
         break;
+      }
 
       case "multiDropdown":
         await selectMultiDropdown(page, fieldId, value as string[]);
@@ -252,6 +287,17 @@ export async function fillForm(
         }[];
 
         await handleDualListbox(page, fieldId, dualListboxes);
+        break;
+      }
+
+      case "button": {
+        const button = page.locator(`#${fieldId}`).first();
+        await button.waitFor({ state: "visible", timeout: 5000 }).catch(() => {
+          if (!optional) console.warn(`Button "${fieldId}" not visible`);
+        });
+        if (await button.isVisible()) {
+          await button.click();
+        }
         break;
       }
 

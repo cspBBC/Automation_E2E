@@ -7,6 +7,7 @@
     "dbtest": "npx playwright test --project=db",
     "uitest": "npx bddgen && npx playwright test --project=uitest --headed",
     "report": "npx playwright show-report",
+    "schdtest": "npx bddgen && npx playwright test --project=uitest --grep @schdTeamUI --headed",
     "all:report": "npx bddgen && npx playwright test && npm run report"
   },
   "keywords": [],
