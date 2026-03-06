@@ -29,6 +29,15 @@ When('user creates a new scheduling group using test data from {string}', async 
 });
 
 Then('the scheduling group should be visible in the list', async ({ scheduledGroupPage }) => {
-  await scheduledGroupPage.verifyScheduledGroupExists();
+  await scheduledGroupPage.verifyScheduledGroupVisibleForUser('areaAdmin_News');
   console.log('Scheduling Group verified in the list');
+});
+
+/**
+ * Verify that a scheduling group created by a specific user is visible in the list
+ * Step: Then the scheduling group created by 'areaAdmin_News' should be visible in the list
+ */
+Then('the scheduling group created by {string} should be visible in the list', async ({ scheduledGroupPage }, userAlias: string) => {
+  await scheduledGroupPage.verifyScheduledGroupVisibleForUser(userAlias);
+  console.log(`Scheduling Group created by '${userAlias}' verified in the list`);
 });
