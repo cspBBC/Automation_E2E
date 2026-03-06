@@ -1,39 +1,31 @@
+
 import { test as bddTest } from 'playwright-bdd';
-import { expect, Page } from '@playwright/test';
-import { FacilityPage } from '../ui/page/NP001/FacilityPage';
+import { expect, BrowserContext, Page } from '@playwright/test';
+// import { FacilityPage } from '../ui/page/NP001/FacilityPage';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { ScheduledGroupPage} from '@pages/NP035/ScheduledGroupPage';
+import { ScheduledGroupPage } from '@pages/NP035/ScheduledGroupPage';
 
-// Define __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+let currentTestContext: BrowserContext | undefined;
+let currentTestPage: Page | undefined;
+
 export type PageFixtures = {
-  facilityPage: FacilityPage;
+  // facilityPage: FacilityPage;
   scheduledGroupPage: ScheduledGroupPage;
   loginAs: (userAlias: string) => Promise<void>;
   page: Page;
 };
 
-// ============================================
-// Helper Functions
-// ============================================
-
-/**
- * Load users data from core/data/users.json
- */
 function loadUsers() {
   const usersPath = path.join(__dirname, '../../core/data/users.json');
-  const usersData = JSON.parse(fs.readFileSync(usersPath, 'utf-8'));
-  return usersData;
+  return JSON.parse(fs.readFileSync(usersPath, 'utf-8'));
 }
 
-/**
- * Get password from environment variables
- */
 function getPassword(envKey: string): string {
   const password = process.env[envKey];
   if (!password) {
@@ -43,54 +35,47 @@ function getPassword(envKey: string): string {
 }
 
 export const test = bddTest.extend<PageFixtures>({
-  // ========================================
-  // LOGIN FIXTURE
-  // ========================================
-  /**
-   * Login as specified user with credentials from users.json and .env
-   * Usage: await loginAs('systemAdmin')
-   */
-  loginAs: async ({ page }, use) => {
+  loginAs: async ({ browser }, use) => {
     await use(async (userAlias: string) => {
-      // Load users from users.json
       const users = loadUsers();
       const user = users[userAlias];
-
-      if (!user) {
-        throw new Error(`User '${userAlias}' not found in core/data/users.json`);
-      }
-
-      // Get password from .env using envKey
+      if (!user) throw new Error(`User '${userAlias}' not found in users.json`);
       const password = getPassword(user.envKey);
 
-      // Authenticate to base URL with embedded credentials
-      const baseURL = process.env.UI_BASE_URL || 'https://allocate-systest-dbr.national.core.bbc.co.uk';
+      // Close previous context if exists
+      if (currentTestContext) {
+        await currentTestContext.close();
+      }
+
+      // Create new browser context and page
+      currentTestContext = await browser.newContext();
+      currentTestPage = await currentTestContext.newPage();
+      global.currentTestPage = currentTestPage;
+
+      const baseURL = process.env.UI_BASE_URL || 'https://allocate-systest-wp.national.core.bbc.co.uk';
       const url = new URL(baseURL);
       const urlWithAuth = `${url.protocol}//${user.username}:${password}@${url.host}${url.pathname}`;
-    
-      console.log(`Authenticating user: ${user.username} | Role: ${user.roleid} | Area: ${user.area || 'Global'}`);
-    
-      // Navigate to base URL with embedded credentials for authentication
-      await page.goto(urlWithAuth);
-      
-      // Get and log PHPSESSID cookie
-      const cookies = await page.context().cookies();
-      const phpSessionId = cookies.find(cookie => cookie.name === 'PHPSESSID');
-      console.log(`Authentication successful | PHPSESSID:`, phpSessionId?.value || 'Not found');
+
+      console.log(`Authenticating user: ${user.username}`);
+      await currentTestPage.goto(urlWithAuth);
+  
+      const cookies = await currentTestContext.cookies();
+      const phpSessionId = cookies.find(c => c.name === 'PHPSESSID');
+      console.log(`PHPSESSID for ${userAlias}: ${phpSessionId?.value}`);
     });
   },
 
-  facilityPage: async ({ page }, use) => {
-    const facilityPage = new FacilityPage(page);
-    await use(facilityPage);
-  },
+  // facilityPage: async ({}, use) => {
+  //   if (!currentTestPage) throw new Error('No page instance available. Did you call loginAs?');
+  //   const facilityPage = new FacilityPage(currentTestPage);
+  //   await use(facilityPage);
+  // },
 
-  //craete Schd Team page ficture
-  scheduledGroupPage: async ({ page }, use) => {
-    const scheduledGroupPage = new ScheduledGroupPage(page);
-    await use(scheduledGroupPage);
-  }
-
+  // scheduledGroupPage: async ({}, use) => {
+  //   if (!currentTestPage) throw new Error('No page instance available. Did you call loginAs?');
+  //   const scheduledGroupPage = new ScheduledGroupPage(currentTestPage);
+  //   await use(scheduledGroupPage);
+  // }
 });
 
 export { expect };
