@@ -9,7 +9,7 @@ async function selectStandardDropdown(
 ) {
   // Select by value attribute (numeric) or by label text
   const select = page.locator(`#${fieldId}`);
-  
+
   // Try to select by value first (if value is numeric like "1", "2")
   try {
     await select.selectOption(value);
@@ -58,7 +58,7 @@ async function selectMultiDropdown(
   await container.click();
 
   const searchInput = container.locator(".chosen-search input");
-  
+
   for (const val of values) {
     if (await searchInput.count()) {
       await searchInput.fill(val);
@@ -71,7 +71,7 @@ async function selectMultiDropdown(
 
     await option.waitFor({ state: "visible" });
     await option.click();
-    
+
     // Clear the search input for the next iteration
     if (await searchInput.count()) {
       await searchInput.clear();
@@ -178,7 +178,8 @@ async function handleWeeklyAvailability(
   const doneBtn = page.locator(`#${fieldId}-save-btn, button:visible`).filter({ hasText: /save|done/i }).first();
   if (!(await doneBtn.count())) throw new Error(`Done/Save button not found for "${fieldId}"`);
 
-  await doneBtn.click();}
+  await doneBtn.click();
+}
 
 // list box from > to list
 async function handleDualListbox(
@@ -221,6 +222,23 @@ async function handleDualListbox(
   await doneBtn.click();
 }
 
+// Helper: Fill text field by ID or name
+async function fillTextField(page: Page, fieldId: string, value: string, optional?: boolean) {
+  const selectors = [`#${fieldId}`, `[name="${fieldId}"]`];
+  for (const selector of selectors) {
+    try {
+      if (await page.locator(selector).count() > 0) {
+        await page.locator(selector).first().waitFor({ state: "visible", timeout: 5000 });
+        await page.fill(selector, String(value));
+        return;
+      }
+    } catch (e) {
+      // Try next selector
+    }
+  }
+  if (!optional) console.error(`Failed to fill field "${fieldId}"`);
+}
+
 // ---------- MAIN GENERIC FORM FILLER ----------
 export async function fillForm(
   page: Page,
@@ -230,7 +248,7 @@ export async function fillForm(
     const { type, value, optional, subValues } = field;
 
     const exists = await page
-      .locator(`#${fieldId}, #${fieldId}_frm, #${fieldId}_open_frm`)
+      .locator(`#${fieldId}, #${fieldId}_frm, #${fieldId}_open_frm, [name="${fieldId}"]`)
       .count();
 
     if (!exists) {
@@ -238,85 +256,94 @@ export async function fillForm(
       continue;
     }
 
-    switch (type) {
-      case "text":
-      case "number":
-      case "textarea":
-        await page.fill(`#${fieldId}`, String(value));
-        break;
+    try {
+      console.log(`Filling field: ${fieldId} (type: ${type})`);
 
-      case "dropdown": {
-        // Check if it's a Chosen dropdown FIRST (since it also has the hidden select)
-        const isChosenDropdown = await page.locator(`#${fieldId}_chosen`).count() > 0;
-        const isStandardSelect = await page.locator(`#${fieldId}`).count() > 0 && !isChosenDropdown;
-        
-        if (isChosenDropdown) {
-          await selectChosenDropdown(page, fieldId, value as string);
-        } else if (isStandardSelect) {
-          await selectStandardDropdown(page, fieldId, value as string);
-        } else {
-          throw new Error(`No dropdown found for field "${fieldId}"`);
+      switch (type) {
+        case "text":
+        case "number":
+        case "textarea":
+          await fillTextField(page, fieldId, String(value), optional);
+          break;
+
+        case "dropdown": {
+          // Check if it's a Chosen dropdown FIRST (since it also has the hidden select)
+          const isChosenDropdown = await page.locator(`#${fieldId}_chosen`).count() > 0;
+          const isStandardSelect = await page.locator(`#${fieldId}`).count() > 0 && !isChosenDropdown;
+
+          if (isChosenDropdown) {
+            await selectChosenDropdown(page, fieldId, value as string);
+          } else if (isStandardSelect) {
+            await selectStandardDropdown(page, fieldId, value as string);
+          } else {
+            throw new Error(`No dropdown found for field "${fieldId}"`);
+          }
+          break;
         }
-        break;
-      }
 
-      case "multiDropdown":
-        await selectMultiDropdown(page, fieldId, value as string[]);
-        break;
+        case "multiDropdown":
+          await selectMultiDropdown(page, fieldId, value as string[]);
+          break;
 
-      case "radio":
-        await page.locator(`label[for="${fieldId}"]`).click();
-        break;
+        case "radio":
+          await page.locator(`label[for="${fieldId}"]`).click();
+          break;
 
-      case "checkbox": {
-        const checked = await page.isChecked(`#${fieldId}`);
-        if (value && !checked) await page.check(`#${fieldId}`);
-        if (!value && checked) await page.uncheck(`#${fieldId}`);
-        break;
-      }
-
-      case "date":
-        await pickDate(page, fieldId, value as string);
-        break;
-
-      case "facilityModal":
-        await handleGenericModal(page, fieldId, {
-          value: value as string,
-          subValues,
-        });
-        break;
-
-      case "weeklyAvailability":
-        await handleWeeklyAvailability(
-          page,
-          fieldId,
-          value as Record<string, WeekDayAvailability>,
-        );
-        break;
-      case "dualListboxModal": {
-        const dualListboxes = value as {
-          sourceId: string;
-          targetId: string;
-          selectedValues: string[];
-        }[];
-
-        await handleDualListbox(page, fieldId, dualListboxes);
-        break;
-      }
-
-      case "button": {
-        const button = page.locator(`#${fieldId}`).first();
-        await button.waitFor({ state: "visible", timeout: 5000 }).catch(() => {
-          if (!optional) console.warn(`Button "${fieldId}" not visible`);
-        });
-        if (await button.isVisible()) {
-          await button.click();
+        case "checkbox": {
+          const checked = await page.isChecked(`#${fieldId}`);
+          if (value && !checked) await page.check(`#${fieldId}`);
+          if (!value && checked) await page.uncheck(`#${fieldId}`);
+          break;
         }
-        break;
-      }
 
-      default:
-        console.warn(`Unknown field type: ${type}`);
+        case "date":
+          await pickDate(page, fieldId, value as string);
+          break;
+
+        case "facilityModal":
+          await handleGenericModal(page, fieldId, {
+            value: value as string,
+            subValues,
+          });
+          break;
+
+        case "weeklyAvailability":
+          await handleWeeklyAvailability(
+            page,
+            fieldId,
+            value as Record<string, WeekDayAvailability>,
+          );
+          break;
+        case "dualListboxModal": {
+          const dualListboxes = value as {
+            sourceId: string;
+            targetId: string;
+            selectedValues: string[];
+          }[];
+
+          await handleDualListbox(page, fieldId, dualListboxes);
+          break;
+        }
+
+        case "button": {
+          const button = page.locator(`#${fieldId}`).first();
+          await button.waitFor({ state: "visible", timeout: 5000 }).catch(() => {
+            if (!optional) console.warn(`Button "${fieldId}" not visible`);
+          });
+          if (await button.isVisible()) {
+            await button.click();
+          }
+          break;
+        }
+
+        default:
+          console.warn(`Unknown field type: ${type}`);
+      }
+    } catch (e) {
+      if (!optional) {
+        console.error(`Error filling field "${fieldId}": ${e}`);
+        throw e;
+      }
     }
   }
 }

@@ -51,7 +51,7 @@ export default defineConfig({
       testDir: './.features-gen',
       testMatch: '**/*.feature.spec.*',
       grep: /@ui/,
-      workers: process.env.CI ? 2 : 2,  // Fewer workers for UI (heavier)
+      workers: process.env.CI ? 4 : 1,  // More workers for parallel execution
       use: {
         ...devices['Desktop Chrome'],
         baseURL: process.env.UI_BASE_URL,

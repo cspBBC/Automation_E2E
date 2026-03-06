@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { ScheduledteamPage } from '@pages/NP035/ScheduledTeamPage';
+import { ScheduledGroupPage} from '@pages/NP035/ScheduledGroupPage';
 
 // Define __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -13,7 +13,7 @@ const __dirname = dirname(__filename);
 
 export type PageFixtures = {
   facilityPage: FacilityPage;
-  scheduledteamPage: ScheduledteamPage;
+  scheduledGroupPage: ScheduledGroupPage;
   loginAs: (userAlias: string) => Promise<void>;
   page: Page;
 };
@@ -68,12 +68,15 @@ export const test = bddTest.extend<PageFixtures>({
       const url = new URL(baseURL);
       const urlWithAuth = `${url.protocol}//${user.username}:${password}@${url.host}${url.pathname}`;
     
-      console.log(`Authenticating user: ${user.username}`);
-      
+      console.log(`Authenticating user: ${user.username} | Role: ${user.roleid} | Area: ${user.area || 'Global'}`);
+    
       // Navigate to base URL with embedded credentials for authentication
       await page.goto(urlWithAuth);
       
-      console.log(`Authentication successful`);
+      // Get and log PHPSESSID cookie
+      const cookies = await page.context().cookies();
+      const phpSessionId = cookies.find(cookie => cookie.name === 'PHPSESSID');
+      console.log(`Authentication successful | PHPSESSID:`, phpSessionId?.value || 'Not found');
     });
   },
 
@@ -83,9 +86,9 @@ export const test = bddTest.extend<PageFixtures>({
   },
 
   //craete Schd Team page ficture
-  scheduledteamPage: async ({ page }, use) => {
-    const scheduledteamPage = new ScheduledteamPage(page);
-    await use(scheduledteamPage);
+  scheduledGroupPage: async ({ page }, use) => {
+    const scheduledGroupPage = new ScheduledGroupPage(page);
+    await use(scheduledGroupPage);
   }
 
 });
