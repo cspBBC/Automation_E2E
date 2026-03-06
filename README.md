@@ -325,3 +325,272 @@ core/
 - **Form Filler**: Generic utility to fill different field types
 - **Test Data**: JSON file with all form values to fill
 - **Users File**: Stores user credentials and role information
+
+---
+
+# API Test Execution Flow
+
+This section explains how API tests execute using the **Scheduling Group View** API as an example.
+
+---
+
+## API Test Setup
+
+**Run Command:**
+```powershell
+npm run dbtest
+```
+
+**File:** `package.json`
+```json
+"dbtest": "npx playwright test --project=db"
+```
+
+---
+
+## API Test Structure
+
+**File:** `tests/integrated/db/schedulingGroupSP.db.spec.ts`
+
+```typescript
+import { test, expect } from '@fixtures/test.fixture';
+import { SchedulingGroupSP } from '@workflows/schd-group/db/sp/schedulingGroup.sp';
+import { SchedulingGroupQueries } from '@workflows/schd-group/db/queries/schedulingGroup.queries';
+
+test('create scheduling group via SP', async ({ db }) => {
+  // Test input parameters
+  const inputParamsForSP = {
+    AreaId: 12,
+    GroupName: 'SP Test Group',
+    AllocationsMenu: 1,
+    Notes: 'created via sp',
+    UserId: 10752
+  };
+
+  // Step 1: Call Stored Procedure
+  const result = await SchedulingGroupSP.create(inputParamsForSP);
+  expect(result).toBeDefined();
+
+  // Step 2: Verify in Database
+  const dbRow = await SchedulingGroupQueries.getByName(db, inputParamsForSP.GroupName);
+  expect(dbRow).toBeTruthy();
+});
+```
+
+**What happens:**
+1. Import fixture with `db` connection
+2. Define test input parameters
+3. Call stored procedure via `SchedulingGroupSP.create()`
+4. Verify result exists
+5. Query database to confirm creation
+6. Assert 200 response + data in DB
+
+---
+
+## API File Structure
+
+**File:** `workflows/schedulingGroup/api/view.api.ts`
+
+```typescript
+import { APIRequestContext } from '@playwright/test';
+import { apiGet } from '../../../core/api/apiClient';
+
+const viewEndpoints = {
+  list: '/api/scheduling-groups',
+  getById: (id: number | string) => `/api/scheduling-groups/${id}`,
+  listByArea: (areaId: number) => `/api/scheduling-groups?area=${areaId}`,
+  getHistory: (id: number | string) => `/api/scheduling-groups/${id}/history`,
+} as const;
+
+export const viewAPI = {
+  // List all Scheduling Groups
+  list: (api: APIRequestContext, areaId?: number) => {
+    const endpoint = areaId 
+      ? viewEndpoints.listByArea(areaId)
+      : viewEndpoints.list;
+    return apiGet(api, endpoint);
+  },
+
+  // Get single Scheduling Group by ID
+  getById: (api: APIRequestContext, id: number) => {
+    return apiGet(api, viewEndpoints.getById(id));
+  },
+
+  // Get Scheduling Group history/audit trail
+  getHistory: (api: APIRequestContext, id: number) => {
+    return apiGet(api, viewEndpoints.getHistory(id));
+  },
+} as const;
+```
+
+**What it provides:**
+- Centralized API endpoints
+- Reusable functions for each operation
+- Type-safe API calls via Playwright
+
+---
+
+## Stored Procedure Wrapper
+
+**File:** `workflows/schedulingGroup/db/sp/schedulingGroup.sp.ts`
+
+```typescript
+export class SchedulingGroupSP {
+  static async create(params: {
+    AreaId: number;
+    GroupName: string;
+    AllocationsMenu: number;
+    Notes: string;
+    UserId: number;
+  }) {
+    // Call stored procedure: sp_CreateSchedulingGroup
+    return executeSp('sp_CreateSchedulingGroup', params);
+  }
+}
+```
+
+**What it does:**
+- Wraps database stored procedures
+- Type-safe parameter passing
+- Returns proc execution result
+
+---
+
+## Database Query Wrapper
+
+**File:** `workflows/schedulingGroup/db/queries/schedulingGroup.queries.ts`
+
+```typescript
+export class SchedulingGroupQueries {
+  static async getByName(db: Connection, groupName: string) {
+    return db.request()
+      .input('GroupName', groupName)
+      .query(`SELECT * FROM SchedulingGroups WHERE GroupName = @GroupName`);
+  }
+
+  static async getUserArea(db: Connection, userId: number) {
+    return db.request()
+      .input('UserId', userId)
+      .query(`SELECT DivisionId FROM Users WHERE UserId = @UserId`);
+  }
+}
+```
+
+**What it does:**
+- Encapsulates SQL queries
+- Type-safe result assertions
+- Reusable across tests
+
+---
+
+## API Test Execution Summary
+
+| Step | File | Function | Action |
+|------|------|----------|--------|
+| 1 | `package.json` | `dbtest` | Run test command |
+| 2 | `.spec.ts` | `test()` | Define test |
+| 3 | `.sp.ts` | `create()` | Call stored procedure |
+| 4 | `.queries.ts` | `getByName()` | Verify in database |
+| 5 | `test.fixture.ts` | `db` | Provide DB connection |
+
+---
+
+## API vs DB vs UI Tests Comparison
+
+| Aspect | UI Tests | API Tests | DB Tests |
+|--------|----------|-----------|----------|
+| **File** | `.feature` + `.steps.ts` | `.spec.ts` | `.spec.ts` |
+| **What tests** | User interface | API endpoints | Database queries |
+| **Framework** | Playwright-BDD + Playwright | Playwright | Playwright |
+| **Runtime** | 11 seconds | 2 seconds | 1 second |
+| **Command** | `npm run schdtest:systest` | `npm run dbtest` | `npm run dbtest` |
+| **Data** | JSON files | Direct API calls | Direct DB exec |
+| **Assertion** | Page visibility | Status code + response | DB rows |
+
+---
+
+## Test Fixture - Database Connection
+
+**File:** `tests/fixtures/test.fixture.ts`
+
+```typescript
+export const test = baseTest.extend<{
+  db: Connection;
+}>({
+  db: async ({}, use) => {
+    // Connect to database
+    const connection = await createConnection({
+      server: process.env.DB_SERVER,
+      database: process.env.DB_NAME,
+      authentication: {
+        type: 'default',
+        options: {
+          userName: process.env.DB_USER,
+          password: process.env.DB_PASSWORD,
+        },
+      },
+    });
+
+    await use(connection);
+
+    // Close connection after test
+    await connection.close();
+  },
+});
+```
+
+**What it provides:**
+- Database connection for all tests
+- Auto-close after test completes
+- Env-based configuration
+
+---
+
+## Running All Tests
+
+```powershell
+# UI tests only
+npm run schdtest:systest
+
+# DB/API tests only
+npm run dbtest
+
+# All tests
+npx playwright test
+```
+
+---
+
+## Project Files Structure - API & DB
+
+```
+tests/
+├── integrated/
+│   ├── db/
+│   │   ├── schedulingGroupSP.db.spec.ts      ← DB tests
+│   │   └── mock-schd-group-create.db.spec.ts
+│   ├── features/
+│   │   └── NP035/
+│   │       └── NP035.01_view.feature         ← API scenarios (commented)
+│   └── steps/
+│       └── NP035/
+│           └── schd_grp_view.steps.ts        ← API step definitions (commented)
+└── fixtures/
+    └── test.fixture.ts                       ← DB connection provider
+
+workflows/
+└── schedulingGroup/
+    ├── api/
+    │   └── view.api.ts                       ← API endpoint wrappers
+    └── db/
+        ├── sp/
+        │   └── schedulingGroup.sp.ts        ← Stored proc wrappers
+        └── queries/
+            └── schedulingGroup.queries.ts   ← SQL query wrappers
+
+core/
+├── api/
+│   └── apiClient.ts                         ← HTTP client
+└── db/
+    └── connection.ts                        ← DB connection setup
+```
