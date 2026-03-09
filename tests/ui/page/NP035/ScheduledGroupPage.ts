@@ -12,7 +12,8 @@ export class ScheduledGroupPage {
 
   async open() {
     await this.page.goto('/mvc-app/admin/scheduling-group');
-    // Optionally wait for a unique element to ensure the page is loaded for the current user
+    // Wait for the page to be fully loaded and table to be visible
+    await this.page.waitForLoadState('networkidle');
     await this.page.waitForSelector('table#scheduling-list-table');
   }
 
