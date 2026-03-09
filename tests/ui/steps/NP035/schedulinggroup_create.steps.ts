@@ -56,3 +56,13 @@ Then(
     await scenarioContext.scheduledGroupPage.verifyScheduledGroupNotVisibleForUser();
   },
 );
+
+Then(
+  "the scheduling group created by {string} should be visible in the list",
+  async ({} )=> {
+    if (!scenarioContext.scheduledGroupPage) {
+      throw new Error('No ScheduledGroupPage instance available.');
+    }
+    await scenarioContext.scheduledGroupPage.verifyScheduledGroupVisibleForUserAlias();
+  },
+);
