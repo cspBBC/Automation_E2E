@@ -587,6 +587,490 @@ core/
 
 ---
 
+# 📋 Test Data Structure & Form Filling Guide
+
+This section explains how test data JSON files work with `formFiller.ts` and how to create your own test data files.
+
+## Understanding Test Data Files
+
+### **What is a Test Data File?**
+
+A test data file is a **JSON file** that contains all the form field values needed to fill a specific form during UI testing.
+
+**Example:** `workflows/schedulingGroup/data/schdGroupCreate_AreaAdminNews_UIdata.json`
+
+```json
+{
+  "group_name": {
+    "type": "text",
+    "value": "Test Scheduling Group_0015",
+    "required": true
+  },
+  "allocations_menu": {
+    "type": "dropdown",
+    "value": "0",
+    "label": "No",
+    "required": true
+  },
+  "notes": {
+    "type": "textarea",
+    "value": "This is a test scheduling group created for UI automation testing purposes.",
+    "required": true
+  },
+  "submit-create-scheduling-form": {
+    "type": "button",
+    "value": "Submit"
+  }
+}
+```
+
+---
+
+## JSON Structure Explained
+
+### **Field Properties**
+
+| Property | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `type` | ✅ Yes | The HTML input type or control type | `"text"`, `"dropdown"`, `"button"` |
+| `value` | ✅ Yes | The actual value to enter/select | `"Test Group"`, `"0"`, `"Submit"` |
+| `label` | ❌ No | Display label (for documentation only) | `"No"`, `"Yes"` |
+| `required` | ❌ No | Whether field is mandatory | `true`, `false` |
+
+---
+
+## How Field IDs Map to DOM Elements
+
+### **Field ID = HTML Element Locator**
+
+The **key name** (e.g., `"group_name"`) is the **field ID** that maps to the HTML element in the browser:
+
+```
+JSON:        "group_name": { ... }
+                ↓
+HTML:        <input id="group_name" type="text" />
+                ↓
+Locator:     #group_name
+```
+
+**How `formFiller.ts` finds elements:**
+
+```typescript
+// formFiller.ts - Line 220-227
+const selectors = [`#${fieldId}`, `[name="${fieldId}"]`];
+// Tries to find: #group_name OR [name="group_name"]
+```
+
+**The framework tries multiple locators:**
+1. **ID selector:** `#group_name` (most common)
+2. **Name selector:** `[name="group_name"]` (fallback)
+
+---
+
+## Mapping Fields in Your Application
+
+### **Step 1: Inspect the HTML Form**
+
+Open your application and inspect the form you want to test:
+
+```html
+<!-- In the browser, right-click → Inspect Element -->
+<input id="group_name" type="text" placeholder="Group Name" />
+<select id="allocations_menu">
+  <option value="0">No</option>
+  <option value="1">Yes</option>
+</select>
+<textarea id="notes"></textarea>
+<button id="submit-create-scheduling-form">Submit</button>
+```
+
+### **Step 2: Create Test Data File**
+
+For each form element, create a JSON entry using the HTML `id` attribute:
+
+```json
+{
+  "group_name": {
+    "type": "text",
+    "value": "My Test Group"
+  },
+  "allocations_menu": {
+    "type": "dropdown",
+    "value": "0"
+  },
+  "notes": {
+    "type": "textarea",
+    "value": "Test notes"
+  },
+  "submit-create-scheduling-form": {
+    "type": "button"
+  }
+}
+```
+
+---
+
+## Field Types & How formFiller.ts Handles Them
+
+### **Text Input**
+
+**HTML:**
+```html
+<input id="group_name" type="text" />
+```
+
+**JSON:**
+```json
+{
+  "group_name": {
+    "type": "text",
+    "value": "Test Scheduling Group",
+    "required": true
+  }
+}
+```
+
+**How it's filled (formFiller.ts):**
+```typescript
+case "text":
+case "number":
+case "textarea":
+  await fillTextField(page, fieldId, String(value));  // ← Types the value
+  break;
+```
+
+---
+
+### **Dropdown (Standard HTML Select)**
+
+**HTML:**
+```html
+<select id="allocations_menu">
+  <option value="0">No</option>
+  <option value="1">Yes</option>
+</select>
+```
+
+**JSON:**
+```json
+{
+  "allocations_menu": {
+    "type": "dropdown",
+    "value": "0",
+    "label": "No"
+  }
+}
+```
+
+**How it's filled (formFiller.ts):**
+```typescript
+case "dropdown":
+  const isChosenDropdown = await page.locator(`#${fieldId}_chosen`).count() > 0;
+  if (isChosenDropdown) {
+    await selectChosenDropdown(page, fieldId, value as string);  // ← Chosen library
+  } else if (isStandardSelect) {
+    await selectStandardDropdown(page, fieldId, value as string);  // ← Standard select
+  }
+  break;
+```
+
+**Note:** Test data should use the **option value**, not the displayed text:
+- ✅ `"value": "0"` (correct - matches `<option value="0">`)
+- ❌ `"value": "No"` (incorrect - this is the display text)
+
+---
+
+### **Multi-Select Dropdown**
+
+**HTML:**
+```html
+<select id="services" multiple>
+  <option value="1">Service A</option>
+  <option value="2">Service B</option>
+  <option value="3">Service C</option>
+</select>
+```
+
+**JSON:**
+```json
+{
+  "services": {
+    "type": "multiDropdown",
+    "value": ["1", "2"]
+  }
+}
+```
+
+**How it's filled (formFiller.ts):**
+```typescript
+case "multiDropdown":
+  await selectMultiDropdown(page, fieldId, value as string[]);  // ← Array of values
+  break;
+```
+
+---
+
+### **Button**
+
+**HTML:**
+```html
+<button id="submit-create-scheduling-form">Submit</button>
+```
+
+**JSON:**
+```json
+{
+  "submit-create-scheduling-form": {
+    "type": "button",
+    "value": "Submit"
+  }
+}
+```
+
+**How it's filled (formFiller.ts):**
+```typescript
+case "button":
+  const button = page.locator(`#${fieldId}`).first();
+  if (await button.isVisible()) {
+    await button.click();  // ← Clicks the button
+  }
+  break;
+```
+
+---
+
+### **Checkbox**
+
+**HTML:**
+```html
+<input id="accept_terms" type="checkbox" />
+<label for="accept_terms">I accept the terms</label>
+```
+
+**JSON:**
+```json
+{
+  "accept_terms": {
+    "type": "checkbox",
+    "value": true
+  }
+}
+```
+
+**How it's filled (formFiller.ts):**
+```typescript
+case "checkbox":
+  const checked = await page.isChecked(`#${fieldId}`);
+  if (value && !checked) await page.check(`#${fieldId}`);  // ← Check
+  if (!value && checked) await page.uncheck(`#${fieldId}`);  // ← Uncheck
+  break;
+```
+
+---
+
+### **Radio Button**
+
+**HTML:**
+```html
+<input id="type_standard" type="radio" name="group_type" />
+<label for="type_standard">Standard</label>
+<input id="type_advanced" type="radio" name="group_type" />
+<label for="type_advanced">Advanced</label>
+```
+
+**JSON:**
+```json
+{
+  "type_standard": {
+    "type": "radio",
+    "value": "Standard"
+  }
+}
+```
+
+**How it's filled (formFiller.ts):**
+```typescript
+case "radio":
+  await page.locator(`label[for="${fieldId}"]`).click();  // ← Clicks associated label
+  break;
+```
+
+---
+
+### **Date Picker**
+
+**HTML:**
+```html
+<input id="start_date" type="text" />
+```
+
+**JSON:**
+```json
+{
+  "start_date": {
+    "type": "date",
+    "value": "2024-03-15"
+  }
+}
+```
+
+**Format:** `YYYY-MM-DD`
+
+**How it's filled (formFiller.ts):**
+```typescript
+case "date":
+  await pickDate(page, fieldId, value as string);  // ← String format: "2024-03-15"
+  break;
+```
+
+---
+
+### **Textarea**
+
+**HTML:**
+```html
+<textarea id="notes"></textarea>
+```
+
+**JSON:**
+```json
+{
+  "notes": {
+    "type": "textarea",
+    "value": "This is a test scheduling group created for UI automation testing purposes."
+  }
+}
+```
+
+**How it's filled (formFiller.ts):**
+```typescript
+case "textarea":
+  await fillTextField(page, fieldId, String(value));  // ← Same as text input
+  break;
+```
+
+---
+
+## Creating Your Own Test Data File
+
+### **Step-by-Step Guide**
+
+#### **1. Identify All Form Fields**
+
+Inspect your form in the browser and note the HTML `id` attributes:
+
+```html
+<form>
+  <input id="user_email" type="email" />
+  <select id="department">
+    <option value="sales">Sales</option>
+    <option value="it">IT</option>
+  </select>
+  <textarea id="feedback"></textarea>
+  <button id="save-user">Save</button>
+</form>
+```
+
+#### **2. Create JSON File**
+
+Create a new JSON file in `workflows/[feature]/data/`:
+
+```json
+{
+  "user_email": {
+    "type": "text",
+    "value": "testuser@example.com",
+    "required": true
+  },
+  "department": {
+    "type": "dropdown",
+    "value": "sales",
+    "label": "Sales",
+    "required": true
+  },
+  "feedback": {
+    "type": "textarea",
+    "value": "Great product!",
+    "required": false
+  },
+  "save-user": {
+    "type": "button"
+  }
+}
+```
+
+#### **3. Use in Your Test**
+
+```typescript
+async createUser(filename: string = 'schdGroupData') {
+  const jsonData = await readJSON(`workflows/user/data/${filename}.json`);
+  await fillForm(this.page, jsonData);  // ← Automatically fills all fields!
+}
+```
+
+---
+
+## Best Practices
+
+| Practice | ✅ Do | ❌ Don't |
+|----------|-------|---------|
+| **Field IDs** | Use exact HTML `id` attribute | Invent IDs that don't exist |
+| **Dropdown values** | Use option `value` attribute | Use display text |
+| **Dates** | Use `"YYYY-MM-DD"` format | Use other date formats |
+| **Optional fields** | Add `"required": false` | Assume all fields are required |
+| **Large values** | Split into multiple lines | Put everything on one line |
+| **Field naming** | Use snake_case matching HTML | Use camelCase in JSON |
+
+**Example of good formatting:**
+
+```json
+{
+  "field_id": {
+    "type": "text",
+    "value": "Value can span multiple lines if needed",
+    "required": true
+  }
+}
+```
+
+---
+
+## Troubleshooting
+
+### **"Field not found" Error**
+
+```
+Error filling field "group_name": Field "group_name" not found
+```
+
+**Solution:** Check that the HTML `id` matches exactly:
+- Inspect element: Right-click → Inspect
+- Copy the exact `id` attribute: `<input id="group_name" />`
+- Use in JSON: `"group_name": { ... }`
+
+### **Dropdown won't select**
+
+```
+Error: Option with text "No" not found in select
+```
+
+**Solution:** Use dropdown option **value**, not display text:
+- ✅ `"value": "0"` (matches `<option value="0">No</option>`)
+- ❌ `"value": "No"` (use only option's displayed text)
+
+### **Button won't click**
+
+```
+Error: Button "submit-button" not visible
+```
+
+**Solution:** Ensure button ID is correct and button is visible:
+- Check `<button id="submit-button">Submit</button>`
+- Make sure button is not hidden by modal overlay
+- Check if `optional: true` is needed
+
+---
+
 # API Test Execution Flow
 
 This section explains how API tests execute using the **Scheduling Group View** API as an example.
