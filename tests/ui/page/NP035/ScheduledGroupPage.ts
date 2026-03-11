@@ -1,5 +1,5 @@
 import { expect, Page } from '@playwright/test';
-import { FormField } from '@helpers/formField';
+import { FormField } from '@helpers/formFilledType';
 import { fillForm } from '@helpers/formFiller';
 import { readJSON } from '@helpers/readJson';
 
