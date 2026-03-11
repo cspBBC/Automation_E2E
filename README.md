@@ -1,3 +1,74 @@
+# E2E Test Automation Framework
+
+---
+
+## 🔧 Getting Started
+
+### **1. Clone the Repository**
+```bash
+git clone <repository-url>
+cd Automation_E2E
+```
+
+### **2. Install Dependencies**
+```bash
+npm install
+```
+
+This will install all required packages including:
+- **Playwright** - Browser automation framework
+- **Cucumber/BDD** - Behavior-driven development testing
+- **TypeScript** - Type-safe JavaScript
+- **dotenv** - Environment configuration management
+- Other dependencies listed in `package.json`
+
+### **3. Configure Environment Variables**
+Create `.env` files in the root directory for your environments:
+
+```
+.env.dev        ← DEV environment configuration
+.env.systest    ← SYSTEST/STAGING environment configuration
+```
+
+**Required variables in each `.env` file:**
+```
+UI_BASE_URL=https://your-dev-url.com
+API_BASE_URL=https://your-api-dev-url.com
+DB_HOST=localhost
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+SYS_ADMIN_PASSWORD=your_password
+AREA_ADMIN_PASSWORD=your_password
+```
+
+### **4. Execute Tests**
+
+#### Quick Start
+```bash
+npm run test              # Run UI + API tests (SYSTEST environment)
+npm run test:dev         # Run UI + API tests (DEV environment)
+```
+
+#### Run Specific Test Types
+```bash
+npm run uidevtest        # UI tests only (DEV)
+npm run uisystesttest    # UI tests only (SYSTEST)
+npm run apitest          # API tests only (DEV)
+npm run apitest:systest  # API tests only (SYSTEST)
+```
+
+#### CI/CD Pipeline
+```bash
+npm run test:ci          # Full automated test suite for CI/CD
+```
+
+#### View Test Reports
+```bash
+npm run report           # Open HTML test report in browser
+```
+
+---
+
 # UI Test Execution Flow
 
 ---
