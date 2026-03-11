@@ -1,10 +1,198 @@
 # UI Test Execution Flow
 
-This document explains how a UI test executes from start to end using the **Scheduling Group Create** test as an example.
+---
+
+## 🚀 Test Execution Commands
+
+This framework supports **UI tests** and **API tests** running independently or together. Use the commands below based on your needs.
+
+### **Local Testing**
+
+#### UI Tests Only
+```bash
+npm run uidevtest        # Run UI tests with DEV environment (headed browser)
+npm run uisystesttest    # Run UI tests with SYSTEST environment (headed browser)
+```
+
+#### API Tests Only
+```bash
+npm run apitest          # Run API tests with DEV environment (headless)
+npm run apitest:systest  # Run API tests with SYSTEST environment (headless)
+```
+
+#### Both UI + API Tests
+```bash
+npm run test:dev         # Run UI + API tests with DEV environment
+npm run test:systest     # Run UI + API tests with SYSTEST environment (default)
+npm run test             # Same as test:systest
+```
+
+### **Continuous Integration (CI)**
+```bash
+npm run test:ci          # Full automated test suite (GitHub Actions)
+                         # Runs both API + UI tests in SYSTEST environment
+                         # No headed browser, parallel workers
+```
+
+### **View Test Reports**
+```bash
+npm run report           # Open HTML test report in browser
+```
 
 ---
 
-## Step 1: Run the Test Command
+## 📋 Command Reference Table
+
+| Command | Test Type | Environment | Mode | Use Case |
+|---------|-----------|-------------|------|----------|
+| `npm run uidevtest` | UI only | DEV | Headed | Quick UI testing locally |
+| `npm run uisystesttest` | UI only | SYSTEST | Headed | Pre-release UI validation |
+| `npm run apitest` | API only | DEV | Headless | API development & testing |
+| `npm run apitest:systest` | API only | SYSTEST | Headless | API pre-release validation |
+| `npm run test:dev` | UI + API | DEV | Headed (UI) | Full suite with dev config |
+| `npm run test:systest` | UI + API | SYSTEST | Headed (UI) | Full suite with staging config |
+| `npm run test` | UI + API | SYSTEST | Headed (UI) | Default full test run |
+| `npm run test:ci` | UI + API | SYSTEST | Headless | GitHub Actions automation |
+
+---
+
+## 🔧 How It Works - Environment & Test Type
+
+### **Environment Selection**
+The framework loads environment-specific configuration from `.env` files:
+
+```
+.env.dev        ← Used by `*:dev` commands (DEV environment)
+.env.systest    ← Used by default/`:systest` commands (STAGING environment)
+```
+
+**Environment files contain:**
+- `UI_BASE_URL` - Website URL
+- `API_BASE_URL` - API endpoint
+- `DB_HOST`, `DB_USER`, `DB_PASSWORD` - Database credentials
+- User credentials - `SYS_ADMIN_PASSWORD`, `AREA_ADMIN_PASSWORD`, etc.
+
+### **Test Type Selection**
+Environment variable `TEST_TYPE` controls which tests are processed:
+
+```
+TEST_TYPE=ui    ← Processes ONLY tests/ui/ folder
+TEST_TYPE=api   ← Processes ONLY tests/integrated/ folder
+```
+
+This prevents cross-contamination: UI tests don't load API fixtures and vice versa.
+
+### **Execution Flow**
+
+```
+1. npm run uidevtest
+   ↓
+2. package.json script sets: ENVIRONMENT=dev TEST_TYPE=ui
+   ↓
+3. playwright.config.ts:
+   - Loads .env.dev (DEV configuration)
+   - Displays: "✅ STARTING UI TESTS | 📍 Environment: DEV | 🌐 Base URL: <dev-url>"
+   - Processes ONLY tests/ui/features & tests/ui/steps
+   ↓
+4. bddgen generates test files
+   ↓
+5. Playwright runs tests with dev configuration
+   - Browser: Chrome (headed - visible)
+   - URL: From .env.dev
+   - Credentials: From .env.dev
+```
+
+---
+
+## 📊 Local vs CI Differences
+
+### **Local Testing** (`npm run test:dev` / `npm run test:systest`)
+```
+✅ Headed browser (you see the tests running)
+✅ Single worker (easier to debug)
+✅ Screenshots & videos on failure
+✅ Manual environment selection
+❌ Slower execution
+❌ Requires UI interaction
+```
+
+### **CI Testing** (`npm run test:ci` in GitHub Actions)
+```
+✅ Fully automated (no user interaction needed)
+✅ Multiple workers (faster execution)
+✅ Runs on every push/PR automatically
+✅ Test reports uploaded as artifacts
+✅ No headed browser (headless = faster)
+❌ Environment fixed to SYSTEST
+❌ Requires repo secrets for credentials
+```
+
+---
+
+## 🔐 CI/CD Setup
+
+### **GitHub Actions Workflow**
+File: `.github/workflows/ci.yml`
+
+Triggers on:
+- ✅ Push to `main` or `develop` branch
+- ✅ Pull requests to `main` or `develop`
+
+What it does:
+1. Checks out code
+2. Installs Node.js & dependencies
+3. Runs `npm run test:ci` (both API + UI tests)
+4. Uploads HTML report as artifact
+5. Publishes test report
+
+### **Required GitHub Secrets**
+Add these to your GitHub repo Settings → Secrets & variables:
+
+```
+DB_HOST              # Database server
+DB_PASSWORD          # Database password
+SYS_ADMIN_PASSWORD   # Admin user password
+AREA_ADMIN_PASSWORD  # Area admin password
+API_BASE_URL         # API endpoint URL
+UI_BASE_URL          # Website URL
+```
+
+Then update `.github/workflows/ci.yml` to use them (see comments in file).
+
+---
+
+## 💡 Which Command Should I Use?
+
+### **I'm developing UI tests locally:**
+```bash
+npm run uidevtest     # Quick feedback with DEV environment
+```
+
+### **I'm developing API tests locally:**
+```bash
+npm run apitest       # Headless API testing with DEV
+```
+
+### **I'm testing the full feature locally before committing:**
+```bash
+npm run test:dev      # Run both UI + API with DEV
+```
+
+### **I want to verify on staging environment before merge:**
+```bash
+npm run test:systest  # Full suite with SYSTEST configuration
+```
+
+### **The CI/CD pipeline will run automatically:**
+```bash
+# No manual command needed
+# Triggered on: git push / PR
+# Command runs: npm run test:ci
+```
+
+---
+
+## 📝 Detailed Test Execution Flow
 
 ```powershell
 npm run schdtest:systest

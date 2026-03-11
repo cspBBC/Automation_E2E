@@ -7,24 +7,65 @@ import { defineBddConfig } from 'playwright-bdd';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Load environment-specific .env file
-const environment = process.env.ENVIRONMENT || 'systest';
+// If already loaded in this session, reuse that environment
+const loadedEnv = process.env.LOADED_ENVIRONMENT;
+const environment = loadedEnv || process.env.ENVIRONMENT || 'systest';
 const envPath = path.resolve(__dirname, `.env.${environment}`);
-console.log(`Loading environment: ${environment} from ${envPath}`);
-dotenvConfig({ path: envPath });
 
-// BDD config for UI tests
-export const bddConfig = defineBddConfig({
-  features: [
-    'tests/ui/features/**/*.feature',
-    'tests/integrated/features/**/*.feature',
-  ],
-  steps: [
-    'tests/ui/steps/**/*.steps.ts',
-    'tests/integrated/steps/**/*.steps.ts',
-    'tests/fixtures/pages.fixture.ts',
-    'tests/fixtures/test.fixture.ts',
-  ],
-});
+// Only load dotenv if not already loaded in this session
+if (!loadedEnv) {
+  dotenvConfig({ path: envPath });
+  process.env.LOADED_ENVIRONMENT = environment;  // Mark as loaded
+}
+
+// Determine which test type based on env variable
+const testType = process.env.TEST_TYPE || 'ui';
+
+// Log configuration ONLY ONCE per process (prevents double logging from bddgen + playwright)
+if (!process.env.CONFIG_LOGGED) {
+  console.log(`Loading environment: ${environment} from ${envPath}`);
+  
+  if (testType === 'ui') {
+    console.log(`✅ STARTING UI TESTS`);
+    console.log(`📍 Environment: ${environment.toUpperCase()}`);
+    console.log(`🌐 Base URL: ${process.env.UI_BASE_URL}\n`);
+  } else if (testType === 'api') {
+    console.log(`✅ STARTING API TESTS`);
+    console.log(`📍 Environment: ${environment.toUpperCase()}`);
+    console.log(`🌐 Base URL: ${process.env.API_BASE_URL}\n`);
+  }
+  
+  process.env.CONFIG_LOGGED = 'true';
+}
+
+// BDD config - ONLY define the one we need to avoid processing both
+let bddConfig;
+
+if (testType === 'api') {
+  bddConfig = defineBddConfig({
+    features: [
+      'tests/integrated/features/**/*.feature',
+    ],
+    steps: [
+      'tests/integrated/steps/**/*.steps.ts',
+      'tests/fixtures/test.fixture.ts',
+    ],
+    outputDir: '.features-gen/api',
+  });
+} else {
+  bddConfig = defineBddConfig({
+    features: [
+      'tests/ui/features/**/*.feature',
+    ],
+    steps: [
+      'tests/ui/steps/**/*.steps.ts',
+      'tests/fixtures/pages.fixture.ts',
+    ],
+    outputDir: '.features-gen/ui',
+  });
+}
+
+export { bddConfig };
 
 export default defineConfig({
   timeout: 60 * 1000,
@@ -48,10 +89,9 @@ export default defineConfig({
     // =======================
     {
       name: 'uitest',
-      testDir: './.features-gen',
+      testDir: './.features-gen/ui',
       testMatch: '**/*.feature.spec.*',
-      grep: /@ui/,
-      workers: process.env.CI ? 4 : 1,  // More workers for parallel execution
+      workers: process.env.CI ? 4 : 1,
       use: {
         ...devices['Desktop Chrome'],
         baseURL: process.env.UI_BASE_URL,
@@ -59,30 +99,18 @@ export default defineConfig({
     },
 
     // =======================
-    // API TESTS
+    // API TESTS (Integrated)
     // =======================
     {
-      name: 'api_db_test',
-      testDir: './.features-gen',
+      name: 'apitest',
+      testDir: './.features-gen/api',
       testMatch: '**/*.feature.spec.*',
-      grep: /@integrated/,
-      workers: process.env.CI ? 4 : 2,  // More workers for API/DB (lighter)
+      workers: process.env.CI ? 4 : 1,
       use: {
         baseURL: process.env.API_BASE_URL,
+        browserName: undefined,  // No browser for API tests
       },
     },
 
-    // =======================
-    // DB TESTS (NO BROWSER)
-    // =======================
-    {
-      name: 'db',
-      testDir: './tests',
-      testMatch: /.*\.db\.spec\.ts/,
-      workers: process.env.CI ? 6 : 2,  // Most workers for DB-only tests
-      use: {
-        browserName: undefined,
-      },
-    },
   ],
 });

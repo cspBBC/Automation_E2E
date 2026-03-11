@@ -29,7 +29,10 @@ export const test = base.extend<{ loginAs: (role: keyof typeof users) => Promise
       currentContext = await browser.newContext();
       const currentPage = await currentContext.newPage();
 
-      const baseURL = process.env.UI_BASE_URL || 'https://allocate-systest-wp.national.core.bbc.co.uk';
+      const baseURL = process.env.UI_BASE_URL;
+      if (!baseURL) {
+        throw new Error('UI_BASE_URL not found in environment. Check .env file');
+      }
       const url = new URL(baseURL);
       
       // Properly encode username and password for URL authentication
