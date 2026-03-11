@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { FormField } from '@feildtypes/formField'
+import { FormField } from './formField'
 
 export async function readJSON(filePath: string): Promise<Record<string, any>> {
   // Accept full path from workspace root or relative path

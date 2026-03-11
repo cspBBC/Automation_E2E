@@ -26,13 +26,13 @@ if (!process.env.CONFIG_LOGGED) {
   console.log(`Loading environment: ${environment} from ${envPath}`);
   
   if (testType === 'ui') {
-    console.log(`✅ STARTING UI TESTS`);
-    console.log(`📍 Environment: ${environment.toUpperCase()}`);
-    console.log(`🌐 Base URL: ${process.env.UI_BASE_URL}\n`);
+    console.log(`STARTING UI TESTS`);
+    console.log(`Environment: ${environment.toUpperCase()}`);
+    console.log(`Base URL: ${process.env.UI_BASE_URL}\n`);
   } else if (testType === 'api') {
-    console.log(`✅ STARTING API TESTS`);
-    console.log(`📍 Environment: ${environment.toUpperCase()}`);
-    console.log(`🌐 Base URL: ${process.env.API_BASE_URL}\n`);
+    console.log(`STARTING API TESTS`);
+    console.log(`Environment: ${environment.toUpperCase()}`);
+    console.log(`Base URL: ${process.env.API_BASE_URL}\n`);
   }
   
   process.env.CONFIG_LOGGED = 'true';
