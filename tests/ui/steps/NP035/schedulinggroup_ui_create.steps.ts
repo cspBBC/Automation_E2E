@@ -1,29 +1,31 @@
 import { Page } from '@playwright/test';
-import { ScheduledGroupPage } from '@pages/NP035/ScheduledGroupPage';
 import users from '@core/data/users.json' with { type: 'json' };
 import { createBdd } from "playwright-bdd";
 import { test } from "@fixtures/pages.fixture";
+import { getPageObject, PageObject } from '@helpers/pageFactory';
 
 const { Given, When, Then } = createBdd(test);
 
 // Local context to store page and scheduledGroupPage within a scenario
-let scenarioContext: { page: Page | null; scheduledGroupPage: ScheduledGroupPage | null } = {
+let scenarioContext: { page: Page | null; scheduledGroupPage: PageObject | null } = {
   page: null,
   scheduledGroupPage: null,
 };
 
 Given(
-  "user {string} is on Show Scheduled Group page",
-  async ({ loginAs }, userAlias: string) => {
+  'user {string} is on Show {string} page',
+  async ({ loginAs }, userAlias: string, pageName: string) => {
     const page = await loginAs(userAlias as keyof typeof users);
-    const scheduledGroupPage = new ScheduledGroupPage(page);
+    
+    // Get the appropriate page object using the factory
+    const scheduledGroupPage = getPageObject(pageName, page);
     await scheduledGroupPage.open();
-
+    
     // Store in local scenario context
     scenarioContext.page = page;
     scenarioContext.scheduledGroupPage = scheduledGroupPage;
-
-    console.log(`User '${userAlias}' navigated to Scheduling Group page`);
+    
+    console.log(`User '${userAlias}' navigated to ${pageName} page`);
   },
 );
 
