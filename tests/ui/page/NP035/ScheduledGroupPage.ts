@@ -34,7 +34,7 @@ export class ScheduledGroupPage {
     const randomNum = Math.floor(Math.random() * 99) + 1;
     const formattedNum = String(randomNum).padStart(2, '0');
 
-    jsonData['group_name'].value = `Test Scheduling Group11_${formattedNum}`;
+    jsonData['group_name'].value = `Test Scheduling GroupDemo_${formattedNum}`;
     ScheduledGroupPage.lastCreatedGroupName = jsonData['group_name'].value;
     await this.fill(jsonData);
   }
