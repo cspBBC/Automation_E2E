@@ -57,7 +57,7 @@ export class ScheduledGroupPage {
       has: this.page.locator(`td.scheduling-group-name:has-text("${groupName}")`)
     });
     await expect(groupRow).toHaveCount(0);
-    await this.page.screenshot({ path: 'scheduled_group_not_visible.png' });
+    //await this.page.screenshot({ path: 'scheduled_group_not_visible.png' });
    
   }
 
@@ -73,7 +73,7 @@ export class ScheduledGroupPage {
       has: this.page.locator(`td.scheduling-group-name:has-text("${groupName}")`)
     });
     await expect(groupRow).toHaveCount(1);
-    await this.page.screenshot({ path: 'scheduled_group_visible.png' });
+    //await this.page.screenshot({ path: 'scheduled_group_visible.png' });
   }
 
 }

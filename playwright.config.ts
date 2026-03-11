@@ -74,9 +74,13 @@ export default defineConfig({
   },
   retries: process.env.CI ? 1 : 0,
   reporter: [
-    ['html', { open: 'never' }],
+    ['html', { 
+      open: 'never',
+      outputFolder: 'playwright-report',
+    }],
     ['list'],
   ],
+  outputDir: 'test-results',
   use: {
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
@@ -91,7 +95,8 @@ export default defineConfig({
       name: 'uitest',
       testDir: './.features-gen/ui',
       testMatch: '**/*.feature.spec.*',
-      workers: process.env.CI ? 4 : 1,
+      workers: process.env.CI ? 4 : 2,  // 2 workers locally for parallel execution
+      outputDir: 'test-results/ui',
       use: {
         ...devices['Desktop Chrome'],
         baseURL: process.env.UI_BASE_URL,
@@ -105,7 +110,8 @@ export default defineConfig({
       name: 'apitest',
       testDir: './.features-gen/api',
       testMatch: '**/*.feature.spec.*',
-      workers: process.env.CI ? 4 : 1,
+      workers: process.env.CI ? 4 : 2,  // 2 workers locally for parallel execution
+      outputDir: 'test-results/api',
       use: {
         baseURL: process.env.API_BASE_URL,
         browserName: undefined,  // No browser for API tests
