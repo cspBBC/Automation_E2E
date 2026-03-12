@@ -1,0 +1,230 @@
+{
+  "schedulingTeamName": {
+    "type": "text",
+    "value": "Test Scheduling Team_0015",
+    "required": true
+  },
+  "schedulingTeamDescription": {
+    "type": "textarea",
+    "value": "This is a test scheduling team created for UI automation testing purposes."
+  },
+  "divisionId": {
+    "type": "dropdown",
+    "value": "1",
+    "label": "News",
+    "required": true
+  },
+  "divisionName": {
+    "type": "text",
+    "value": "News",
+    "disabled": true
+  },
+  "defaultChargeCode": {
+    "type": "text",
+    "value": "1234567890"
+  },
+  "defaultChargeCodeDesc": {
+    "type": "text",
+    "value": "Test Charge Code Description"
+  },
+  "defaultActiveCode": {
+    "type": "dropdown",
+    "value": "1"
+  },
+  "isActive": {
+    "type": "checkbox",
+    "value": true,
+    "required": true
+  },
+  "defaultSicknessHoursAllocation": {
+    "type": "dropdown",
+    "value": "1",
+    "label": "7 Hours",
+    "required": true
+  },
+  "defaultDutyDuration": {
+    "type": "text",
+    "value": "8",
+    "required": true
+  },
+  "maskType": {
+    "type": "dropdown",
+    "value": "0",
+    "label": "Hide All Allocations"
+  },
+  "maskAfter": {
+    "type": "text",
+    "value": "7",
+    "required": true
+  },
+  "DailyViewMasking": {
+    "type": "checkbox",
+    "value": false
+  },
+  "dailyViewMaskingDays": {
+    "type": "text",
+    "value": "3",
+    "disabled": true
+  },
+  "freelancerMasking": {
+    "type": "checkbox",
+    "value": false
+  },
+  "freelancerMaskingDays": {
+    "type": "text",
+    "value": "5",
+    "disabled": true
+  },
+  "restrictedEditing": {
+    "type": "checkbox",
+    "value": true
+  },
+  "numberofDaysAllowedEditing": {
+    "type": "text",
+    "value": "7",
+    "required": true
+  },
+  "WeekendOnly": {
+    "type": "checkbox",
+    "value": false,
+    "disabled": true
+  },
+  "editingStartHour": {
+    "type": "dropdown",
+    "value": "9",
+    "required": true
+  },
+  "editingStartMinute": {
+    "type": "dropdown",
+    "value": "0",
+    "required": true
+  },
+  "autoLockTodayTimer": {
+    "type": "checkbox",
+    "value": false,
+    "disabled": true
+  },
+  "editingEndHour": {
+    "type": "dropdown",
+    "value": "17",
+    "required": true
+  },
+  "editingEndMinute": {
+    "type": "dropdown",
+    "value": "0",
+    "required": true
+  },
+  "workTimeDirectiveOptOut": {
+    "type": "checkbox",
+    "value": false
+  },
+  "checkOverSixDaysWorked": {
+    "type": "checkbox",
+    "value": true
+  },
+  "checkOverFiveDaysWorked": {
+    "type": "checkbox",
+    "value": false,
+    "hidden": true
+  },
+  "locks": {
+    "type": "checkbox",
+    "value": true
+  },
+  "locksStart": {
+    "type": "text",
+    "value": "2",
+    "required": true
+  },
+  "locksWeekataTime": {
+    "type": "checkbox",
+    "value": false,
+    "disabled": true
+  },
+  "locksEnd": {
+    "type": "text",
+    "value": "52",
+    "required": true
+  },
+  "signIn": {
+    "type": "checkbox",
+    "value": true
+  },
+  "signInDays": {
+    "type": "text",
+    "value": "14",
+    "required": true
+  },
+  "allowInBuilding": {
+    "type": "checkbox",
+    "value": false
+  },
+  "showEditYearly": {
+    "type": "checkbox",
+    "value": true
+  },
+  "restrictDeleteDuty": {
+    "type": "checkbox",
+    "value": false,
+    "disabled": true
+  },
+  "restrictApplyRota": {
+    "type": "checkbox",
+    "value": false,
+    "disabled": true
+  },
+  "hasGridChecks": {
+    "type": "checkbox",
+    "value": true
+  },
+  "restrictCopyDuty": {
+    "type": "checkbox",
+    "value": true
+  },
+  "showProductionView": {
+    "type": "checkbox",
+    "value": false
+  },
+  "createDutyFromRota": {
+    "type": "checkbox",
+    "value": true
+  },
+  "showJobsInWeeklyView": {
+    "type": "checkbox",
+    "value": true
+  },
+  "allowOvertimeRequests": {
+    "type": "checkbox",
+    "value": false
+  },
+  "colourWeek": {
+    "type": "checkbox",
+    "value": true
+  },
+  "defaultNumberweeksRotaPattern": {
+    "type": "text",
+    "value": "4",
+    "required": true
+  },
+  "leaveSelectiveHide": {
+    "type": "checkbox",
+    "value": false
+  },
+  "hasHandovers": {
+    "type": "checkbox",
+    "value": true
+  },
+  "hasXmasPoints": {
+    "type": "checkbox",
+    "value": true
+  },
+  "staffAvailabilityReportStartDate": {
+    "type": "date",
+    "value": "2026-03-12",
+    "required": true
+  },
+  "schEmail": {
+    "type": "text",
+    "value": "test@bbc.com; admin@bbc.com"
+  }
+}
