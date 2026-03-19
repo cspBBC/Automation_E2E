@@ -17,7 +17,12 @@ Feature: Scheduling Group CRUD - Edit
     And the notes are updated to "<updatedNotes>"
     And the Last Amended By displays current user
 
+    When the user clicks the Delete button for the scheduling group
+    Then the delete confirmation popup appears with title "Delete Scheduling Group"
+    And the user approves the deletion
+    Then the scheduling group is no longer visible in the list
+
     Examples:
-      | role           | testDataFile                   | updatedName            | updatedNotes        |
-      | systemAdmin    | schdGroupCreate_Sysadmin_UIdata | Updated_Group_Name     | Updated group notes |
-      | areaAdmin_News | schdGroupCreate_AreaAdmin_UIdata | AreaAdmin_Updated_Group | Edited by AreaAdmin |
+      | role           | testDataFile                        | updatedName             | updatedNotes        |
+      | systemAdmin    | schdGroupCreate_SystemAdmin_UIdata  | Updated_Group_Name      | Updated group notes |
+      | areaAdmin_News | schdGroupCreate_AreaAdminNews_UIdata | AreaAdmin_Updated_Group | Edited by AreaAdmin |

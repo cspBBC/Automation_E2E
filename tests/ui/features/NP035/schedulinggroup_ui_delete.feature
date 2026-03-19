@@ -16,6 +16,6 @@ Feature: Scheduling Group CRUD - Delete
     Then the scheduling group is no longer visible in the list
 
     Examples:
-      | role           | testDataFile                   |
-      | systemAdmin    | schdGroupCreate_Sysadmin_UIdata |
-      | areaAdmin_News | schdGroupCreate_AreaAdmin_UIdata |
+      | role           | testDataFile                        |
+      | systemAdmin    | schdGroupCreate_SystemAdmin_UIdata  |
+      | areaAdmin_News | schdGroupCreate_AreaAdminNews_UIdata |

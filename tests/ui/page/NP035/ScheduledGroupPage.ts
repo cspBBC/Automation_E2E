@@ -31,11 +31,14 @@ export class ScheduledGroupPage {
     const jsonPath = `workflows/schedulingGroup/data/${filename}.json`;
     const jsonData = await readJSON(jsonPath);
 
-    const randomNum = Math.floor(Math.random() * 99) + 1;
-    const formattedNum = String(randomNum).padStart(2, '0');
+    // Generate a unique name using timestamp + random to avoid duplicates
+    const timestamp = Date.now();
+    const randomNum = Math.floor(Math.random() * 10000);
+    const uniqueSuffix = `${timestamp}_${randomNum}`;
 
-    jsonData['group_name'].value = `Test Scheduling GroupDemo_${formattedNum}`;
+    jsonData['group_name'].value = `Test_SchdGrp_${uniqueSuffix}`;
     ScheduledGroupPage.lastCreatedGroupName = jsonData['group_name'].value;
+    console.log(`Generated unique group name: "${jsonData['group_name'].value}"`);
     await this.fill(jsonData);
   }
 

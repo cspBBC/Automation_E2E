@@ -33,9 +33,18 @@ Then(
       throw new Error('Page not available.');
     }
     // Wait for popup/modal to appear and contain history data
-    const historyContent = scenarioContext.page.locator('[role="dialog"]');
+    const historyContent = scenarioContext.page.locator('div.popup');
     await expect(historyContent).toBeVisible();
-    console.log('Verified history popup is displayed');
+    
+    // Verify it contains "Scheduling Group" - the core audit trail indicator
+    const historyText = await scenarioContext.page.locator('div.popup table.redtable tbody tr td p').allTextContents();
+    const hasSchedulingGroupReference = historyText.some(text => text.includes('Scheduling Group'));
+    
+    if (!hasSchedulingGroupReference) {
+      throw new Error('History does not contain "Scheduling Group" reference');
+    }
+    
+    console.log('Verified history popup is displayed with Scheduling Group audit trail');
   },
 );
 
@@ -45,15 +54,20 @@ Then(
     if (!scenarioContext.page) {
       throw new Error('Page not available.');
     }
-    // Verify timestamps are visible in the history data
-    const timestampElements = scenarioContext.page.locator('[role="dialog"] tr td');
-    const count = await timestampElements.count();
+    // Verify "Scheduling Group" + actual timestamp content in history (format: dd/mm/yyyy hh:mm)
+    const historyText = await scenarioContext.page.locator('div.popup table.redtable tbody tr td p').allTextContents();
     
-    if (count > 0) {
-      console.log(`Verified timestamps are present in history (${count} cells found)`);
-    } else {
-      throw new Error('No timestamp data found in history');
+    const hasSchedulingGroup = historyText.some(text => text.includes('Scheduling Group'));
+    const hasTimestamp = historyText.some(text => /\d{2}\/\d{2}\/\d{4}\s\d{2}:\d{2}/.test(text));
+    
+    if (!hasSchedulingGroup) {
+      throw new Error('History does not contain "Scheduling Group" reference');
     }
+    if (!hasTimestamp) {
+      throw new Error('No timestamps with correct format (dd/mm/yyyy hh:mm) found in history');
+    }
+    
+    console.log(`Verified "Scheduling Group" and timestamps are present in history`);
   },
 );
 
@@ -63,15 +77,20 @@ Then(
     if (!scenarioContext.page) {
       throw new Error('Page not available.');
     }
-    // Verify user names are displayed in the history data
-    const historyTableRows = scenarioContext.page.locator('[role="dialog"] tbody tr');
-    const rowCount = await historyTableRows.count();
+    // Verify "Scheduling Group" + user names appear in history records (e.g., "by ChandraShekar Pandey on")
+    const historyText = await scenarioContext.page.locator('div.popup table.redtable tbody tr td p').allTextContents();
     
-    if (rowCount > 0) {
-      console.log(`Verified user change information is present (${rowCount} history records found)`);
-    } else {
-      throw new Error('No user change records found in history');
+    const hasSchedulingGroup = historyText.some(text => text.includes('Scheduling Group'));
+    const hasUserInfo = historyText.some(text => /\sby\s[\w\s]+\son\s/.test(text));
+    
+    if (!hasSchedulingGroup) {
+      throw new Error('History does not contain "Scheduling Group" reference');
     }
+    if (!hasUserInfo) {
+      throw new Error('No user information found in history records');
+    }
+    
+    console.log(`Verified "Scheduling Group" and user names who made changes are present in history`);
   },
 );
 
@@ -81,15 +100,20 @@ Then(
     if (!scenarioContext.page) {
       throw new Error('Page not available.');
     }
-    // Verify column names in history table header
-    const columnHeaders = scenarioContext.page.locator('[role="dialog"] thead th');
-    const headerCount = await columnHeaders.count();
+    // Verify "Scheduling Group" + actual change descriptions in history (e.g., "created", "changed notes", "updated")
+    const historyText = await scenarioContext.page.locator('div.popup table.redtable tbody tr td p').allTextContents();
     
-    if (headerCount >= 2) {
-      console.log(`Verified column headers are present in history (${headerCount} columns)`);
-    } else {
-      throw new Error('Insufficient column headers found in history');
+    const hasSchedulingGroup = historyText.some(text => text.includes('Scheduling Group'));
+    const hasChangeActions = historyText.some(text => /created|changed|updated|modified/i.test(text));
+    
+    if (!hasSchedulingGroup) {
+      throw new Error('History does not contain "Scheduling Group" reference');
     }
+    if (!hasChangeActions) {
+      throw new Error('No change action descriptions found in history');
+    }
+    
+    console.log(`Verified "Scheduling Group" and change descriptions (created/changed/updated) are present in history`);
   },
 );
 
@@ -99,10 +123,8 @@ Then(
     if (!scenarioContext.page) {
       throw new Error('Page not available.');
     }
-    // Locator: button { name: 'close' } OR [role="button"][aria-label="close"]
-    const closeButton = scenarioContext.page.getByRole('link', { name: 'close' })
-      .or(scenarioContext.page.locator('[role="button"][aria-label="close"]'))
-      .or(scenarioContext.page.locator('button:has-text("×")'));
+    // Locator: a.close inside div.popup
+    const closeButton = scenarioContext.page.locator('div.popup a.close');
     
     if (await closeButton.count() > 0) {
       await closeButton.first().click();
@@ -110,8 +132,8 @@ Then(
       
       // Wait for modal to close
       await scenarioContext.page.waitForFunction(() => {
-        const dialog = document.querySelector('[role="dialog"]');
-        return !dialog || (dialog as HTMLElement).offsetHeight === 0;
+        const popup = document.querySelector('div.popup');
+        return !popup || (popup as HTMLElement).offsetHeight === 0;
       });
     } else {
       console.log('Close button not found, attempting keyboard escape');
@@ -129,12 +151,12 @@ Then(
       throw new Error('Page not available.');
     }
     // Verify the specified user appears in history records
-    const historyTableRows = scenarioContext.page.locator('[role="dialog"] tbody tr');
+    const historyTableRows = scenarioContext.page.locator('div.popup table.redtable tbody tr');
     const rowCount = await historyTableRows.count();
     
     if (rowCount > 0) {
       // Try to find the user in the history
-      const userElement = scenarioContext.page.locator(`[role="dialog"] :text("${userName}")`);
+      const userElement = scenarioContext.page.locator(`div.popup :text("${userName}")`);
       const userCount = await userElement.count();
       
       if (userCount > 0) {

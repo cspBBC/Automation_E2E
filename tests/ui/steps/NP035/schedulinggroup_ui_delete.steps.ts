@@ -11,8 +11,12 @@ When(
     if (!scenarioContext.page) {
       throw new Error('Page not available. Did you call the Given step first?');
     }
+    
+    // Get the group name from scenarioContext (persists across user context switches)
+    const groupName = scenarioContext.lastCreatedGroupName;
+    
     await scenarioContext.page.locator('.fas.fa-trash-alt').first().click();
-    console.log('Clicked Delete button for scheduling group');
+    console.log(`Clicked Delete button for scheduling group: "${groupName}"`);
   },
 );
 
@@ -46,8 +50,13 @@ When(
     if (!scenarioContext.page) {
       throw new Error('Page not available.');
     }
+    
+    // Get the group name from scenarioContext (persists across user context switches)
+    const groupName = scenarioContext.lastCreatedGroupName;
+    console.log(`Approving deletion for group: "${groupName}"`);
+    
     await scenarioContext.page.getByRole('button', { name: /Approve deletion scheduling/ }).click();
-    console.log('Clicked Approve deletion button');
+    console.log(`✓ Approved deletion for group: "${groupName}"`);
     await scenarioContext.page.waitForLoadState('networkidle');
   },
 );
@@ -58,9 +67,43 @@ Then(
     if (!scenarioContext.page) {
       throw new Error('Page not available.');
     }
-    const tableRows = scenarioContext.page.locator('tbody tr');
-    const count = await tableRows.count();
-    console.log(`Verified scheduling group removed from list. Current rows: ${count}`);
+    
+    // Get the group name from scenarioContext (persists across user context switches)
+    const groupName = scenarioContext.lastCreatedGroupName;
+    
+    if (groupName) {
+      // Wait for the group row to disappear from the list
+      console.log(`Waiting for group "${groupName}" to disappear from list...`);
+      
+      await scenarioContext.page.waitForFunction(
+        (name) => {
+          const table = document.querySelector('table#scheduling-list-table');
+          if (!table) return false;
+          const rows = table.querySelectorAll('tbody tr');
+          return !Array.from(rows).some(row => row.textContent?.includes(name));
+        },
+        groupName,
+        { timeout: 10000 }
+      );
+      
+      // Double-check with locator
+      const deletedGroupRow = scenarioContext.page.locator('table#scheduling-list-table tbody tr').filter({
+        has: scenarioContext.page.locator(`td:has-text("${groupName}")`)
+      });
+      
+      const rowCount = await deletedGroupRow.count();
+      
+      if (rowCount === 0) {
+        console.log(`✓ Verified: Group "${groupName}" successfully removed from list`);
+      } else {
+        throw new Error(`Group "${groupName}" still visible in the list - deletion failed`);
+      }
+    } else {
+      // Fallback: just count total rows
+      const tableRows = scenarioContext.page.locator('tbody tr');
+      const count = await tableRows.count();
+      console.log(`Verified scheduling group removed from list. Current rows: ${count}`);
+    }
   },
 );
 

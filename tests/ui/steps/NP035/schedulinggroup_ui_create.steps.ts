@@ -11,18 +11,13 @@ When(
       throw new Error('No ScheduledGroupPage instance available. Did you call the Given step first?');
     }
     await scenarioContext.scheduledGroupPage.createScheduledGroup(filename);
+    
+    // Store the group name in scenarioContext for later access (persists across user switches)
+    const groupName = (scenarioContext.scheduledGroupPage.constructor as any).lastCreatedGroupName;
+    scenarioContext.lastCreatedGroupName = groupName;
+    
     console.log(`Created scheduling group using: ${filename}`);
-  },
-);
-
-Then(
-  "the scheduling group is visible",
-  async ({ }) => {
-    if (!scenarioContext.scheduledGroupPage) {
-      throw new Error('No ScheduledGroupPage instance available.');
-    }
-    await scenarioContext.scheduledGroupPage.verifyScheduledGroupVisibleForUser();
-    console.log('Verified: scheduling group is visible');
+    console.log(`Group name stored in context: "${groupName}"`);
   },
 );
 

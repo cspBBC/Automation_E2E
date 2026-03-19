@@ -7,7 +7,11 @@ import { getPageObject, PageObject } from '@helpers/pageFactory';
 const { Given, When } = createBdd(test);
 
 // Global context to store page and scheduledGroupPage within a scenario
-export let scenarioContext: { page: Page | null; scheduledGroupPage: PageObject | null } = {
+export let scenarioContext: { 
+  page: Page | null; 
+  scheduledGroupPage: PageObject | null;
+  lastCreatedGroupName?: string;
+} = {
   page: null,
   scheduledGroupPage: null,
 };
