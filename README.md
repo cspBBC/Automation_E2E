@@ -1039,69 +1039,194 @@ Given user is on the "New Page" page
 
 ## 5. `scenarioContextManager.ts` - Parallel Test Context Management
 
+### **Why It's Needed (The Problem It Solves)**
+
+Imagine running 10 scheduling group tests in **parallel** (at the same time):
+
+❌ **Without Context Manager:**
+```
+Test 1: Creates group "Team A"
+Test 2: Creates group "Team B"
+Test 3: Creates group "Team C"
+
+All store groupName in same variable → 💥 COLLISION!
+Test 1 reads groupName → Gets "Team C" instead of "Team A"
+Test fails randomly ❌
+```
+
+✅ **With Context Manager (Our Solution):**
+```
+Test 1: contextStore[ID=1] → groupName = "Team A" ✓
+Test 2: contextStore[ID=2] → groupName = "Team B" ✓
+Test 3: contextStore[ID=3] → groupName = "Team C" ✓
+
+Each test has its OWN isolated storage → No collision!
+Tests run fast without interfering with each other ✅
+```
+
 ### **Purpose**
-Provides isolated context per test to prevent state contamination when running tests in parallel. Each test gets its own isolated storage for page, fixtures, and user data.
+Provides **isolated context per test** to prevent state contamination when running tests in parallel. Each test automatically gets its own storage for page, fixtures, user data, and custom values. Uses a **Proxy pattern** to route all context reads/writes to the correct test's storage.
+
+### **How It Works - The Proxy Pattern**
+
+```typescript
+// The magic: scenarioContext proxy automatically routes to correct test's context
+
+When Test 1 runs:
+scenarioContext.page = page1
+  ↓
+Proxy detects: context for Test ID 1
+  ↓
+Stores in contextStore[1].page = page1  ✓
+
+When Test 2 runs (same time):
+scenarioContext.page = page2
+  ↓
+Proxy detects: context for Test ID 2
+  ↓
+Stores in contextStore[2].page = page2  ✓
+
+When Test 1 later reads:
+const myPage = scenarioContext.page
+  ↓
+Proxy detects: current test is 1
+  ↓
+Returns contextStore[1].page = page1  ✓ (Gets correct page!)
+```
+
+### **Real-World E2E Workflow - With Multiple Tests Running Parallel**
+
+**Setup:** Running 3 scheduling group tests simultaneously
+
+```typescript
+// File: tests/ui/steps/NP035/schedulinggroup_ui_create.steps.ts
+
+// ─────────────────────────────────────────────────────────────
+// TEST 1: SystemAdmin creates group
+// ─────────────────────────────────────────────────────────────
+Given('user "systemAdmin" is on the Scheduled Group page', async ({ }) => {
+  const page = await loginAs('systemAdmin');
+  
+  // Each test automatically gets own ID from proxy
+  // Test 1 → ID: 1
+  scenarioContext.page = page;  // Stored in contextStore[1]
+  scenarioContext.currentUserAlias = 'systemAdmin';  // Stored in contextStore[1]
+});
+
+When('creates scheduling group using "TestData1"', async ({ }) => {
+  const groupName = `Team-SystemAdmin-${Date.now()}`;
+  
+  // This is Test 1's data
+  scenarioContext.lastCreatedGroupName = groupName;  // contextStore[1]
+  scenarioContext.scheduledGroupPage = pageObject1;  // contextStore[1]
+});
+
+Then('scheduling group is visible to creator', async ({ }) => {
+  // Test 1 retrieves ITS OWN data (not Test 2's or Test 3's)
+  const groupName = scenarioContext.lastCreatedGroupName;  // contextStore[1]
+  const page = scenarioContext.page;  // contextStore[1]
+  
+  await expect(page.locator(`text=${groupName}`)).toBeVisible();  // ✅ Correct data!
+});
+
+// ─────────────────────────────────────────────────────────────
+// TEST 2: AreaAdmin creates group (runs AT SAME TIME as Test 1)
+// ─────────────────────────────────────────────────────────────
+Given('user "areaAdmin_News" is on the Scheduled Group page', async ({ }) => {
+  const page = await loginAs('areaAdmin_News');
+  
+  // Automatically: Test 2 → ID: 2
+  scenarioContext.page = page;  // Stored in contextStore[2]
+  scenarioContext.currentUserAlias = 'areaAdmin_News';  // Stored in contextStore[2]
+});
+
+When('creates scheduling group using "TestData2"', async ({ }) => {
+  const groupName = `Team-AreaAdmin-${Date.now()}`;
+  
+  // This is Test 2's data - separate from Test 1!
+  scenarioContext.lastCreatedGroupName = groupName;  // contextStore[2]
+  scenarioContext.scheduledGroupPage = pageObject2;  // contextStore[2]
+});
+
+Then('scheduling group is visible to creator', async ({ }) => {
+  // Test 2 retrieves ITS OWN data
+  const groupName = scenarioContext.lastCreatedGroupName;  // contextStore[2]
+  const page = scenarioContext.page;  // contextStore[2]
+  
+  await expect(page.locator(`text=${groupName}`)).toBeVisible();  // ✅ Correct data!
+});
+```
+
+**Result:** Both tests run at same time, each with their own isolated storage. No cross-contamination!
+
+```
+┌─ Test 1 (Parallel Worker 1) ──────┐
+│ contextStore[1]:                  │
+│  - page: Test1Browser             │
+│  - lastCreatedGroupName: TeamA     │
+│  - currentUserAlias: systemAdmin   │
+└───────────────────────────────────┘
+
+┌─ Test 2 (Parallel Worker 2) ──────┐
+│ contextStore[2]:                  │
+│  - page: Test2Browser             │
+│  - lastCreatedGroupName: TeamB     │
+│  - currentUserAlias: areaAdmin     │
+└───────────────────────────────────┘
+
+✓ No conflicts - tests pass!
+✓ Memory efficient - auto-cleanup after 100 tests
+```
 
 ### **Key Functions**
 
-| Function | Purpose | Returns |
-|----------|---------|---------|
-| `initializeScenarioContext()` | Create new context for test | `{ id: number }` |
-| `scenarioContext` | Access current test's context | Context object |
-| `cleanupContext()` | Manual cleanup of test context | void |
-| `getContextStats()` | Monitor context usage | Stats object |
+| Function | Purpose | Returns | Use Case |
+|----------|---------|---------|----------|
+| `initializeScenarioContext()` | Create new context for test | `{ id: number }` | Called once per test in fixture |
+| `scenarioContext` | Access current test's context (all properties) | Context object | Store/retrieve page, group names, data |
+| `cleanupContext(testId)` | Manual cleanup of specific test context | void | In AfterAll hooks if needed |
+| `getContextStats()` | Monitor context usage/memory | Stats object | Debugging parallel test issues |
 
-### **How It Works**
+### **ScenarioContext Interface - What You Can Store**
 
 ```typescript
 export interface ScenarioContext {
-  page: any | null;
-  scheduledGroupPage?: PageObject;
-  lastCreatedGroupName?: string;
-  currentUserAlias?: string;
-  [key: string]: any;  // Store any custom data
+  page: any | null;                        // Playwright page object
+  scheduledGroupPage?: ScheduledGroupPage;  // Page object for scheduling group
+  lastCreatedGroupName?: string;            // Group name from Create step
+  lastUpdatedGroupName?: string;            // Group name from Edit step
+  currentUserAlias?: string;                // Current logged-in user (systemAdmin, areaAdmin_News)
+  lastUpdatedNotes?: string;                // Updated notes from Edit step
+  [key: string]: any;                       // Store ANY custom data you need
 }
-
-// Each test gets unique ID
-Test 1 → ID: 1 → Context 1
-Test 2 → ID: 2 → Context 2
-Test 3 → ID: 3 → Context 3
-// No cross-contamination!
 ```
 
-### **When to Use**
-- Storing page objects during test execution
-- Passing data between steps in same test
-- Parallel test execution without state conflicts
+### **When to Use Context Manager**
 
-### **Usage in Tests**
+| Scenario | Solution | Example |
+|----------|----------|---------|
+| Store page object created in Given step | `scenarioContext.page = page` | "Had no page object in When/Then" → Solved! |
+| Pass group name from When to Then step | `scenarioContext.lastCreatedGroupName = name` | "Need name created in When step in Then step" → Solved! |
+| Track current user across steps | `scenarioContext.currentUserAlias = 'systemAdmin'` | "Need to know who is logged in later" → Solved! |
+| Store data from API response | `scenarioContext.apiResponse = response` | "Need to verify API response in UI later" → Solved! |
+| Parallel tests colliding | Context isolation | "Tests fail when run parallel" → Solved! |
 
-```typescript
-import { scenarioContext } from '@helpers/scenarioContextManager';
-
-// Store data during test
-When('user creates a group', async ({ page }) => {
-  const groupName = await createGroup(page);
-  scenarioContext.lastCreatedGroupName = groupName;  // Store for later steps
-  scenarioContext.page = page;
-});
-
-// Retrieve data in later steps
-Then('group is visible', async ({ }) => {
-  const groupName = scenarioContext.lastCreatedGroupName;  // ← Get stored data
-  await verifyGroupVisible(scenarioContext.page, groupName);
-});
-```
-
-### **Auto-Cleanup**
+### **Auto-Cleanup & Memory Management**
 
 ```typescript
-// Automatically removes old contexts
-const MAX_CONTEXTS = 100;  // Keeps only 100 recent contexts
+// Automatic memory optimization
+const MAX_CONTEXTS = 100;
 
-// If more than 100 tests run:
-// → Oldest contexts are auto-deleted
-// → Memory stays efficient
+// How it works:
+// Test 1 runs → contextStore[1] created
+// Test 2 runs → contextStore[2] created
+// ...
+// Test 101 runs → contextStore[101] created
+//                → contextStore[1] auto-deleted (oldest)
+//                → Memory stays low ✓
+
+// Result: Only last 100 test contexts in memory
+// Prevents "Out of Memory" errors in long test runs
 ```
 
 ### **Monitoring Context Health**
@@ -1111,8 +1236,79 @@ import { getContextStats } from '@helpers/scenarioContextManager';
 
 afterEach(() => {
   const stats = getContextStats();
-  console.log(`📊 Contexts in use: ${stats.totalContexts}/${stats.maxContexts}`);
-  console.log(`Current test ID: ${stats.currentTestId}`);
+  console.log(`📊 Contexts in memory: ${stats.totalContexts}/${stats.maxContexts}`);
+  console.log(`📍 Current test ID: ${stats.currentTestId}`);
+  
+  // Example output:
+  // 📊 Contexts in memory: 47/100
+  // 📍 Current test ID: 47
+});
+```
+
+### **Using Context for Future Stories - Best Practices**
+
+**When adding NEW test steps, follow this pattern:**
+
+```typescript
+// 🟢 GOOD - Use context to pass data between steps
+Given('user is on page', async ({ page }) => {
+  scenarioContext.page = page;  // Store for later steps
+});
+
+When('user creates item', async ({ }) => {
+  const itemId = await createItem(scenarioContext.page);
+  scenarioContext.lastCreatedItemId = itemId;  // Store for verification later
+});
+
+Then('item appears in list', async ({ }) => {
+  // Use stored data
+  const itemId = scenarioContext.lastCreatedItemId;  // ✓ Isolated per test
+  await verifyItemExists(scenarioContext.page, itemId);
+});
+
+// 🔴 DON'T - Don't use global variables
+let globalPage;  // ❌ Cross-test contamination!
+let globalItemId;  // ❌ Shared between parallel tests!
+
+Given('user is on page', async ({ page }) => {
+  globalPage = page;  // ❌ Test 1 and Test 2 fight over this
+});
+```
+
+### **Usage in Tests - Complete Example**
+
+```typescript
+import { scenarioContext } from '@helpers/scenarioContextManager';
+
+// Step 1: Store page object
+When('user navigates to scheduling group page', async ({ loginAs }) => {
+  const page = await loginAs('systemAdmin');
+  scenarioContext.page = page;
+});
+
+// Step 2: Store created item details
+When('creates a scheduling group named {string}', async ({ }, groupName: string) => {
+  scenarioContext.lastCreatedGroupName = groupName;
+  scenarioContext.pageObject = new ScheduledGroupPage(scenarioContext.page);
+});
+
+// Step 3: Use stored values in verification
+Then('the group {string} is visible in the list', async ({ }, groupName: string) => {
+  const page = scenarioContext.page;  // ← Retrieved automatically from correct test
+  const storedName = scenarioContext.lastCreatedGroupName;  // ← Test-isolated data
+  
+  if (groupName === storedName) {
+    await expect(page.locator(`text=${groupName}`)).toBeVisible();
+  }
+});
+
+// Step 4: Delete created item (cleanup)
+Then('clean up by deleting the group', async ({ }) => {
+  const groupName = scenarioContext.lastCreatedGroupName;  // ← Still have the data
+  const pageObject = scenarioContext.pageObject;
+  
+  await pageObject.deleteGroup(groupName);
+  // Context auto-cleans after test ends
 });
 ```
 
