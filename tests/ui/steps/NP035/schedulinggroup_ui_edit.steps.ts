@@ -1,7 +1,7 @@
 import { createBdd } from "playwright-bdd";
 import { test } from "@fixtures/pages.fixture";
 import { expect } from '@playwright/test';
-import { scenarioContext } from './schedulinggroup_ui_common.steps';
+import { scenarioContext } from '@helpers/scenarioContextManager';
 import users from '@core/data/users.json' with { type: 'json' };
 
 const { When, Then } = createBdd(test);
@@ -92,8 +92,6 @@ Then(
       
       // Extract all cell texts from the row as a list
       const cellTexts = await groupRow.locator('td').allTextContents();
-      
-      console.log(`Row data for updated group "${updatedGroupName}":`, cellTexts);
       
       // Verify the notes text is in the row (should be in position 5: Actions, Area, Name, Team, Allocations, Notes)
       const notesFound = cellTexts.some(text => text.includes(expectedNotes));

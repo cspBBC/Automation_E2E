@@ -1,6 +1,6 @@
 import { createBdd } from "playwright-bdd";
 import { test } from "@fixtures/pages.fixture";
-import { scenarioContext } from './schedulinggroup_ui_common.steps';
+import { scenarioContext } from '@helpers/scenarioContextManager';
 
 const { When, Then } = createBdd(test);
 

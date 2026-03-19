@@ -3,21 +3,9 @@ import users from '@core/data/users.json' with { type: 'json' };
 import { createBdd } from "playwright-bdd";
 import { test } from "@fixtures/pages.fixture";
 import { getPageObject, PageObject } from '@helpers/pageFactory';
+import { scenarioContext } from '@helpers/scenarioContextManager';
 
 const { Given, When } = createBdd(test);
-
-// Global context to store page and scheduledGroupPage within a scenario
-export let scenarioContext: { 
-  page: Page | null; 
-  scheduledGroupPage: PageObject | null;
-  lastCreatedGroupName?: string;
-  lastUpdatedGroupName?: string;
-  lastUpdatedNotes?: string;
-  currentUserAlias?: string;
-} = {
-  page: null,
-  scheduledGroupPage: null,
-};
 
 Given(
   'user {string} is on the {string} page',
