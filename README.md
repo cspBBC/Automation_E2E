@@ -589,7 +589,394 @@ core/
 
 ---
 
-# 📋 Test Data Structure & Form Filling Guide
+# �️ Understanding the Utils Folder
+
+This section explains all utility modules in `tests/utils/` to help new developers use them effectively.
+
+---
+
+## Overview - Utils Folder Structure
+
+```
+tests/utils/
+├── formFilledType.ts              ← Type definitions for form fields
+├── formFiller.ts                  ← Utility to fill HTML forms with test data
+├── pageFactory.ts                 ← Page object factory pattern
+├── readJson.ts                    ← Utility to read JSON test data files
+└── scenarioContextManager.ts      ← Centralized context manager for parallel tests
+```
+
+---
+
+## 1. `formFilledType.ts` - Form Field Type Definitions
+
+### **Purpose**
+Defines TypeScript interfaces for form fields so the framework knows what types of inputs exist and how to handle them.
+
+### **What It Contains**
+
+```typescript
+export type FieldType =
+  | 'text'                // Text input
+  | 'number'              // Number input
+  | 'textarea'            // Multi-line text
+  | 'dropdown'            // Select dropdown
+  | 'multiDropdown'       // Multi-select dropdown
+  | 'radio'               // Radio button
+  | 'checkbox'            // Checkbox
+  | 'date'                // Date picker
+  | 'facilityModal'       // Modal with facility selection
+  | 'dualListboxModal'    // Modal with dual listbox
+  | 'weeklyAvailability'  // Week availability picker
+  | 'button';             // Button (for actions)
+
+export interface FormField {
+  type: FieldType;                    // Field input type
+  value: string | number | string[];  // Value to fill
+  optional?: boolean;                 // Is field optional?
+  subValues?: string[];               // Additional values
+}
+
+export interface WeekDayAvailability {
+  from: string;      // e.g., "09:00"
+  to: string;        // e.g., "17:00"
+  unavailable: boolean;
+}
+```
+
+### **When to Use**
+- When creating test data JSON files
+- When defining new form field types
+- For TypeScript type checking
+
+### **Example**
+
+```typescript
+// In your test data JSON file
+const formData: Record<string, FormField> = {
+  "group_name": {
+    type: "text",
+    value: "My Group",
+    optional: false
+  },
+  "department": {
+    type: "dropdown",
+    value: "1"
+  },
+  "services": {
+    type: "multiDropdown",
+    value: ["1", "2", "3"]
+  }
+};
+```
+
+---
+
+## 2. `formFiller.ts` - Programmatic Form Filling
+
+### **Purpose**
+Automatically fills HTML forms with values from test data, handling all field types (text, dropdowns, checkboxes, date pickers, etc.).
+
+### **Key Functions**
+
+| Function | Purpose | Input | Output |
+|----------|---------|-------|--------|
+| `fillForm()` | Fills all fields in a form | Page object + form data | Boolean (success/fail) |
+| `selectStandardDropdown()` | Selects value in HTML select | Page + fieldId + value | void |
+| `selectChosenDropdown()` | Selects in Chosen library dropdown | Page + fieldId + value | void |
+| `selectMultiDropdown()` | Selects multiple options | Page + fieldId + values[] | void |
+| `pickDate()` | Fills date picker | Page + fieldId + dateStr | void |
+
+### **When to Use**
+- Filling out forms in UI tests
+- Instead of manually clicking each field
+- When you want reusable form-filling logic
+
+### **Example**
+
+```typescript
+import { fillForm } from '@helpers/formFiller';
+import { readJSON } from '@helpers/readJson';
+
+async createSchedulingGroup(filename: string) {
+  // Load test data
+  const testData = await readJSON(`workflows/schedulingGroup/data/${filename}.json`);
+  
+  // Open form modal
+  await this.page.click('button:has-text("Add Group")');
+  await this.page.waitForSelector('#facebox');
+  
+  // Fill all form fields automatically!
+  await fillForm(this.page, testData);
+  
+  // Submit
+  await this.page.click('button[type="submit"]');
+}
+```
+
+### **Supported Field Types**
+
+| Type | Example | How It Fills |
+|------|---------|------------|
+| `text` | Name, Email | Types value into input |
+| `textarea` | Description | Types multi-line text |
+| `dropdown` | Status | Selects option by value |
+| `multiDropdown` | Tags | Selects multiple options |
+| `checkbox` | Agree | Checks/unchecks based on value |
+| `radio` | Gender | Clicks associated label |
+| `date` | Start Date | Opens picker and selects date |
+| `button` | Submit | Clicks button |
+
+---
+
+## 3. `readJson.ts` - JSON Data File Reader
+
+### **Purpose**
+Reads JSON test data files from disk so you can use test data in your tests.
+
+### **Key Function**
+
+```typescript
+export async function readJSON(filePath: string): Promise<Record<string, any>>
+```
+
+### **When to Use**
+- Loading test data for form filling
+- Reading test configuration
+- Loading user data or test fixtures
+
+### **Examples**
+
+```typescript
+import { readJSON } from '@helpers/readJson';
+
+// Example 1: Load form data
+const formData = await readJSON('workflows/schedulingGroup/data/schdGroupCreate_AreaAdminNews_UIdata.json');
+
+// Example 2: Load users
+const users = await readJSON('core/data/users.json');
+
+// Example 3: Using relative paths
+const data = await readJSON('path/to/data.json');
+```
+
+### **How It Works**
+
+```typescript
+// Accepts absolute or relative paths
+const formData = await readJSON('workflows/schedulingGroup/data/mydata.json');
+
+// Automatically resolves from workspace root:
+// → C:\BBC_Automation\E2E_Framework\Automation_E2E\workflows\...
+```
+
+### **Return Value**
+
+```typescript
+// Returns parsed JSON as object
+{
+  "field1": { type: "text", value: "data1" },
+  "field2": { type: "dropdown", value: "0" }
+}
+```
+
+---
+
+## 4. `pageFactory.ts` - Page Object Factory
+
+### **Purpose**
+Creates and provides page objects using the Factory pattern. Centralizes all page object mappings.
+
+### **Key Functions**
+
+| Function | Purpose | Example |
+|----------|---------|---------|
+| `getPageObject()` | Get page instance by name | `getPageObject('Scheduled Group', page)` |
+| `getSupportedPages()` | List all available pages | `['Scheduled Group', 'Scheduling Team']` |
+| `registerPage()` | Register new page dynamically | `registerPage('New Page', NewPageClass)` |
+
+### **When to Use**
+- Getting a page object in step definitions
+- Adding new pages to the framework
+- When you need type-safe page access
+
+### **Example**
+
+```typescript
+import { getPageObject, getSupportedPages } from '@helpers/pageFactory';
+
+// Step Definition
+Given('user is on the {string} page', async ({ page }, pageName: string) => {
+  // Get page object by name
+  const pageObject = getPageObject(pageName, page);
+  
+  // Use the page object
+  await pageObject.open();
+  console.log(`Opened page: ${pageName}`);
+});
+```
+
+### **Adding New Pages**
+
+**Step 1: Create your page object**
+```typescript
+// tests/ui/page/NP035/NewPage.ts
+export class NewPage {
+  constructor(private page: Page) {}
+  async open() {
+    await this.page.goto('/new-page');
+  }
+}
+```
+
+**Step 2: Register it in pageFactory.ts**
+```typescript
+import { NewPage } from '@pages/NP035/NewPage';
+
+const pageFactory: Record<string, (page: Page) => PageObject> = {
+  "Scheduled Group": (page: Page) => new ScheduledGroupPage(page),
+  "New Page": (page: Page) => new NewPage(page),  // ← Add here
+};
+```
+
+**Step 3: Use in your feature file**
+```gherkin
+Given user is on the "New Page" page
+```
+
+---
+
+## 5. `scenarioContextManager.ts` - Parallel Test Context Management
+
+### **Purpose**
+Provides isolated context per test to prevent state contamination when running tests in parallel. Each test gets its own isolated storage for page, fixtures, and user data.
+
+### **Key Functions**
+
+| Function | Purpose | Returns |
+|----------|---------|---------|
+| `initializeScenarioContext()` | Create new context for test | `{ id: number }` |
+| `scenarioContext` | Access current test's context | Context object |
+| `cleanupContext()` | Manual cleanup of test context | void |
+| `getContextStats()` | Monitor context usage | Stats object |
+
+### **How It Works**
+
+```typescript
+export interface ScenarioContext {
+  page: any | null;
+  scheduledGroupPage?: PageObject;
+  lastCreatedGroupName?: string;
+  currentUserAlias?: string;
+  [key: string]: any;  // Store any custom data
+}
+
+// Each test gets unique ID
+Test 1 → ID: 1 → Context 1
+Test 2 → ID: 2 → Context 2
+Test 3 → ID: 3 → Context 3
+// No cross-contamination!
+```
+
+### **When to Use**
+- Storing page objects during test execution
+- Passing data between steps in same test
+- Parallel test execution without state conflicts
+
+### **Usage in Tests**
+
+```typescript
+import { scenarioContext } from '@helpers/scenarioContextManager';
+
+// Store data during test
+When('user creates a group', async ({ page }) => {
+  const groupName = await createGroup(page);
+  scenarioContext.lastCreatedGroupName = groupName;  // Store for later steps
+  scenarioContext.page = page;
+});
+
+// Retrieve data in later steps
+Then('group is visible', async ({ }) => {
+  const groupName = scenarioContext.lastCreatedGroupName;  // ← Get stored data
+  await verifyGroupVisible(scenarioContext.page, groupName);
+});
+```
+
+### **Auto-Cleanup**
+
+```typescript
+// Automatically removes old contexts
+const MAX_CONTEXTS = 100;  // Keeps only 100 recent contexts
+
+// If more than 100 tests run:
+// → Oldest contexts are auto-deleted
+// → Memory stays efficient
+```
+
+### **Monitoring Context Health**
+
+```typescript
+import { getContextStats } from '@helpers/scenarioContextManager';
+
+afterEach(() => {
+  const stats = getContextStats();
+  console.log(`📊 Contexts in use: ${stats.totalContexts}/${stats.maxContexts}`);
+  console.log(`Current test ID: ${stats.currentTestId}`);
+});
+```
+
+---
+
+## Utils Quick Reference Guide
+
+### **How to Use Each Utility**
+
+| Task | Utility | Example |
+|------|---------|---------|
+| Fill a form | `formFiller.ts` | `await fillForm(page, testData)` |
+| Load test data | `readJson.ts` | `await readJSON('path/data.json')` |
+| Get page object | `pageFactory.ts` | `getPageObject('Scheduled Group', page)` |
+| Store test context | `scenarioContextManager.ts` | `scenarioContext.page = page` |
+| Define field types | `formFilledType.ts` | Use in test data JSON |
+
+---
+
+## Complete Utils Execution Example
+
+```typescript
+// Step 1: Import utilities
+import { fillForm } from '@helpers/formFiller';
+import { readJSON } from '@helpers/readJson';
+import { getPageObject } from '@helpers/pageFactory';
+import { scenarioContext } from '@helpers/scenarioContextManager';
+
+// Step 2: Use utilities in your step
+When('user creates scheduling group with {string}', async ({ loginAs }, userAlias: string, dataFile: string) => {
+  // Get page object
+  const page = await loginAs(userAlias);
+  const pageObject = getPageObject('Scheduled Group', page);
+  
+  // Read test data
+  const testData = await readJSON(`workflows/schedulingGroup/data/${dataFile}.json`);
+  
+  // Open form
+  await pageObject.openCreateForm();
+  
+  // Fill form using formFiller
+  await fillForm(page, testData);
+  
+  // Store context for next steps
+  scenarioContext.page = page;
+  scenarioContext.lastGroupName = testData.group_name.value;
+  scenarioContext.scheduledGroupPage = pageObject;
+  
+  console.log('✅ Scheduling group created successfully!');
+});
+```
+
+---
+
+# �📋 Test Data Structure & Form Filling Guide
 
 This section explains how test data JSON files work with `formFiller.ts` and how to create your own test data files.
 
