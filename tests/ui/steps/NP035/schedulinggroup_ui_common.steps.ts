@@ -3,13 +3,16 @@ import users from '@core/data/users.json' with { type: 'json' };
 import { createBdd } from "playwright-bdd";
 import { test } from "@fixtures/pages.fixture";
 import { getPageObject, PageObject } from '@helpers/pageFactory';
-import { scenarioContext } from '@helpers/scenarioContextManager';
+import { scenarioContext, initializeScenarioContext } from '@helpers/scenarioContextManager';
 
 const { Given, When } = createBdd(test);
 
 Given(
   'user {string} is on the {string} page',
   async ({ loginAs }, userAlias: string, pageName: string) => {
+    // Initialize isolated context for this test
+    initializeScenarioContext();
+    
     const page = await loginAs(userAlias as keyof typeof users);
     
     const scheduledGroupPage = getPageObject(pageName, page);

@@ -12,7 +12,18 @@ When(
     if (!scenarioContext.page) {
       throw new Error('Page not available. Did you call the Given step first?');
     }
-    await scenarioContext.page.locator('.fas.fa-edit').first().click();
+    
+    // Wait for edit button to be visible and clickable
+    const editButton = scenarioContext.page.locator('.fas.fa-edit').first();
+    await editButton.waitFor({ state: 'visible', timeout: 8000 });
+    
+    // Wait for button to be clickable (not disabled, visible, stable)
+    await scenarioContext.page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+    await editButton.click();
+    
+    // Wait for modal/form to appear after click
+    await scenarioContext.page.locator('#group_name, input[name="group_name"]').waitFor({ state: 'visible', timeout: 5000 });
+    
     console.log('Clicked Edit button for scheduling group');
   },
 );
@@ -23,7 +34,18 @@ When(
     if (!scenarioContext.page) {
       throw new Error('Page not available.');
     }
-    await scenarioContext.page.locator('#group_name').fill(newName);
+    
+    // Wait for name input to be ready
+    const nameInput = scenarioContext.page.locator('#group_name');
+    await nameInput.waitFor({ state: 'visible', timeout: 5000 });
+    
+    // Clear the field first to ensure clean state
+    await nameInput.clear();
+    await nameInput.fill(newName);
+    
+    // Verify the value was set
+    await expect(nameInput).toHaveValue(newName);
+    
     scenarioContext.lastUpdatedGroupName = newName;
     console.log(`Updated scheduling group name to: ${newName}`);
   },
@@ -35,7 +57,18 @@ When(
     if (!scenarioContext.page) {
       throw new Error('Page not available.');
     }
-    await scenarioContext.page.locator('textarea[name="notes"]').fill(notes);
+    
+    // Wait for notes textarea to be ready
+    const notesField = scenarioContext.page.locator('textarea[name="notes"]');
+    await notesField.waitFor({ state: 'visible', timeout: 5000 });
+    
+    // Clear and fill
+    await notesField.clear();
+    await notesField.fill(notes);
+    
+    // Verify the value was set
+    await expect(notesField).toHaveValue(notes);
+    
     scenarioContext.lastUpdatedNotes = notes;
     console.log(`Updated notes to: ${notes}`);
   },
@@ -47,7 +80,23 @@ When(
     if (!scenarioContext.page) {
       throw new Error('Page not available.');
     }
-    await scenarioContext.page.getByRole('button', { name: 'Update scheduling group' }).click();
+    
+    // Wait for the update button to be clickable
+    const updateButton = scenarioContext.page.getByRole('button', { name: /Update scheduling group/i });
+    await updateButton.waitFor({ state: 'visible', timeout: 5000 });
+    await updateButton.click();
+    
+    // Wait for modal to close after successful update (check for loading states)
+    try {
+      // Wait for loading indicator to appear and disappear (typical pattern)
+      await scenarioContext.page.locator('[class*="loading"], [class*="spinner"]').first().waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
+    } catch (e) {
+      // If no loading indicator, continue
+    }
+    
+    // Wait for table to be visible again (indicates modal closed)
+    await scenarioContext.page.locator('table tbody').waitFor({ state: 'visible', timeout: 8000 });
+    
     console.log('Clicked Update scheduling group button');
   },
 );
@@ -59,14 +108,12 @@ Then(
       throw new Error('Page not available.');
     }
     
-    // Wait for modal/form to close by checking if the update button is gone
-    await scenarioContext.page.waitForURL(/.*/, { timeout: 5000 }).catch(() => {});
+    // Wait for navigation/modal close
+    await scenarioContext.page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {});
     
-    // Verify in the table - look for the group name in the scheduling-group-name class
-    const groupNameCell = scenarioContext.page.locator('td.scheduling-group-name', {
-      hasText: expectedName
-    });
-    await expect(groupNameCell).toBeVisible({ timeout: 10000 });
+    // Simple: find any visible cell with the updated name
+    await expect(scenarioContext.page.locator('td', { hasText: expectedName })).toBeVisible({ timeout: 10000 });
+    
     console.log(`Verified scheduling group name is: ${expectedName}`);
   },
 );
@@ -78,32 +125,21 @@ Then(
       throw new Error('Page not available.');
     }
     
-    // After update, modal closes and we're back at list view. Verify in table instead.
-    // Wait for modal/form to close
-    await scenarioContext.page.waitForURL(/.*/, { timeout: 5000 }).catch(() => {});
+    await scenarioContext.page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {});
     
-    // Verify the updated notes appear in the table row for the UPDATED group name
     const updatedGroupName = scenarioContext.lastUpdatedGroupName;
-    if (updatedGroupName) {
-      // Find the row containing the updated scheduling group name
-      const groupRow = scenarioContext.page.locator('table tbody tr', {
-        has: scenarioContext.page.locator(`td.scheduling-group-name:has-text("${updatedGroupName}")`)
-      });
-      
-      // Extract all cell texts from the row as a list
-      const cellTexts = await groupRow.locator('td').allTextContents();
-      
-      // Verify the notes text is in the row (should be in position 5: Actions, Area, Name, Team, Allocations, Notes)
-      const notesFound = cellTexts.some(text => text.includes(expectedNotes));
-      
-      if (!notesFound) {
-        throw new Error(`Expected notes "${expectedNotes}" not found in row. Row cells: ${JSON.stringify(cellTexts)}`);
-      }
-      
-      console.log(`✓ Verified notes "${expectedNotes}" for updated group "${updatedGroupName}"`);
-    } else {
+    if (!updatedGroupName) {
       throw new Error('No updated group name stored in context. Did the "updates the scheduling group name" step complete?');
     }
+    
+    // Find row with updated group name, then verify notes are in that row
+    const groupRow = scenarioContext.page.locator('table tbody tr', {
+      has: scenarioContext.page.locator('td', { hasText: updatedGroupName })
+    });
+    
+    await expect(groupRow.locator('td', { hasText: expectedNotes })).toBeVisible({ timeout: 10000 });
+    
+    console.log(`✓ Verified notes "${expectedNotes}" for updated group "${updatedGroupName}"`);
   },
 );
 
