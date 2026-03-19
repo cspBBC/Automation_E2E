@@ -1,75 +1,266 @@
-# E2E Test Automation Framework
+# 🚀 E2E Test Automation Framework - Complete Guide for New Users
+
+Welcome! This guide will help you understand and use this comprehensive test automation framework.
+
+## 📖 Quick Navigation
+
+- [What is this framework?](#what-is-this-framework) ← Start here!
+- [5-Minute Quick Start](#5-minute-quick-start)
+- [Project Structure Overview](#project-structure-overview)
+- [How the Framework Works](#how-the-framework-works)
+- [Complete Test Execution Flow](#complete-test-execution-flow)
+- [Understanding the Utils Folder](#understanding-the-utils-folder)
+- [Test Data Guide](#test-data-structure--form-filling-guide)
+- [Common Workflows](#common-workflows)
+- [Troubleshooting](#troubleshooting)
 
 ---
 
-## 🔧 Getting Started
+# What is this framework?
 
-### **1. Clone the Repository**
+This is a **BDD (Behavior-Driven Development) Test Automation Framework** using:
+
+- **Playwright** - Modern browser automation
+- **Cucumber/BDD** - Plain English test scenarios
+- **TypeScript** - Type-safe automation code
+- **Parallel Execution** - Run 100s of tests simultaneously
+- **Database Testing** - Direct DB & API testing
+- **Page Objects** - Maintainable, reusable code
+
+### **What can you test?**
+
+✅ **UI Tests** - Click buttons, fill forms, verify text  
+✅ **API Tests** - HTTP requests, responses, status codes  
+✅ **Database Tests** - Stored procedures, queries, data validation  
+✅ **E2E Tests** - Complete user workflows across all layers  
+
+### **Key Benefits**
+
+| Feature | Benefit |
+|---------|---------|
+| **BDD Format** | Non-technical people can write tests in plain English |
+| **Page Objects** | Update selectors in one place, tests still pass |
+| **Reusable Utilities** | Form filling, JSON reading, context management built-in |
+| **Parallel Execution** | Run 100 tests in 2 minutes instead of 30 minutes |
+| **CI/CD Ready** | Automatic GitHub Actions integration |
+
+---
+
+# 5-Minute Quick Start
+
+## Step 1: Install & Setup (2 minutes)
+
 ```bash
+# Clone and navigate
 git clone <repository-url>
 cd Automation_E2E
-```
 
-### **2. Install Dependencies**
-```bash
+# Install dependencies
 npm install
+
+# Create environment configs
+# Create .env.dev and .env.systest with your URLs and credentials
+
+# Required .env variables (example):
+# UI_BASE_URL=https://your-dev-url.com
+# API_BASE_URL=https://your-api-dev-url.com
+# DB_HOST=localhost
+# DB_USER=your_user
+# DB_PASSWORD=your_password
+# SYS_ADMIN_PASSWORD=your_password
+# AREA_ADMIN_PASSWORD=your_password
 ```
 
-This will install all required packages including:
-- **Playwright** - Browser automation framework
-- **Cucumber/BDD** - Behavior-driven development testing
-- **TypeScript** - Type-safe JavaScript
-- **dotenv** - Environment configuration management
-- Other dependencies listed in `package.json`
+## Step 2: Run Your First Test (2 minutes)
 
-### **3. Configure Environment Variables**
-Create `.env` files in the root directory for your environments:
-
-```
-.env.dev        ← DEV environment configuration
-.env.systest    ← SYSTEST/STAGING environment configuration
-```
-
-**Required variables in each `.env` file:**
-```
-UI_BASE_URL=https://your-dev-url.com
-API_BASE_URL=https://your-api-dev-url.com
-DB_HOST=localhost
-DB_USER=your_db_user
-DB_PASSWORD=your_db_password
-SYS_ADMIN_PASSWORD=your_password
-AREA_ADMIN_PASSWORD=your_password
-```
-
-### **4. Execute Tests**
-
-#### Quick Start
 ```bash
-npm run test              # Run UI + API tests (SYSTEST environment)
-npm run test:dev         # Run UI + API tests (DEV environment)
+# Run UI tests with DEV environment (you'll see browser)
+npm run uidevtest
+
+# Or run API tests
+npm run apitest
+
+# Or run both
+npm run test:dev
 ```
 
-#### Run Specific Test Types
+## Step 3: View Results (1 minute)
+
 ```bash
-npm run uidevtest        # UI tests only (DEV)
-npm run uisystesttest    # UI tests only (SYSTEST)
-npm run apitest          # API tests only (DEV)
-npm run apitest:systest  # API tests only (SYSTEST)
+# Open HTML report
+npm run report
 ```
 
-#### CI/CD Pipeline
-```bash
-npm run test:ci          # Full automated test suite for CI/CD
+That's it! You've run your first tests! 🎉
+
+---
+
+# Project Structure Overview
+
+## What is in each folder?
+
+```
+📦 Automation_E2E
+├── 📁 tests/                          ← All test code lives here
+│   ├── 📁 ui/                         ← Browser/UI tests
+│   │   ├── 📁 features/               ← What to test (English scenarios)
+│   │   ├── 📁 steps/                  ← How to test (code)
+│   │   ├── 📁 page/                   ← Page objects (UI elements)
+│   │   └── 📁 fixtures/               ← Reusable test setup (login, db, etc)
+│   │
+│   ├── 📁 integrated/                 ← API & Database tests
+│   │   ├── 📁 features/               ← What to test (API scenarios)
+│   │   └── 📁 steps/                  ← How to test (API code)
+│   │
+│   └── 📁 utils/                      ← Helper functions everyone uses
+│       ├── formFiller.ts              ← Auto-fill HTML forms
+│       ├── readJson.ts                ← Load test data from files
+│       ├── pageFactory.ts             ← Get page objects
+│       ├── formFilledType.ts          ← Type definitions
+│       └── scenarioContextManager.ts  ← Parallel test isolation
+│
+├── 📁 core/                           ← Framework core utilities
+│   ├── 📁 api/                        ← HTTP client for API tests
+│   ├── 📁 db/                         ← Database connection
+│   ├── 📁 config/                     ← Environment configuration
+│   └── 📁 data/
+│       └── users.json                 ← User credentials and roles
+│
+├── 📁 workflows/                      ← Test data organized by feature
+│   ├── 📁 schedulingGroup/
+│   │   ├── 📁 data/                   ← JSON test data files
+│   │   ├── 📁 api/                    ← API endpoints for this feature
+│   │   └── 📁 db/                     ← Database queries/procedures
+│   └── 📁 facility/
+│       └── 📁data/
+│
+├── 📁 playwright-report/              ← Generated test reports
+├── 📁 test-results/                   ← Test results/screenshots
+│
+├── 📄 package.json                    ← Dependencies & test commands
+├── 📄 playwright.config.ts            ← Playwright configuration
+├── 📄 tsconfig.json                   ← TypeScript configuration
+└── 📄 .env.dev, .env.systest         ← Environment variables (you create)
 ```
 
-#### View Test Reports
-```bash
-npm run report           # Open HTML test report in browser
+### **Understanding Each Folder's Purpose**
+
+| Folder | Purpose | What's Inside |
+|--------|---------|---------------|
+| `tests/ui/features/` | **What to test** (scenarios in English) | `.feature` files |
+| `tests/ui/steps/` | **How to implement** those scenarios | `.steps.ts` files |
+| `tests/ui/page/` | **User interface elements** (buttons, inputs, etc) | Page objects |
+| `tests/utils/` | **Reusable helper functions** used by all tests | Form filler, JSON reader, etc |
+| `core/` | **Framework services** (login, database, HTTP requests) | Login, DB, API clients |
+| `workflows/` | **Test data organized by feature** | Scheduling group data, facility data, etc |
+| `core/data/users.json` | **User credentials** (who can log in) | usernames, passwords, roles |
+
+---
+
+# How the Framework Works
+
+## The 5-Step Flow
+
+```
+1. You write a test scenario in English (.feature file)
+                  ↓
+2. Framework matches steps to TypeScript code (.steps.ts)
+                  ↓
+3. Code interacts with UI/API/Database
+                  ↓
+4. Framework collects results (pass/fail)
+                  ↓
+5. You view HTML report
+```
+
+## Real Example: Creating a Scheduling Group
+
+### **Step 1: Write Test Scenario (Plain English)**
+```gherkin
+# File: tests/ui/features/NP035/schedulinggroup_ui_create.feature
+
+Feature: Scheduling Group CRUD
+
+  Scenario: Create a new Scheduling Group
+    Given user 'areaAdmin_News' is on the "Scheduled Group" page
+    When the user creates a new scheduling group using "schdGroupCreate_AreaAdminNews_UIdata"
+    Then the scheduling group is visible
+```
+
+### **Step 2: Map Steps to Code**
+```typescript
+// File: tests/ui/steps/NP035/schedulinggroup_ui_create.steps.ts
+
+Given('user {string} is on the "Scheduled Group" page', async ({ loginAs }, userAlias: string) => {
+  // loginAs = fixture that logs user in
+  // getPageObject = utility to get page object
+  const page = await loginAs(userAlias);
+  const pageObject = getPageObject('Scheduled Group', page);
+  await pageObject.open();
+});
+
+When('the user creates a new scheduling group using {string}', async ({ }, dataFile: string) => {
+  // Read test data from JSON file
+  const testData = await readJSON(`workflows/schedulingGroup/data/${dataFile}.json`);
+  
+  // Use formFiller utility to fill all form fields automatically
+  await fillForm(page, testData);
+});
+
+Then('the scheduling group is visible', async ({ }) => {
+  // Verify group appears in list
+  await expect(page.locator(`text=${groupName}`)).toBeVisible();
+});
+```
+
+### **Step 3: Access Page Elements**
+```typescript
+// File: tests/ui/page/NP035/ScheduledGroupPage.ts
+
+export class ScheduledGroupPage {
+  constructor(private page: Page) {}
+  
+  async open() {
+    await this.page.goto('/mvc-app/admin/scheduling-group');
+  }
+  
+  async createGroup() {
+    await this.page.click('button:has-text("Add Group")');
+  }
+}
+```
+
+### **Step 4: Use Test Data**
+```json
+// File: workflows/schedulingGroup/data/schdGroupCreate_AreaAdminNews_UIdata.json
+
+{
+  "group_name": {
+    "type": "text",
+    "value": "Test Group"
+  },
+  "department": {
+    "type": "dropdown",
+    "value": "1"
+  },
+  "submit": {
+    "type": "button"
+  }
+}
+```
+
+### **Step 5: View Results**
+```
+✅ PASSED: user 'areaAdmin_News' is on the "Scheduled Group" page
+✅ PASSED: the user creates a new scheduling group
+✅ PASSED: the scheduling group is visible
+
+HTML Report → npm run report
 ```
 
 ---
 
-# UI Test Execution Flow
+# Complete Test Execution Flow
 
 ---
 
