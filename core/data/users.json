@@ -3,6 +3,7 @@
     "id": 10773,
     "roleid": 1,
     "username": "patans01",
+    "name":"Sameer Patan",
     "area": null,
     "envKey": "SYS_ADMIN_PASSWORD"
   },
@@ -11,6 +12,7 @@
     "id": 10769,
     "roleid": 2,
     "username": "pandec01",
+    "name":"ChandraShekar Pandey",
     "area": "News",
     "envKey": "AREA_ADMIN_PASSWORD"
   },

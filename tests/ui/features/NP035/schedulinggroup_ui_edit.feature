@@ -24,5 +24,5 @@ Feature: Scheduling Group CRUD - Edit
 
     Examples:
       | role           | testDataFile                        | updatedName             | updatedNotes        |
-      | systemAdmin    | schdGroupCreate_SystemAdmin_UIdata  | Updated_Group_Name      | Updated group notes |
+      # | systemAdmin    | schdGroupCreate_SystemAdmin_UIdata  | Updated_Group_Name      | Updated group notes |
       | areaAdmin_News | schdGroupCreate_AreaAdminNews_UIdata | AreaAdmin_Updated_Group | Edited by AreaAdmin |

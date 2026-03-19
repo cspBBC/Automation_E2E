@@ -11,6 +11,9 @@ export let scenarioContext: {
   page: Page | null; 
   scheduledGroupPage: PageObject | null;
   lastCreatedGroupName?: string;
+  lastUpdatedGroupName?: string;
+  lastUpdatedNotes?: string;
+  currentUserAlias?: string;
 } = {
   page: null,
   scheduledGroupPage: null,
@@ -26,6 +29,7 @@ Given(
     
     scenarioContext.page = page;
     scenarioContext.scheduledGroupPage = scheduledGroupPage;
+    scenarioContext.currentUserAlias = userAlias;
     
     console.log(`User '${userAlias}' is on ${pageName} page`);
   },
@@ -41,6 +45,7 @@ When(
     
     scenarioContext.page = page;
     scenarioContext.scheduledGroupPage = scheduledGroupPage;
+    scenarioContext.currentUserAlias = userAlias;
     
     console.log(`User '${userAlias}' navigated to ${pageName} page`);
   },
