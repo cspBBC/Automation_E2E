@@ -169,7 +169,7 @@ Then(
       throw new Error('Current user not available in context');
     }
     
-    const userData = users[userAlias as keyof typeof users];
+    const userData = users[userAlias as keyof typeof users] as Record<string, any>;
     if (!userData) {
       throw new Error(`User '${userAlias}' not found in users.json`);
     }

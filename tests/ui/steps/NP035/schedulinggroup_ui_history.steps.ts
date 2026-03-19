@@ -38,7 +38,7 @@ Then(
     
     // Verify it contains "Scheduling Group" - the core audit trail indicator
     const historyText = await scenarioContext.page.locator('div.popup table.redtable tbody tr td p').allTextContents();
-    const hasSchedulingGroupReference = historyText.some(text => text.includes('Scheduling Group'));
+    const hasSchedulingGroupReference = historyText.some((text: string) => text.includes('Scheduling Group'));
     
     if (!hasSchedulingGroupReference) {
       throw new Error('History does not contain "Scheduling Group" reference');
@@ -57,8 +57,8 @@ Then(
     // Verify "Scheduling Group" + actual timestamp content in history (format: dd/mm/yyyy hh:mm)
     const historyText = await scenarioContext.page.locator('div.popup table.redtable tbody tr td p').allTextContents();
     
-    const hasSchedulingGroup = historyText.some(text => text.includes('Scheduling Group'));
-    const hasTimestamp = historyText.some(text => /\d{2}\/\d{2}\/\d{4}\s\d{2}:\d{2}/.test(text));
+    const hasSchedulingGroup = historyText.some((text: string) => text.includes('Scheduling Group'));
+    const hasTimestamp = historyText.some((text: string) => /\d{2}\/\d{2}\/\d{4}\s\d{2}:\d{2}/.test(text));
     
     if (!hasSchedulingGroup) {
       throw new Error('History does not contain "Scheduling Group" reference');
@@ -80,8 +80,8 @@ Then(
     // Verify "Scheduling Group" + user names appear in history records (e.g., "by ChandraShekar Pandey on")
     const historyText = await scenarioContext.page.locator('div.popup table.redtable tbody tr td p').allTextContents();
     
-    const hasSchedulingGroup = historyText.some(text => text.includes('Scheduling Group'));
-    const hasUserInfo = historyText.some(text => /\sby\s[\w\s]+\son\s/.test(text));
+    const hasSchedulingGroup = historyText.some((text: string) => text.includes('Scheduling Group'));
+    const hasUserInfo = historyText.some((text: string) => /\sby\s[\w\s]+\son\s/.test(text));
     
     if (!hasSchedulingGroup) {
       throw new Error('History does not contain "Scheduling Group" reference');
@@ -103,8 +103,8 @@ Then(
     // Verify "Scheduling Group" + actual change descriptions in history (e.g., "created", "changed notes", "updated")
     const historyText = await scenarioContext.page.locator('div.popup table.redtable tbody tr td p').allTextContents();
     
-    const hasSchedulingGroup = historyText.some(text => text.includes('Scheduling Group'));
-    const hasChangeActions = historyText.some(text => /created|changed|updated|modified/i.test(text));
+    const hasSchedulingGroup = historyText.some((text: string) => text.includes('Scheduling Group'));
+    const hasChangeActions = historyText.some((text: string) => /created|changed|updated|modified/i.test(text));
     
     if (!hasSchedulingGroup) {
       throw new Error('History does not contain "Scheduling Group" reference');
