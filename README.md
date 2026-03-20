@@ -120,34 +120,62 @@ The framework needs `.env` files to know which environment to test and what cred
 ### Create `.env.dev` (Development Environment)
 
 ```bash
-# .env.dev
-UI_BASE_URL=https://your-dev-website.com
-API_BASE_URL=https://your-dev-api.com
-DB_HOST=dev-database.internal
-DB_USER=dev_user
-DB_PASSWORD=dev_password
-SYS_ADMIN_PASSWORD=system_admin_pwd_here
-AREA_ADMIN_PASSWORD=area_admin_pwd_here
-FACILITY_ADMIN_PASSWORD=facility_admin_pwd_here
+# .env.dev - DEV Environment Configuration
+# Database Connection Details
+DB_AUTH_TYPE=sql
+DB_HOST=dev-clus15-lsn1.national.core.bbc.co.uk  # Your dev database server
+DB_NAME=BBCSchedules_WP                           # Your database name
+DB_USER=ALLOCATE-D                               # Database user
+DB_PASSWORD=ALLOCATE-D1                          # Database password
+
+# Application URLs
+API_BASE_URL=https://allocate-dev-wp.national.core.bbc.co.uk/api  # Dev API endpoint
+UI_BASE_URL=https://allocate-dev-wp.national.core.bbc.co.uk      # Dev application URL
+
+# User Credentials (from core/data/users.json)
+SYS_ADMIN_PASSWORD=Jr.ntr@090909                # System Admin password
+AREA_ADMIN_PASSWORD=BBC@2025@                   # Area Admin password
+AREA_ADMIN_1_PASSWORD=your_actual_password      # Additional Area Admin
+REGULAR_USER_PASSWORD=your_actual_password      # Regular user password
+
+ENVIRONMENT=dev                                 # Always "dev" for this file
 ```
+
+**Key Concepts:**
+- `DB_HOST` + `DB_USER` + `DB_PASSWORD` = How to connect to development database
+- `API_BASE_URL` + `UI_BASE_URL` = Where the dev application is hosted
+- Passwords = Must match the users defined in `core/data/users.json`
+- `ENVIRONMENT=dev` = Tells framework to use this file
 
 ### Create `.env.systest` (Staging/System Test Environment)
 
 ```bash
-# .env.systest
-UI_BASE_URL=https://your-staging-website.com
-API_BASE_URL=https://your-staging-api.com
-DB_HOST=systest-database.internal
-DB_USER=systest_user
-DB_PASSWORD=systest_password
-SYS_ADMIN_PASSWORD=system_admin_pwd_here
-AREA_ADMIN_PASSWORD=area_admin_pwd_here
-FACILITY_ADMIN_PASSWORD=facility_admin_pwd_here
+# .env.systest - STAGING Environment Configuration
+# Database Connection Details (Staging/Pre-Production)
+DB_AUTH_TYPE=sql
+DB_HOST=systest-clus15-lsn1.national.core.bbc.co.uk  # Your staging database server
+DB_NAME=BBCSchedules_WP                              # Same database name
+DB_USER=ALLOCATE-SYSTEST                            # Staging database user
+DB_PASSWORD=ALLOCATE-SYSTEST-PWD                    # Staging database password
+
+# Application URLs
+API_BASE_URL=https://allocate-systest-wp.national.core.bbc.co.uk/api  # Staging API endpoint
+UI_BASE_URL=https://allocate-systest-wp.national.core.bbc.co.uk      # Staging app URL
+
+# User Credentials (from core/data/users.json)
+SYS_ADMIN_PASSWORD=Jr.ntr@090909                # System Admin password (same as dev)
+AREA_ADMIN_PASSWORD=BBC@2025@                   # Area Admin password (same as dev)
+AREA_ADMIN_1_PASSWORD=your_actual_password      # Additional Area Admin
+REGULAR_USER_PASSWORD=your_actual_password      # Regular user password
+
+ENVIRONMENT=systest                             # Always "systest" for this file
 ```
 
-**Why two files?** 
-- Developers use `.env.dev` to test locally against development servers
-- CI/CD uses `.env.systest` for staging environment testing before production
+**Key Concepts:**
+- **Same structure as .env.dev** - only the host/URL values differ
+- Uses **staging database server** instead of dev
+- Used by **CI/CD pipelines** for automated testing before production
+- Passwords should be **same as dev** (user accounts replicated between environments)
 
 ## Step 3: Verify Installation
 
@@ -706,6 +734,25 @@ Memory: Each test has isolated context = No collisions ✅
 
 # 7. Test Execution Commands - Complete Reference
 
+## Understanding NPM Scripts & Environments
+
+### Important: Base Scripts vs Environment Variants
+
+Your `package.json` has **two types of scripts:**
+
+| Type | Example | Environment | Use |
+|------|---------|-------------|-----|
+| **Base Scripts** | `npm run _ui:run` | Uses `.env.systest` (default) | Internal - don't use directly |
+| **Environment Variants** | `npm run uidevtest` | Uses `.env.dev` (explicit) | Use these! |
+
+**Why?** Base scripts don't set `ENVIRONMENT`, so they default to `'systest'` in `playwright.config.ts`:
+```typescript
+const environment = loadedEnv || process.env.ENVIRONMENT || 'systest';
+                                                              ↑ DEFAULT
+```
+
+---
+
 ## Local Development
 
 ### Run UI Tests (See the browser - best for debugging)
@@ -715,7 +762,7 @@ npm run uidevtest
 ```
 
 **Configuration:**
-- ✅ Environment: DEV (loads `.env.dev`)
+- ✅ Environment: DEV (loads `.env.dev` explicitly)
 - ✅ Browser: Chrome (HEADED - you see it)
 - ✅ Workers: 1 (tests run one at a time)
 - ✅ Speed: Slower (but easy to debug)
@@ -724,6 +771,15 @@ npm run uidevtest
 - 👨‍💻 Writing new tests
 - 🐛 Debugging failing tests
 - 💪 Testing locally before commit
+
+**⚠️ Common Mistake:**
+```bash
+# ❌ DON'T use this - it uses .env.systest!
+npm run _ui:run
+
+# ✅ DO use this - it uses .env.dev
+npm run uidevtest
+```
 
 **Real output:**
 ```
@@ -832,17 +888,19 @@ npm run report
 
 ## Command Reference Table
 
-| Command | UI | API | Browser | Workers | Environment | Use Case |
-|---------|----|----|---------|---------|-------------|----------|
-| `uidevtest` | ✅ | ❌ | Chrome Headed | 1 | DEV | Local UI debugging |
-| `uisystesttest` | ✅ | ❌ | Chrome Headed | 1 | SYSTEST | Staging validation |
-| `apitest` | ❌ | ✅ | None | 1 | DEV | Local API testing |
-| `apitest:systest` | ❌ | ✅ | None | 1 | SYSTEST | Staging API testing |
-| `test:dev` | ✅ | ✅ | Chrome Headed | 1 | DEV | Full suite locally |
-| `test:systest` | ✅ | ✅ | Chrome Headed | 1 | SYSTEST | Full suite staging |
-| `test` | ✅ | ✅ | Chrome Headed | 1 | SYSTEST | Default full run |
-| `test:ci` | ✅ | ✅ | Chrome Headless | 4 | SYSTEST | CI/CD automation |
-| `report` | - | - | HTML Browser | - | - | View results |
+| Command | UI | API | Browser | Workers | Environment | Use Case | Notes |
+|---------|----|----|---------|---------|-------------|----------|-------|
+| `_ui:run` | ✅ | ❌ | Chrome Headed | 2 | **SYSTEST** | ⚠️ **Don't use** | Base script - uses default env |
+| `_api:run` | ❌ | ✅ | None | 2 | **SYSTEST** | ⚠️ **Don't use** | Base script - uses default env |
+| `uidevtest` | ✅ | ❌ | Chrome Headed | 1 | **DEV** ✅ | Local UI debugging | **Recommended for dev** |
+| `uisystesttest` | ✅ | ❌ | Chrome Headed | 1 | **SYSTEST** | Staging validation | For pre-prod testing |
+| `apitest` | ❌ | ✅ | None | 1 | **DEV** ✅ | Local API testing | **Recommended for dev** |
+| `apitest:systest` | ❌ | ✅ | None | 1 | **SYSTEST** | Staging API testing | For pre-prod testing |
+| `test:dev` | ✅ | ✅ | Chrome Headed | 1 | **DEV** ✅ | Full suite locally | UI + API together |
+| `test:systest` | ✅ | ✅ | Chrome Headed | 1 | **SYSTEST** | Full suite staging | UI + API together |
+| `test` | ✅ | ✅ | Chrome Headed | 1 | **SYSTEST** | Default full run | Alias for test:systest |
+| `test:ci` | ✅ | ✅ | Chrome Headless | 4 | **SYSTEST** | CI/CD automation | GitHub Actions |
+| `report` | - | - | HTML Browser | - | - | View test results | Opens `playwright-report/` |
 
 ---
 
@@ -2091,6 +2149,33 @@ npm run uidevtest -- --reporter=verbose
 3. Parallel workers (CI/CD)
 4. Optimize selectors (faster DOM queries)
 
+## Problem: Tests Run Against Wrong Environment
+
+**Symptoms:**
+- You run a test but it connects to STAGING database (not dev)
+- Tests fail with unfamiliar database names
+- Different password doesn't work
+
+**Root Cause:**
+You used `npm run _ui:run` or `npm run _api:run` (base scripts) instead of environment-specific commands.
+
+**Solution:**
+```bash
+# ❌ WRONG - uses .env.systest by default
+npm run _ui:run
+
+# ✅ CORRECT - explicitly uses .env.dev
+npm run uidevtest
+
+# ✅ ALSO CORRECT - for API tests
+npm run apitest
+```
+
+**How to verify which environment loaded:**
+1. Look at console output when test starts - it prints the environment
+2. Check the database host connecting - is it dev or staging?
+3. Check the URL - is it allocate-dev-wp or allocate-systest-wp?
+
 ## Problem: Credentials Wrong
 
 **Error:**
@@ -2215,6 +2300,21 @@ async createScheduledGroup(filename: string) {
 # 17. FAQ
 
 ## General Questions
+
+### Q: Which command should I use to run tests locally?
+**A:** 
+- **For DEV environment:** `npm run uidevtest` (loads `.env.dev`)
+- **For STAGING environment:** `npm run uisystesttest` (loads `.env.systest`)
+- **Don't use:** `npm run _ui:run` - it defaults to SYSTEST!
+
+**Pro tip:** Always use environment-specific commands:
+```bash
+npm run uidevtest       # ✅ Local dev - uses .env.dev
+npm run apitest         # ✅ Local API - uses .env.dev
+npm run test:dev        # ✅ Full suite - uses .env.dev
+
+npm run _ui:run         # ❌ Defaults to .env.systest (confusing!)
+```
 
 ### Q: How long does a test take?
 **A:** Typically 8-15 seconds per test. Simple tests (UI clicks only) = faster. Complex tests (form filling, waiting) = slower.

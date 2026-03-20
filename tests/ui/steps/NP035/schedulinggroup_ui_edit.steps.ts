@@ -108,12 +108,22 @@ Then(
       throw new Error('Page not available.');
     }
     
-    // Wait for navigation/modal close
-    await scenarioContext.page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {});
+    // Wait for any loading spinners to disappear
+    await scenarioContext.page.locator('[class*="loading"], [class*="spinner"]').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     
-    // Simple: find any visible cell with the updated name
-    await expect(scenarioContext.page.locator('td', { hasText: expectedName })).toBeVisible({ timeout: 10000 });
+    // Scroll table to top to ensure all rows are visible
+    await scenarioContext.page.locator('table tbody').first().evaluate((el: HTMLElement) => el.scrollIntoView()).catch(() => {});
     
+    // Small delay for table re-render
+    await scenarioContext.page.waitForTimeout(500);
+    
+    // Find the specific row with the updated name
+    const updatedRow = scenarioContext.page.locator('table tbody tr').filter({
+      has: scenarioContext.page.locator(`td.scheduling-group-name:has-text("${expectedName}")`)
+    });
+    
+    // Wait for the updated row to appear (table updates after modal closes)
+    await expect(updatedRow).toHaveCount(1, { timeout: 15000 });
     console.log(`Verified scheduling group name is: ${expectedName}`);
   },
 );
@@ -125,7 +135,14 @@ Then(
       throw new Error('Page not available.');
     }
     
-    await scenarioContext.page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {});
+    // Wait for any loading spinners to disappear
+    await scenarioContext.page.locator('[class*="loading"], [class*="spinner"]').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+    
+    // Scroll table to top to ensure all rows are visible
+    await scenarioContext.page.locator('table tbody').first().evaluate((el: HTMLElement) => el.scrollIntoView()).catch(() => {});
+    
+    // Small delay for table re-render
+    await scenarioContext.page.waitForTimeout(500);
     
     const updatedGroupName = scenarioContext.lastUpdatedGroupName;
     if (!updatedGroupName) {
@@ -133,11 +150,11 @@ Then(
     }
     
     // Find row with updated group name, then verify notes are in that row
-    const groupRow = scenarioContext.page.locator('table tbody tr', {
-      has: scenarioContext.page.locator('td', { hasText: updatedGroupName })
+    const groupRow = scenarioContext.page.locator('table tbody tr').filter({
+      has: scenarioContext.page.locator(`td.scheduling-group-name:has-text("${updatedGroupName}")`)
     });
     
-    await expect(groupRow.locator('td', { hasText: expectedNotes })).toBeVisible({ timeout: 10000 });
+    await expect(groupRow.locator('td', { hasText: expectedNotes })).toBeVisible({ timeout: 15000 });
     
     console.log(`✓ Verified notes "${expectedNotes}" for updated group "${updatedGroupName}"`);
   },

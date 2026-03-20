@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "report": "npx playwright show-report",
-    "_ui:run": "npx bddgen && npx playwright test --project=uitest --headed",
+    "_ui:run": "npx bddgen && npx playwright test --project=uitest",
     "_api:run": "npx bddgen && npx playwright test --project=apitest",
     "uidevtest": "cross-env ENVIRONMENT=dev TEST_TYPE=ui npm run _ui:run",
     "uisystesttest": "cross-env ENVIRONMENT=systest TEST_TYPE=ui npm run _ui:run",

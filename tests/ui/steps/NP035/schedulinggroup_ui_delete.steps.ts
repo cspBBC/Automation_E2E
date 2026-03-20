@@ -12,11 +12,20 @@ When(
       throw new Error('Page not available. Did you call the Given step first?');
     }
     
-    // Get the group name - use updated name if available (after edit), otherwise use created name
     const groupName = scenarioContext.lastUpdatedGroupName || scenarioContext.lastCreatedGroupName;
     
-    await scenarioContext.page.locator('.fas.fa-trash-alt').first().click();
-    console.log(`Clicked Delete button for scheduling group: "${groupName}"`);
+    // Find the row with this specific group, then click its delete button
+    const groupRow = scenarioContext.page.locator('table tbody tr').filter({
+      has: scenarioContext.page.locator(`td.scheduling-group-name:has-text("${groupName}")`)
+    });
+    
+    // Wait for the row to be visible and stable (important after edit operations)
+    await expect(groupRow).toHaveCount(1, { timeout: 8000 });
+    await groupRow.scrollIntoViewIfNeeded();
+    
+    const deleteBtn = groupRow.locator('.fas.fa-trash-alt');
+    await deleteBtn.click();
+    console.log(`Clicked Delete button for group: "${groupName}"`);
   },
 );
 
@@ -53,14 +62,14 @@ When(
       throw new Error('Page not available.');
     }
     
-    // Get the group name - use updated name if available (after edit), otherwise use created name
     const groupName = scenarioContext.lastUpdatedGroupName || scenarioContext.lastCreatedGroupName;
     console.log(`Approving deletion for group: "${groupName}"`);
     
-    // Click the "Yes" button using the button ID
     await scenarioContext.page.locator('#approve-delete-scheduling-group-form').click();
     console.log(`✓ Approved deletion for group: "${groupName}"`);
+    
     await scenarioContext.page.waitForLoadState('networkidle');
+    await scenarioContext.page.waitForTimeout(1500);
   },
 );
 
@@ -71,24 +80,18 @@ Then(
       throw new Error('Page not available.');
     }
     
-    // Get the group name - use updated name if available (after edit), otherwise use created name
     const groupName = scenarioContext.lastUpdatedGroupName || scenarioContext.lastCreatedGroupName;
     
     if (groupName) {
-      // Wait for the group row to disappear from the list
-      console.log(`Waiting for group "${groupName}" to disappear from list...`);
+      console.log(`Verifying group "${groupName}" is deleted...`);
       
-      // Use locator-based approach with retry logic - more reliable than waitForFunction
-      const deletedGroupRow = scenarioContext.page.locator('table tbody tr', {
+      const deletedGroupRow = scenarioContext.page.locator('table tbody tr').filter({
         has: scenarioContext.page.locator(`td.scheduling-group-name:has-text("${groupName}")`)
       });
       
-      // Wait for the row to be detached from DOM (max 10 seconds)
-      await expect(deletedGroupRow).toHaveCount(0, { timeout: 10000 });
-      
-      console.log(`✓ Verified: Group "${groupName}" successfully removed from list`);
+      await expect(deletedGroupRow).toHaveCount(0, { timeout: 8000 });
+      console.log(`✓ Verified: Group "${groupName}" removed from list`);
     } else {
-      // Fallback: just verify table is visible
       const tableRows = scenarioContext.page.locator('tbody tr');
       await expect(tableRows).toBeTruthy();
       console.log(`Verified scheduling group removed from list.`);

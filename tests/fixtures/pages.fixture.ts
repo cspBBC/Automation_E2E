@@ -54,9 +54,15 @@ export const test = base.extend<{ loginAs: (role: keyof typeof users) => Promise
     // Provide the fixture to the test
     await use(loginWithRole);
 
-    // Cleanup context after test
+    // Cleanup context after test - add small delay to ensure all async operations complete
     if (currentContext) {
-      await currentContext.close();
+      // Wait a bit for any pending operations before closing
+      await new Promise(resolve => setTimeout(resolve, 500));
+      try {
+        await currentContext.close();
+      } catch (error) {
+        console.warn('Error closing context:', error);
+      }
     }
   },
 

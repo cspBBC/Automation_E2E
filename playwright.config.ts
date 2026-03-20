@@ -95,7 +95,7 @@ export default defineConfig({
       name: 'uitest',
       testDir: './.features-gen/ui',
       testMatch: '**/*.feature.spec.*',
-      workers: process.env.CI ? 4 : 2,  // 2 workers locally for parallel execution
+      workers: process.env.CI ? 4 : 4,  // 2 workers locally for parallel execution
       outputDir: 'test-results/ui',
       use: {
         ...devices['Desktop Chrome'],

@@ -13,15 +13,26 @@ When(
     if (!scenarioContext.page) {
       throw new Error('Page not available. Did you call the Given step first?');
     }
-    // Locator: .fa - History icon in actions column (can be refined to .fa-history or similar)
-    const historyIcons = scenarioContext.page.locator('tr td div .fa');
-    
-    // Click the first history icon available
-    if (await historyIcons.count() > 0) {
-      await historyIcons.first().click();
-      console.log('Clicked History option for scheduling group');
+    // Use the unique group name from context (updated or created)
+    const groupName = scenarioContext.lastUpdatedGroupName || scenarioContext.lastCreatedGroupName;
+    if (!groupName) {
+      throw new Error('No group name found in context.');
+    }
+    // Find the row with this group name
+    const groupRow = scenarioContext.page.locator('table tbody tr').filter({
+      has: scenarioContext.page.locator(`td.scheduling-group-name:has-text("${groupName}")`)
+    });
+    // Wait for the row to be present
+    await expect(groupRow).toHaveCount(1, { timeout: 8000 });
+    // Find the history icon in this row (assume .fa-history or .fa)
+    const historyIcon = groupRow.locator('.fa-history, .fa');
+    if (await historyIcon.count() > 0) {
+      await historyIcon.first().click();
+      console.log(`Clicked History option for group: "${groupName}"`);
+      // Wait a bit for the popup to start appearing after click
+      await scenarioContext.page.waitForTimeout(500);
     } else {
-      throw new Error('History icon not found');
+      throw new Error('History icon not found in row for group: ' + groupName);
     }
   },
 );
@@ -32,18 +43,23 @@ Then(
     if (!scenarioContext.page) {
       throw new Error('Page not available.');
     }
-    // Wait for popup/modal to appear and contain history data
-    const historyContent = scenarioContext.page.locator('div.popup');
+    
+    // Wait for the facebox modal container to appear first
+    await scenarioContext.page.locator('#facebox').waitFor({ state: 'visible', timeout: 10000 });
+    // Now wait for the popup inside facebox
+    await scenarioContext.page.locator('#facebox div.popup').waitFor({ state: 'visible', timeout: 10000 });
+
+    const historyContent = scenarioContext.page.locator('#facebox div.popup');
     await expect(historyContent).toBeVisible();
-    
+
     // Verify it contains "Scheduling Group" - the core audit trail indicator
-    const historyText = await scenarioContext.page.locator('div.popup table.redtable tbody tr td p').allTextContents();
+    const historyText = await scenarioContext.page.locator('#facebox div.popup table.redtable tbody tr td p').allTextContents();
     const hasSchedulingGroupReference = historyText.some((text: string) => text.includes('Scheduling Group'));
-    
+
     if (!hasSchedulingGroupReference) {
       throw new Error('History does not contain "Scheduling Group" reference');
     }
-    
+
     console.log('Verified history popup is displayed with Scheduling Group audit trail');
   },
 );
@@ -54,20 +70,30 @@ Then(
     if (!scenarioContext.page) {
       throw new Error('Page not available.');
     }
-    // Verify "Scheduling Group" + actual timestamp content in history (format: dd/mm/yyyy hh:mm)
-    const historyText = await scenarioContext.page.locator('div.popup table.redtable tbody tr td p').allTextContents();
     
-    const hasSchedulingGroup = historyText.some((text: string) => text.includes('Scheduling Group'));
-    const hasTimestamp = historyText.some((text: string) => /\d{2}\/\d{2}\/\d{4}\s\d{2}:\d{2}/.test(text));
-    
-    if (!hasSchedulingGroup) {
-      throw new Error('History does not contain "Scheduling Group" reference');
+    try {
+      // Ensure popup is still visible before querying
+      await scenarioContext.page.locator('div.popup').waitFor({ state: 'visible', timeout: 5000 }).catch(() => {
+        console.log('Popup visibility check timed out, continuing with query...');
+      });
+      
+      // Verify "Scheduling Group" + actual timestamp content in history (format: dd/mm/yyyy hh:mm)
+      const historyText = await scenarioContext.page.locator('div.popup table.redtable tbody tr td p').allTextContents();
+      
+      const hasSchedulingGroup = historyText.some((text: string) => text.includes('Scheduling Group'));
+      const hasTimestamp = historyText.some((text: string) => /\d{2}\/\d{2}\/\d{4}\s\d{2}:\d{2}/.test(text));
+      
+      if (!hasSchedulingGroup) {
+        throw new Error('History does not contain "Scheduling Group" reference');
+      }
+      if (!hasTimestamp) {
+        throw new Error('No timestamps with correct format (dd/mm/yyyy hh:mm) found in history');
+      }
+      
+      console.log(`Verified "Scheduling Group" and timestamps are present in history`);
+    } catch (error) {
+      throw new Error(`Failed to verify timestamps: ${error}`);
     }
-    if (!hasTimestamp) {
-      throw new Error('No timestamps with correct format (dd/mm/yyyy hh:mm) found in history');
-    }
-    
-    console.log(`Verified "Scheduling Group" and timestamps are present in history`);
   },
 );
 
@@ -77,20 +103,30 @@ Then(
     if (!scenarioContext.page) {
       throw new Error('Page not available.');
     }
-    // Verify "Scheduling Group" + user names appear in history records (e.g., "by ChandraShekar Pandey on")
-    const historyText = await scenarioContext.page.locator('div.popup table.redtable tbody tr td p').allTextContents();
     
-    const hasSchedulingGroup = historyText.some((text: string) => text.includes('Scheduling Group'));
-    const hasUserInfo = historyText.some((text: string) => /\sby\s[\w\s]+\son\s/.test(text));
-    
-    if (!hasSchedulingGroup) {
-      throw new Error('History does not contain "Scheduling Group" reference');
+    try {
+      // Ensure popup is still visible before querying
+      await scenarioContext.page.locator('div.popup').waitFor({ state: 'visible', timeout: 5000 }).catch(() => {
+        console.log('Popup visibility check timed out, continuing with query...');
+      });
+      
+      // Verify "Scheduling Group" + user names appear in history records (e.g., "by ChandraShekar Pandey on")
+      const historyText = await scenarioContext.page.locator('div.popup table.redtable tbody tr td p').allTextContents();
+      
+      const hasSchedulingGroup = historyText.some((text: string) => text.includes('Scheduling Group'));
+      const hasUserInfo = historyText.some((text: string) => /\sby\s[\w\s]+\son\s/.test(text));
+      
+      if (!hasSchedulingGroup) {
+        throw new Error('History does not contain "Scheduling Group" reference');
+      }
+      if (!hasUserInfo) {
+        throw new Error('No user information found in history records');
+      }
+      
+      console.log(`Verified "Scheduling Group" and user names who made changes are present in history`);
+    } catch (error) {
+      throw new Error(`Failed to verify user names: ${error}`);
     }
-    if (!hasUserInfo) {
-      throw new Error('No user information found in history records');
-    }
-    
-    console.log(`Verified "Scheduling Group" and user names who made changes are present in history`);
   },
 );
 
@@ -100,20 +136,30 @@ Then(
     if (!scenarioContext.page) {
       throw new Error('Page not available.');
     }
-    // Verify "Scheduling Group" + actual change descriptions in history (e.g., "created", "changed notes", "updated")
-    const historyText = await scenarioContext.page.locator('div.popup table.redtable tbody tr td p').allTextContents();
     
-    const hasSchedulingGroup = historyText.some((text: string) => text.includes('Scheduling Group'));
-    const hasChangeActions = historyText.some((text: string) => /created|changed|updated|modified/i.test(text));
-    
-    if (!hasSchedulingGroup) {
-      throw new Error('History does not contain "Scheduling Group" reference');
+    try {
+      // Ensure popup is still visible before querying
+      await scenarioContext.page.locator('div.popup').waitFor({ state: 'visible', timeout: 5000 }).catch(() => {
+        console.log('Popup visibility check timed out, continuing with query...');
+      });
+      
+      // Verify "Scheduling Group" + actual change descriptions in history (e.g., "created", "changed notes", "updated")
+      const historyText = await scenarioContext.page.locator('div.popup table.redtable tbody tr td p').allTextContents();
+      
+      const hasSchedulingGroup = historyText.some((text: string) => text.includes('Scheduling Group'));
+      const hasChangeActions = historyText.some((text: string) => /created|changed|updated|modified/i.test(text));
+      
+      if (!hasSchedulingGroup) {
+        throw new Error('History does not contain "Scheduling Group" reference');
+      }
+      if (!hasChangeActions) {
+        throw new Error('No change action descriptions found in history');
+      }
+      
+      console.log(`Verified "Scheduling Group" and change descriptions (created/changed/updated) are present in history`);
+    } catch (error) {
+      throw new Error(`Failed to verify change descriptions: ${error}`);
     }
-    if (!hasChangeActions) {
-      throw new Error('No change action descriptions found in history');
-    }
-    
-    console.log(`Verified "Scheduling Group" and change descriptions (created/changed/updated) are present in history`);
   },
 );
 
