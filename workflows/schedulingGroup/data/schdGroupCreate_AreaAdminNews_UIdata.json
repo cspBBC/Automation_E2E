@@ -1,0 +1,22 @@
+{
+  "group_name": {
+    "type": "text",
+    "value": "Test Scheduling Group_0015",
+    "required": true
+  },
+  "allocations_menu": {
+    "type": "dropdown",
+    "value": "0",
+    "label": "No",
+    "required": true
+  },
+  "notes": {
+    "type": "textarea",
+    "value": "This is a test scheduling group created for UI automation testing purposes.",
+    "required": true
+  },
+  "submit-create-scheduling-form": {
+    "type": "button",
+    "value": "Submit"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "schd-group-create": {
+    "name": "SG_SystemAdmin_Test_<timestamp>",
+    "area": 10,
+    "allocations_menu": true,
+    "notes": "Created by System Admin test"
+  }
+}

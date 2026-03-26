@@ -1,0 +1,37 @@
+{
+  "name": "poc_bbc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "report": "npx playwright show-report",
+    "_ui:run": "npx bddgen && npx playwright test --project=uitest",
+    "_api:run": "npx bddgen && npx playwright test --project=apitest",
+    "uidevtest": "cross-env ENVIRONMENT=dev TEST_TYPE=ui npm run _ui:run",
+    "uisystesttest": "cross-env ENVIRONMENT=systest TEST_TYPE=ui npm run _ui:run",
+    "apitest": "cross-env ENVIRONMENT=dev TEST_TYPE=api npm run _api:run",
+    "apitest:systest": "cross-env ENVIRONMENT=systest TEST_TYPE=api npm run _api:run",
+    "test": "npm run test:systest",
+    "test:systest": "npm run apitest:systest && npm run uisystesttest",
+    "test:dev": "npm run apitest && npm run uidevtest",
+    "test:ci": "cross-env ENVIRONMENT=systest TEST_TYPE=api npx bddgen && cross-env ENVIRONMENT=systest TEST_TYPE=ui npx bddgen && npx playwright test --project=apitest && npx playwright test --project=uitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/mssql": "^9.1.9",
+    "@types/node": "^25.2.3",
+    "cross-env": "^10.1.0",
+    "http-server": "^14.1.1",
+    "playwright-bdd": "^8.4.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "mssql": "^12.2.0"
+  }
+}
