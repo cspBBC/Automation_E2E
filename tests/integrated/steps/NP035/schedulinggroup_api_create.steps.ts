@@ -1,15 +1,14 @@
 
 import { createBdd } from 'playwright-bdd';
 import { test, expect } from '@fixtures/fixture';
-import { APIResponse, Page, BrowserContext } from '@playwright/test';
-import { SessionManager } from '@core/auth/sessionManager';
+import { APIResponse, BrowserContext, Page } from '@playwright/test';
 import users from '@core/data/users.json' with { type: 'json' };
 
 const { Given, When, Then } = createBdd(test);
 
-let lastResponse: APIResponse;
-let apiPage: Page | null = null;
+let lastResponse: APIResponse | null = null;
 let authContext: BrowserContext | null = null;
+let apiPage: Page | null = null;
 
 Given('user {string} is authenticated', async ({ browser }, userAlias: string) => {
   const user = (users as any)[userAlias];
@@ -24,10 +23,11 @@ Given('user {string} is authenticated', async ({ browser }, userAlias: string) =
 
   console.log(`🔐 Authenticating user: ${user.username}`);
 
-  // Create browser context
+  // Create browser context for authentication
   authContext = await browser.newContext({
     ignoreHTTPSErrors: true,
   });
+  
   apiPage = await authContext.newPage();
 
   // Login URL with embedded credentials - this establishes NTLM session
@@ -38,22 +38,9 @@ Given('user {string} is authenticated', async ({ browser }, userAlias: string) =
   await apiPage.waitForLoadState('networkidle');
 
   console.log(`✅ Login successful - NTLM session established`);
-
-  // Capture auth data for logging
-  const storageState = await authContext.storageState();
-  const cookies = storageState.cookies.map(c => `${c.name}=${c.value}`).join('; ');
-
-  console.log(`📦 Captured authentication data:`);
-  console.log(`   - Cookies count: ${storageState.cookies.length}`);
-  console.log(`   - Storage: ${Object.keys(storageState).join(', ')}`);
-
-  // Save session for reuse
-  const sessionManager = new SessionManager(userAlias);
-  await sessionManager.saveSession(authContext, user.username, user.id);
-  console.log(`💾 Session saved to .auth/${userAlias}.json`);
 });
 
-When('the system admin requests to view all Scheduling Groups', async ({ browser }) => {
+When('the system admin requests to view all Scheduling Groups', async () => {
   if (!apiPage) {
     throw new Error('Not authenticated. Run "Given user is authenticated" first.');
   }
@@ -65,14 +52,17 @@ When('the system admin requests to view all Scheduling Groups', async ({ browser
   console.log(`📤 GET ${apiUrl}`);
   console.log(`📋 Using page.goto() which handles NTLM natively`);
 
-  // Navigate page to endpoint - page.goto() automatically handles NTLM authentication
-  // No need for separate API request because the browser handles the auth
+  // Use page.goto() for NTLM auth (not page.request which loses NTLM negotiation)
   lastResponse = await apiPage.goto(apiUrl);
 
   console.log(`📥 Response Status: ${lastResponse?.status()}`);
 });
 
 Then('the response status code should be {int}', async ({}, expectedStatus: number) => {
+  if (!lastResponse) {
+    throw new Error('No response available. Run "When" step first.');
+  }
+
   const actualStatus = lastResponse.status();
   console.log(`Response Status: ${actualStatus}`);
   
