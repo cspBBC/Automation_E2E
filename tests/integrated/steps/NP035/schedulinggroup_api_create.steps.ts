@@ -1,31 +1,82 @@
 
-// import { createBdd } from 'playwright-bdd';
-// import { test, expect } from '@fixtures/test.fixture';
+import { createBdd } from 'playwright-bdd';
+import { test, expect } from '@fixtures/fixture';
+import { APIResponse, Page, BrowserContext } from '@playwright/test';
+import { SessionManager } from '@core/auth/sessionManager';
+import users from '@core/data/users.json' with { type: 'json' };
+import path from 'path';
 
+const { Given, When, Then } = createBdd(test);
 
-// const { Given, When, Then } = createBdd(test);
+let lastResponse: APIResponse;
+let browserContext: BrowserContext | null = null;
+let browserPage: Page | null = null;
 
-// Given('user {string} is authenticated', async ({}, arg: string) => {
-//   // Step: Given user 'systemAdmin' is authenticated
-//   // From: tests\integrated\features\NP035\schedulinggroup_api_create.feature:5:5
-// });
+async function loginAndCapture(browser: any, userAlias: string) {
+  const user = (users as any)[userAlias];
+  if (!user) {
+    throw new Error(`User '${userAlias}' not found in users.json`);
+  }
 
-// When('the system admin requests to view all Scheduling Groups', async ({}) => {
-//   // Step: When the system admin requests to view all Scheduling Groups
-//   // From: tests\integrated\features\NP035\schedulinggroup_api_create.feature:6:5
-// });
+  const password = process.env[user.envKey];
+  if (!password) {
+    throw new Error(`Password not found in .env for key: ${user.envKey}`);
+  }
 
-// Then('the response status code should be {int}', async ({}, arg: number) => {
-//   // Step: Then the response status code should be 200
-//   // From: tests\integrated\features\NP035\schedulinggroup_api_create.feature:7:5
-// });
+  const baseURL = process.env.UI_BASE_URL!;
+  const url = new URL(baseURL);
+  const encodedUsername = encodeURIComponent(user.username);
+  const encodedPassword = encodeURIComponent(password);
+  const urlWithAuth = `${url.protocol}//${encodedUsername}:${encodedPassword}@${url.host}${url.pathname}`;
 
-// Then('the response should contain Scheduling Group with ID {int}', async ({}, arg: number) => {
-//   // Step: And the response should contain Scheduling Group with ID 19
-//   // From: tests\integrated\features\NP035\schedulinggroup_api_create.feature:8:5
-// });
+  // Create and keep browser context alive with HTTPS error handling
+  browserContext = await browser.newContext({
+    ignoreHTTPSErrors: true,
+  });
+  browserPage = await browserContext.newPage();
 
-// Then('the Scheduling Groups list should be retrieved from database', async ({}) => {
-//   // Step: And the Scheduling Groups list should be retrieved from database
-//   // From: tests\integrated\features\NP035\schedulinggroup_api_create.feature:10:5
-// });
+  console.log(`🌐 Logging in via browser: ${user.username}`);
+  await browserPage.goto(urlWithAuth);
+  await browserPage.waitForLoadState('networkidle');
+
+  // Save the session for reuse in other tests
+  const sessionManager = new SessionManager(userAlias);
+  await sessionManager.saveSession(browserContext, user.username, user.id);
+  console.log(`✅ Session captured and saved`);
+
+  return browserContext;
+}
+
+Given('user {string} is authenticated', async ({ browser }, userAlias: string) => {
+  const sessionManager = new SessionManager(userAlias);
+  
+  if (sessionManager.isSessionValid()) {
+    console.log(`📦 Reusing existing session, but opening new browser context for API calls`);
+  } else {
+    console.log(`🔓 No session found, capturing from browser login`);
+  }
+
+  // Always login via browser to get authenticated context for API
+  browserContext = await loginAndCapture(browser, userAlias);
+  console.log(`✅ Authenticated as: ${userAlias} (via browser context)`);
+});
+
+When('the system admin requests to view all Scheduling Groups', async ({ browser }) => {
+  if (!browserContext || !browserPage) {
+    throw new Error('Browser context not initialized. Must authenticate first.');
+  }
+
+  console.log(`📞 GET /mvc-app/admin/scheduling-group (using browser context)`);
+  
+  // Use the authenticated browser context to make API request
+  const apiBaseUrl = process.env.API_BASE_URL!;
+  const fullUrl = `${apiBaseUrl}/mvc-app/admin/scheduling-group`;
+  
+  lastResponse = await browserContext.request.get(fullUrl);
+});
+
+Then('the response status code should be {int}', async ({}, expectedStatus: number) => {
+  const actualStatus = lastResponse.status();
+  console.log(`Response Status: ${actualStatus}`);
+  expect(actualStatus).toBe(expectedStatus);
+});

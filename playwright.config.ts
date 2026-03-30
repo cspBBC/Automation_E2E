@@ -48,7 +48,7 @@ if (testType === 'api') {
     ],
     steps: [
       'tests/integrated/steps/**/*.steps.ts',
-      'tests/fixtures/test.fixture.ts',
+      'tests/fixtures/fixture.ts',
     ],
     outputDir: '.features-gen/api',
   });

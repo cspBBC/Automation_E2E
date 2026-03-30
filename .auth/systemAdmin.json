@@ -1,0 +1,93 @@
+{
+  "cookies": [
+    {
+      "name": "PHPSESSID",
+      "value": "574d904d26c6f1b786239f7fa7ffe794",
+      "domain": "allocate-systest-wp.national.core.bbc.co.uk",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "editWeeklyUserNetLogin",
+      "value": "patans01",
+      "domain": "allocate-systest-wp.national.core.bbc.co.uk",
+      "path": "/",
+      "expires": 1774966045.838541,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "editWeeklyUserId",
+      "value": "10801",
+      "domain": "allocate-systest-wp.national.core.bbc.co.uk",
+      "path": "/",
+      "expires": 1774966045.838581,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "editWeeklyUserFullName",
+      "value": "Sameer%20Patan",
+      "domain": "allocate-systest-wp.national.core.bbc.co.uk",
+      "path": "/",
+      "expires": 1774966045.83861,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "storageState": {
+    "cookies": [
+      {
+        "name": "PHPSESSID",
+        "value": "574d904d26c6f1b786239f7fa7ffe794",
+        "domain": "allocate-systest-wp.national.core.bbc.co.uk",
+        "path": "/",
+        "expires": -1,
+        "httpOnly": false,
+        "secure": false,
+        "sameSite": "Lax"
+      },
+      {
+        "name": "editWeeklyUserNetLogin",
+        "value": "patans01",
+        "domain": "allocate-systest-wp.national.core.bbc.co.uk",
+        "path": "/",
+        "expires": 1774966045.838541,
+        "httpOnly": false,
+        "secure": false,
+        "sameSite": "Lax"
+      },
+      {
+        "name": "editWeeklyUserId",
+        "value": "10801",
+        "domain": "allocate-systest-wp.national.core.bbc.co.uk",
+        "path": "/",
+        "expires": 1774966045.838581,
+        "httpOnly": false,
+        "secure": false,
+        "sameSite": "Lax"
+      },
+      {
+        "name": "editWeeklyUserFullName",
+        "value": "Sameer%20Patan",
+        "domain": "allocate-systest-wp.national.core.bbc.co.uk",
+        "path": "/",
+        "expires": 1774966045.83861,
+        "httpOnly": false,
+        "secure": false,
+        "sameSite": "Lax"
+      }
+    ],
+    "origins": []
+  },
+  "username": "patans01",
+  "userId": 10773,
+  "createdAt": "2026-03-30T14:07:28.184Z",
+  "expiresAt": "2026-03-31T14:07:28.184Z"
+}

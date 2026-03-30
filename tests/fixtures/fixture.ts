@@ -4,12 +4,14 @@ import {
   request,
   APIRequestContext,
   APIResponse,
+  Browser,
 } from '@playwright/test';
 import sql from 'mssql';
 import { getDbPool } from '@core/db/connection'
 import { ApiClient, RequestOptions } from '@core/api/apiClient';
 import { readJSON } from '@helpers/readJson';
 import { verifyUser } from '@core/db/dbseed';
+import { SessionManager } from '@core/auth/sessionManager';
 import path from 'path';
 
 // Wrapper to maintain authentication headers across requests
@@ -62,7 +64,7 @@ type TestFixtures = {
   request: APIRequestContext;
   apiClient: AuthenticatedApiClient;
   db: sql.ConnectionPool;
-  authenticateAs: (userId: number) => Promise<void>;
+  authenticateAs: (userAlias: string) => Promise<void>;
   ensureUserExists: (userAlias: string) => Promise<{ id: number; username: string }>;
 };
 
@@ -71,6 +73,7 @@ export const test = bddTest.extend<TestFixtures>({
   apiClient: async ({}, use) => {
     const ctx = await request.newContext({
       baseURL: process.env.API_BASE_URL,
+      ignoreHTTPSErrors: true,
     });
 
     const baseClient = new ApiClient(ctx);
@@ -79,31 +82,40 @@ export const test = bddTest.extend<TestFixtures>({
     await ctx.dispose();
   },
 
-  // Authentication method - Basic Auth using credentials from .env
+  // Authentication method - tries session first, then falls back to Basic Auth
   authenticateAs: async ({ apiClient }, use) => {
-    await use(async (userId: number) => {
-      // Load users data
+    await use(async (userAlias: string) => {
       const usersData = await readJSON(path.resolve(process.cwd(), 'core/data/users.json'));
-      
-      // Find user by ID
-      let user = Object.values(usersData).find((u: any) => u.id === userId);
-      
+      const user = (usersData as any)[userAlias];
+
       if (!user) {
-        throw new Error(`User with ID ${userId} not found in core/data/users.json`);
+        throw new Error(`User '${userAlias}' not found in core/data/users.json`);
       }
 
-      // Get password from .env using envKey (e.g., SYS_ADMIN_PASSWORD)
-      const passwordEnvKey = `${user.envKey}_PASSWORD`;
-      const password = process.env[passwordEnvKey];
-      
+      const sessionManager = new SessionManager(userAlias);
+
+      // Try to load session from browser login (if exists)
+      const cookies = sessionManager.getCookies();
+      if (cookies) {
+        console.log(`📦 Using saved session cookies for user: ${userAlias}`);
+        apiClient.setAuthHeaders({
+          'Cookie': cookies,
+        });
+        return;
+      }
+
+      // Fallback: Use Basic Auth if no session exists yet
+      console.log(`🔓 Using Basic Auth for user: ${userAlias}`);
+      const password = process.env[user.envKey];
+
       if (!password) {
-        throw new Error(`Password not found in .env. Expected env variable: ${passwordEnvKey}`);
+        throw new Error(`Password not found in .env. Expected env variable: ${user.envKey}`);
       }
 
-      // Basic Auth: encode username:password in Base64
       const credentials = btoa(`${user.username}:${password}`);
       apiClient.setAuthHeaders({ 'Authorization': `Basic ${credentials}` });
-      console.log(`🔐 Authenticated as user ${userId} (${user.username})`);
+
+      console.log(`🔐 Authenticated as user ${user.id} (${user.username})`);
     });
   },
 
