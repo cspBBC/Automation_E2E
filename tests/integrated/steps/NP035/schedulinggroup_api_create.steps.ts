@@ -66,13 +66,21 @@ When('the system admin requests to view all Scheduling Groups', async ({ browser
     throw new Error('Browser context not initialized. Must authenticate first.');
   }
 
-  console.log(`📞 GET /mvc-app/admin/scheduling-group (using browser context)`);
+  console.log(`📞 GET /mvc-app/admin/scheduling-group (using embedded credentials)`);
   
-  // Use the authenticated browser context to make API request
-  const apiBaseUrl = process.env.API_BASE_URL!;
-  const fullUrl = `${apiBaseUrl}/mvc-app/admin/scheduling-group`;
+  // Get user credentials from users.json
+  const user = (users as any)['systemAdmin'];
+  const password = process.env[user.envKey];
   
-  lastResponse = await browserContext.request.get(fullUrl);
+  // Build URL with embedded credentials
+  const baseURL = process.env.UI_BASE_URL!;
+  const url = new URL(baseURL);
+  const encodedUsername = encodeURIComponent(user.username);
+  const encodedPassword = encodeURIComponent(password);
+  const urlWithAuth = `${url.protocol}//${encodedUsername}:${encodedPassword}@${url.host}/mvc-app/admin/scheduling-group`;
+  
+  // Make API request with embedded credentials
+  lastResponse = await browserContext.request.get(urlWithAuth);
 });
 
 Then('the response status code should be {int}', async ({}, expectedStatus: number) => {
