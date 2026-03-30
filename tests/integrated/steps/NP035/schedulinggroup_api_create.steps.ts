@@ -58,22 +58,18 @@ When('the system admin requests to view all Scheduling Groups', async ({ browser
     throw new Error('Not authenticated. Run "Given user is authenticated" first.');
   }
 
-  console.log(`📞 Making API request using authenticated page session`);
+  console.log(`📞 Requesting Scheduling Groups endpoint`);
 
   const apiUrl = 'https://allocate-systest-wp.national.core.bbc.co.uk/mvc-app/admin/scheduling-group';
   
-  console.log(`📤 First navigating page to: ${apiUrl}`);
-  // Navigate page to the endpoint first to establish full auth context
-  await apiPage.goto(apiUrl);
-  await apiPage.waitForLoadState('networkidle');
-  
-  console.log(`📤 Now making GET request with page.request`);
-  console.log(`📋 Using page.request (inherits full NTLM session from browser)`);
+  console.log(`📤 GET ${apiUrl}`);
+  console.log(`📋 Using page.goto() which handles NTLM natively`);
 
-  // Now make the API call - should have full auth context
-  lastResponse = await apiPage.request.get(apiUrl);
+  // Navigate page to endpoint - page.goto() automatically handles NTLM authentication
+  // No need for separate API request because the browser handles the auth
+  lastResponse = await apiPage.goto(apiUrl);
 
-  console.log(`📥 Response Status: ${lastResponse.status()}`);
+  console.log(`📥 Response Status: ${lastResponse?.status()}`);
 });
 
 Then('the response status code should be {int}', async ({}, expectedStatus: number) => {

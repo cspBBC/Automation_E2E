@@ -2,7 +2,7 @@
   "cookies": [
     {
       "name": "PHPSESSID",
-      "value": "7e548bd03ab5cb83b1736eef6d4009db",
+      "value": "45e5f093457f56695146ba568e2ef501",
       "domain": "allocate-systest-wp.national.core.bbc.co.uk",
       "path": "/",
       "expires": -1,
@@ -15,7 +15,7 @@
       "value": "patans01",
       "domain": "allocate-systest-wp.national.core.bbc.co.uk",
       "path": "/",
-      "expires": 1774966516.495931,
+      "expires": 1774966565.79194,
       "httpOnly": false,
       "secure": false,
       "sameSite": "Lax"
@@ -25,7 +25,7 @@
       "value": "10801",
       "domain": "allocate-systest-wp.national.core.bbc.co.uk",
       "path": "/",
-      "expires": 1774966516.495975,
+      "expires": 1774966565.791985,
       "httpOnly": false,
       "secure": false,
       "sameSite": "Lax"
@@ -35,7 +35,7 @@
       "value": "Sameer%20Patan",
       "domain": "allocate-systest-wp.national.core.bbc.co.uk",
       "path": "/",
-      "expires": 1774966516.496002,
+      "expires": 1774966565.792012,
       "httpOnly": false,
       "secure": false,
       "sameSite": "Lax"
@@ -45,7 +45,7 @@
     "cookies": [
       {
         "name": "PHPSESSID",
-        "value": "7e548bd03ab5cb83b1736eef6d4009db",
+        "value": "45e5f093457f56695146ba568e2ef501",
         "domain": "allocate-systest-wp.national.core.bbc.co.uk",
         "path": "/",
         "expires": -1,
@@ -58,7 +58,7 @@
         "value": "patans01",
         "domain": "allocate-systest-wp.national.core.bbc.co.uk",
         "path": "/",
-        "expires": 1774966516.495931,
+        "expires": 1774966565.79194,
         "httpOnly": false,
         "secure": false,
         "sameSite": "Lax"
@@ -68,7 +68,7 @@
         "value": "10801",
         "domain": "allocate-systest-wp.national.core.bbc.co.uk",
         "path": "/",
-        "expires": 1774966516.495975,
+        "expires": 1774966565.791985,
         "httpOnly": false,
         "secure": false,
         "sameSite": "Lax"
@@ -78,7 +78,7 @@
         "value": "Sameer%20Patan",
         "domain": "allocate-systest-wp.national.core.bbc.co.uk",
         "path": "/",
-        "expires": 1774966516.496002,
+        "expires": 1774966565.792012,
         "httpOnly": false,
         "secure": false,
         "sameSite": "Lax"
@@ -88,6 +88,6 @@
   },
   "username": "patans01",
   "userId": 10773,
-  "createdAt": "2026-03-30T14:15:19.230Z",
-  "expiresAt": "2026-03-31T14:15:19.230Z"
+  "createdAt": "2026-03-30T14:16:08.221Z",
+  "expiresAt": "2026-03-31T14:16:08.221Z"
 }
