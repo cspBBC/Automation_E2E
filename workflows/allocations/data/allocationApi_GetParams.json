@@ -1,0 +1,24 @@
+{
+  "allocation-view-default": {
+    "DutyName": "Test POC test",
+    "StartTime": "00:15",
+    "EndTime": "00:45",
+    "breakTimeHour": "0",
+    "breakTimeMinute": "0",
+    "dutyColorId": "1",
+    "isNeedCovering": "on",
+    "DutyDate": "2026-03-23",
+    "DutyID": "34432",
+    "ID": "34432",
+    "allocationsDutyId": "6752148",
+    "allocationsSpId": "5822036",
+    "allocationsDate": "2026-03-23",
+    "allocationsSchPer": "9441",
+    "SchedulingPersonID": "9441",
+    "SchedulingTeamID": "14",
+    "isPublished": "0",
+    "isEdited": "0",
+    "currDurationVal": "00:30",
+    "miscDuty": "No"
+  }
+}
