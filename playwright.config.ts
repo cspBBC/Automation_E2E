@@ -115,6 +115,7 @@ export default defineConfig({
       use: {
         baseURL: process.env.API_BASE_URL,
         browserName: undefined,  // No browser for API tests
+        ignoreHTTPSErrors: true, // Ignore SSL certificate errors for test environment
       },
     },
 
