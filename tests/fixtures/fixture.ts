@@ -93,7 +93,7 @@ export const test = bddTest.extend<TestFixtures>({
   },
 
   // NTLM authentication via browser context and page.goto()
-  // Supports NTLM protocol negotiation at browser level
+  // page.goto() maintains NTLM session socket - only approach that works
   authenticateWithNtlm: async ({ browser }, use) => {
     let authContext: any = null;
     let apiPage: any = null;
@@ -121,7 +121,7 @@ export const test = bddTest.extend<TestFixtures>({
       const baseUrl = new URL(process.env.API_BASE_URL || 'https://allocate-systest-wp.national.core.bbc.co.uk');
       const encodedPassword = encodeURIComponent(password);
       
-      // Try UPN format first (sameer.patan.ext@bbc.co.uk), fallback to username
+      // Try UPN format first, fallback to username
       const authUsername = user.upn || user.username;
       const loginUrl = `https://${authUsername}:${encodedPassword}@${baseUrl.hostname}/`;
 
