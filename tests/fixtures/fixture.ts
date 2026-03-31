@@ -8,81 +8,34 @@ import {
 } from '@playwright/test';
 import sql from 'mssql';
 import { getDbPool } from '@core/db/connection'
-import { ApiClient, RequestOptions } from '@core/api/apiClient';
+import { ApiClient } from '@core/api/apiClient';
 import { readJSON } from '@helpers/readJson';
 import { verifyUser } from '@core/db/dbseed';
-import { SessionManager } from '@core/auth/sessionManager';
 import path from 'path';
-
-// Wrapper to maintain authentication headers across requests
-class AuthenticatedApiClient {
-  private authHeaders: Record<string, string> = {};
-
-  constructor(private client: ApiClient) {}
-
-  setAuthHeaders(headers: Record<string, string>) {
-    this.authHeaders = headers;
-  }
-
-  get(url: string, options?: RequestOptions): Promise<APIResponse> {
-    return this.client.get(url, {
-      ...options,
-      headers: { ...this.authHeaders, ...options?.headers },
-    });
-  }
-
-  post<T>(url: string, payload?: T, options?: RequestOptions): Promise<APIResponse> {
-    return this.client.post(url, payload, {
-      ...options,
-      headers: { ...this.authHeaders, ...options?.headers },
-    });
-  }
-
-  put<T>(url: string, payload?: T, options?: RequestOptions): Promise<APIResponse> {
-    return this.client.put(url, payload, {
-      ...options,
-      headers: { ...this.authHeaders, ...options?.headers },
-    });
-  }
-
-  delete(url: string, options?: RequestOptions): Promise<APIResponse> {
-    return this.client.delete(url, {
-      ...options,
-      headers: { ...this.authHeaders, ...options?.headers },
-    });
-  }
-
-  patch<T>(url: string, payload?: T, options?: RequestOptions): Promise<APIResponse> {
-    return this.client.patch(url, payload, {
-      ...options,
-      headers: { ...this.authHeaders, ...options?.headers },
-    });
-  }
-}
 
 type TestFixtures = {
   request: APIRequestContext;
-  apiClient: AuthenticatedApiClient;
+  apiClient: ApiClient;
   db: sql.ConnectionPool;
   authenticateAs: (userAlias: string) => Promise<void>;
   ensureUserExists: (userAlias: string) => Promise<{ id: number; username: string }>;
+  authenticateWithNtlm: (userAlias: string) => Promise<{ apiPage: any; authContext: any }>;
 };
 
 export const test = bddTest.extend<TestFixtures>({
-  // Base API client - use with X-User-Id header for authentication
+  // Base API client with auth header support
   apiClient: async ({}, use) => {
     const ctx = await request.newContext({
       baseURL: process.env.API_BASE_URL,
       ignoreHTTPSErrors: true,
     });
 
-    const baseClient = new ApiClient(ctx);
-    const authenticatedClient = new AuthenticatedApiClient(baseClient);
-    await use(authenticatedClient);
+    const client = new ApiClient(ctx);
+    await use(client);
     await ctx.dispose();
   },
 
-  // Authentication method - tries session first, then falls back to Basic Auth
+  // Authentication method - uses Basic Auth for API requests
   authenticateAs: async ({ apiClient }, use) => {
     await use(async (userAlias: string) => {
       const usersData = await readJSON(path.resolve(process.cwd(), 'core/data/users.json'));
@@ -92,19 +45,6 @@ export const test = bddTest.extend<TestFixtures>({
         throw new Error(`User '${userAlias}' not found in core/data/users.json`);
       }
 
-      const sessionManager = new SessionManager(userAlias);
-
-      // Try to load session from browser login (if exists)
-      const cookies = sessionManager.getCookies();
-      if (cookies) {
-        console.log(`📦 Using saved session cookies for user: ${userAlias}`);
-        apiClient.setAuthHeaders({
-          'Cookie': cookies,
-        });
-        return;
-      }
-
-      // Fallback: Use Basic Auth if no session exists yet
       console.log(`🔓 Using Basic Auth for user: ${userAlias}`);
       const password = process.env[user.envKey];
 
@@ -150,6 +90,53 @@ export const test = bddTest.extend<TestFixtures>({
       await verifyUser(db, user);
       return user;
     });
+  },
+
+  // NTLM authentication with browser context - for API tests requiring NTLM
+  authenticateWithNtlm: async ({ browser }, use) => {
+    let authContext: any = null;
+    let apiPage: any = null;
+
+    await use(async (userAlias: string) => {
+      const usersData = await readJSON(path.resolve(process.cwd(), 'core/data/users.json'));
+      const user = (usersData as any)[userAlias];
+
+      if (!user) {
+        throw new Error(`User '${userAlias}' not found in users.json`);
+      }
+
+      const password = process.env[user.envKey];
+      if (!password) {
+        throw new Error(`Password not found in .env for key: ${user.envKey}`);
+      }
+
+      console.log(`🔐 Authenticating user: ${user.username}`);
+
+      authContext = await browser.newContext({
+        ignoreHTTPSErrors: true,
+      });
+
+      apiPage = await authContext.newPage();
+      const baseUrl = new URL(process.env.API_BASE_URL || 'https://allocate-systest-wp.national.core.bbc.co.uk');
+      const loginUrl = `https://${user.username}:${password}@${baseUrl.hostname}/`;
+
+      const response = await apiPage.request.get(loginUrl);
+
+      if (response.status() !== 200) {
+        throw new Error(`Failed to authenticate user '${userAlias}'. Status: ${response.status()}`);
+      }
+
+      console.log(`✅ NTLM session established for ${user.username}`);
+      return { apiPage, authContext };
+    });
+
+    // Cleanup after test
+    if (apiPage) {
+      await apiPage.close();
+    }
+    if (authContext) {
+      await authContext.close();
+    }
   },
 });
 
