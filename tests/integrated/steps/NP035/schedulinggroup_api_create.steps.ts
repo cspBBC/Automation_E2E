@@ -24,7 +24,7 @@ When('the system admin requests to view all Scheduling Groups', async () => {
   const apiUrl = `${process.env.API_BASE_URL}/mvc-app/admin/scheduling-group`;
   console.log(`📤 GET ${apiUrl}`);
 
-  // Use page.goto() via authenticated NTLM session
+  // Use page.goto() via authenticated NTLM session (NTLM protocol negotiation)
   lastResponse = await apiPage.goto(apiUrl);
 
   console.log(`📥 Response Status: ${lastResponse?.status()}`);
