@@ -11,7 +11,7 @@ let apiPage: any = null;
 Given('user {string} is authenticated', async ({ authenticateWithNtlm }, userAlias: string) => {
   // Get the authenticated page (NTLM context established)
   apiPage = await authenticateWithNtlm(userAlias);
-  console.log(`🔒 Ready to make authenticated requests as ${userAlias}`);
+  console.log(`Ready to make authenticated requests as ${userAlias}`);
 });
 
 When('the system admin requests to view all Scheduling Groups', async () => {
@@ -19,15 +19,15 @@ When('the system admin requests to view all Scheduling Groups', async () => {
     throw new Error('Not authenticated. Run "Given user is authenticated" first.');
   }
 
-  console.log(`📞 Requesting Scheduling Groups endpoint`);
+  console.log(`Requesting Scheduling Groups endpoint`);
 
   const apiUrl = `${process.env.API_BASE_URL}/mvc-app/admin/scheduling-group`;
-  console.log(`📤 GET ${apiUrl}`);
+  console.log(`GET ${apiUrl}`);
 
   // Use apiPage.goto() (NTLM stays in browser context)
   lastResponse = await apiPage.goto(apiUrl);
 
-  console.log(`📥 Response Status: ${lastResponse?.status()}`);
+  console.log(`Response Status: ${lastResponse?.status()}`);
 });
 
 Then('the response status code should be {int}', async ({ }, expectedStatus: number) => {
