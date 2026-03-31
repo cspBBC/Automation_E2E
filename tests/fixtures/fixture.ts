@@ -118,9 +118,11 @@ export const test = bddTest.extend<TestFixtures>({
 
       apiPage = await authContext.newPage();
       const baseUrl = new URL(process.env.API_BASE_URL || 'https://allocate-systest-wp.national.core.bbc.co.uk');
-      const loginUrl = `https://${user.username}:${password}@${baseUrl.hostname}/`;
+      const encodedPassword = encodeURIComponent(password);
+      const loginUrl = `https://${user.username}:${encodedPassword}@${baseUrl.hostname}/`;
 
-      const response = await apiPage.request.get(loginUrl);
+      // Use goto() for NTLM - it handles the negotiation properly, not request.get()
+      const response = await apiPage.goto(loginUrl);
 
       if (response.status() !== 200) {
         throw new Error(`Failed to authenticate user '${userAlias}'. Status: ${response.status()}`);
