@@ -19,7 +19,7 @@ type TestFixtures = {
   db: sql.ConnectionPool;
   authenticateAs: (userAlias: string) => Promise<void>;
   ensureUserExists: (userAlias: string) => Promise<{ id: number; username: string }>;
-  authenticateWithNtlm: (userAlias: string) => Promise<{ apiPage: any; authContext: any }>;
+  authenticateWithNtlm: (userAlias: string) => Promise<any>;
 };
 
 export const test = bddTest.extend<TestFixtures>({
@@ -92,7 +92,7 @@ export const test = bddTest.extend<TestFixtures>({
     });
   },
 
-  // NTLM authentication with browser context - for API tests requiring NTLM
+  // NTLM authentication via browser context - returns apiPage.request for authenticated HTTP calls
   authenticateWithNtlm: async ({ browser }, use) => {
     let authContext: any = null;
     let apiPage: any = null;
@@ -110,7 +110,7 @@ export const test = bddTest.extend<TestFixtures>({
         throw new Error(`Password not found in .env for key: ${user.envKey}`);
       }
 
-      console.log(`Authenticating user: ${user.username}`);
+      console.log(`🔐 Authenticating NTLM user: ${user.username}`);
 
       authContext = await browser.newContext({
         ignoreHTTPSErrors: true,
@@ -121,15 +121,16 @@ export const test = bddTest.extend<TestFixtures>({
       const encodedPassword = encodeURIComponent(password);
       const loginUrl = `https://${user.username}:${encodedPassword}@${baseUrl.hostname}/`;
 
-      // Use goto() for NTLM - it handles the negotiation properly, not request.get()
+      // Use page.goto() to trigger NTLM handshake at browser level
       const response = await apiPage.goto(loginUrl);
 
       if (response.status() !== 200) {
         throw new Error(`Failed to authenticate user '${userAlias}'. Status: ${response.status()}`);
       }
 
-      console.log(`NTLM session established for ${user.username}`);
-      return { apiPage, authContext };
+      console.log(`✅ NTLM session established for ${user.username}`);
+      // Return the authenticated page (for goto, request methods, etc)
+      return apiPage;
     });
 
     // Cleanup after test

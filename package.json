@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "dotenv": "^17.2.3",
+    "httpntlm": "^1.8.13",
     "mssql": "^12.2.0"
   }
 }
