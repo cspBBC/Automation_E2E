@@ -45,7 +45,7 @@ export const test = bddTest.extend<TestFixtures>({
         throw new Error(`User '${userAlias}' not found in core/data/users.json`);
       }
 
-      console.log(`🔓 Using Basic Auth for user: ${userAlias}`);
+      console.log(`Using Basic Auth for user: ${userAlias}`);
       const password = process.env[user.envKey];
 
       if (!password) {
@@ -55,7 +55,7 @@ export const test = bddTest.extend<TestFixtures>({
       const credentials = btoa(`${user.username}:${password}`);
       apiClient.setAuthHeaders({ 'Authorization': `Basic ${credentials}` });
 
-      console.log(`🔐 Authenticated as user ${user.id} (${user.username})`);
+      console.log(`Authenticated as user ${user.id} (${user.username})`);
     });
   },
 
@@ -110,7 +110,7 @@ export const test = bddTest.extend<TestFixtures>({
         throw new Error(`Password not found in .env for key: ${user.envKey}`);
       }
 
-      console.log(`🔐 Authenticating user: ${user.username}`);
+      console.log(`Authenticating user: ${user.username}`);
 
       authContext = await browser.newContext({
         ignoreHTTPSErrors: true,
@@ -128,7 +128,7 @@ export const test = bddTest.extend<TestFixtures>({
         throw new Error(`Failed to authenticate user '${userAlias}'. Status: ${response.status()}`);
       }
 
-      console.log(`✅ NTLM session established for ${user.username}`);
+      console.log(`NTLM session established for ${user.username}`);
       return { apiPage, authContext };
     });
 
