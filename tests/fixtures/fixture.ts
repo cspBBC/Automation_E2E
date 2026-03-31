@@ -92,7 +92,8 @@ export const test = bddTest.extend<TestFixtures>({
     });
   },
 
-  // NTLM authentication via browser context - returns apiPage.request for authenticated HTTP calls
+  // NTLM authentication via browser context and page.goto()
+  // Supports all HTTP methods when combined with response object
   authenticateWithNtlm: async ({ browser }, use) => {
     let authContext: any = null;
     let apiPage: any = null;
@@ -121,7 +122,7 @@ export const test = bddTest.extend<TestFixtures>({
       const encodedPassword = encodeURIComponent(password);
       const loginUrl = `https://${user.username}:${encodedPassword}@${baseUrl.hostname}/`;
 
-      // Use page.goto() to trigger NTLM handshake at browser level
+      // Use page.goto() with embedded credentials to trigger NTLM handshake
       const response = await apiPage.goto(loginUrl);
 
       if (response.status() !== 200) {
@@ -129,7 +130,8 @@ export const test = bddTest.extend<TestFixtures>({
       }
 
       console.log(`✅ NTLM session established for ${user.username}`);
-      // Return the authenticated page (for goto, request methods, etc)
+      
+      // Return the authenticated page for making requests
       return apiPage;
     });
 
