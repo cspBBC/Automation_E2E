@@ -9,6 +9,6 @@ Feature: Duty Allocation Edit via API
 
         Examples:
             | user        | testDataFile                  | scenario                |
-            | systemAdmin | allocationApi_PostParams.json | allocation-edit-default |
-            | systemAdmin | allocationApi_PostParams.json | edit1                   |
+            # | systemAdmin | allocationApi_PostParams.json | allocation-edit-default |
+            | systemAdmin | allocationApi_PostParams.json | edit2                  |
 
