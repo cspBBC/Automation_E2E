@@ -15,6 +15,7 @@
 4. [Project Structure Explained](#4-project-structure-explained)
 5. [How the Framework Really Works](#5-how-the-framework-really-works)
 6. [Complete Test Execution Flow](#6-complete-test-execution-flow)
+6.1. [**API Integration Suite Deep Dive** (NEW)](#61-api-integration-suite-deep-dive) ⭐
 
 ### Deep Dives
 7. [Test Execution Commands - Complete Reference](#7-test-execution-commands--complete-reference)
@@ -729,6 +730,622 @@ When running `npm run test:ci`, multiple tests run AT THE SAME TIME:
 Result: 3 tests in 10 seconds (vs 30 seconds sequential)
 Memory: Each test has isolated context = No collisions ✅
 ```
+
+---
+
+# 6.1. API Integration Suite Deep Dive
+
+## What is the Integration Suite?
+
+The **Integration Suite** (`tests/integrated/`) is a specialized testing layer for **API and backend testing** without any UI/browser interaction. It tests:
+
+| What | Example | Why |
+|------|---------|-----|
+| **Direct API Calls** | POST /mark-action.php with parameters | Verify backend accepts requests |
+| **Response Validation** | Check status=200, response body has "success":true | Ensure correct responses |
+| **NTLM Authentication** | Authenticate user, reuse session for requests | Secure API access |
+| **Database Verification** | Execute queries to verify data persisted | Confirm backend data integrity |
+
+## Why a Separate Integration Suite?
+
+### Problem With UI-Only Tests:
+```
+UI Tests (Browser-based):
+✅ Tests complete user journey
+✅ Finds UI bugs early
+❌ Slow (1 test = 5-10 seconds)
+❌ Brittle (selectors break easily)
+❌ Heavy (browser uses 500MB+ RAM)
+❌ Can't test server logic directly
+
+Integration Tests solve this:
+✅ Fast: No browser overhead (1 test = 1-2 seconds)
+✅ Reliable: Test logic, not UI selectors
+✅ Lightweight: 10+ tests in parallel easily
+✅ Direct verification: Call API directly
+```
+
+### Real Example:
+
+**User creates scheduling group:**
+
+| Layer | What Happens | Time |
+|-------|--------------|------|
+| UI Test | 1. Click "Add Group" → 2. Fill form → 3. Click Submit → 4. Wait for UI → 5. Verify in table | **~30 seconds** 🐢 |
+| Integration Test | 1. POST /api/create-group → 2. Parse response → 3. Verify status + data | **~2 seconds** ⚡ |
+
+## Architecture: How Integration Tests Work
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│              INTEGRATION TEST ARCHITECTURE                       │
+└─────────────────────────────────────────────────────────────────┘
+
+Feature File (allocations_api_edit.feature)
+        ↓
+    "Given user 'systemAdmin' is authenticated"
+    "When the user hits mark-action.php to edit allocation..."
+    "Then verify the edit endpoint returned expected response"
+        ↓
+├─ GIVEN STEP: Authentication
+│  ├─ Load user credentials from core/data/users.json
+│  ├─ Authenticate via NTLM (Windows authentication)
+│  ├─ Get authenticated session (browser instance)
+│  └─ Store in shared context: requestContext.authenticatedPage
+│
+├─ WHEN STEP: Make API Request
+│  ├─ Load test parameters from workflows/allocations/data/allocationApi_PostParams.json
+│  ├─ Build query string with parameters
+│  ├─ Send HTTP request using authenticated session
+│  ├─ Capture response status code & body
+│  └─ Store in context: requestContext.status, requestContext.body
+│
+└─ THEN STEP: Validate Response
+   ├─ Assert status code = 200
+   ├─ Parse JSON response
+   ├─ Assert "success" = true
+   └─ Test PASSES ✅
+```
+
+## Understanding NTLM Authentication
+
+### What is NTLM?
+
+**NTLM** = NT LAN Manager (Windows authentication protocol)
+
+- Used in **enterprise environments** (like BBC internal systems)
+- More secure than basic username:password
+- Encrypts credentials in transit
+- Validates against Windows domain
+
+### Why Do We Use NTLM in Integration Tests?
+
+```
+Application Flow:
+┌──────────────────────────────────────┐
+│  Allocation System (Web App)         │
+│  Requires NTLM authentication        │
+│                                      │
+│  Protected Endpoints:                │
+│  - /mark-action.php (requires auth)  │
+│  - /create-group.php (requires auth) │
+│  - /delete-allocation.php (requires) │
+└──────────────────────────────────────┘
+        ↑
+        │ Must authenticate first!
+        │
+Test needs to:
+1. Authenticate user via NTLM
+2. Get session/cookies
+3. Use authenticated session for API calls
+```
+
+### NTLM Flow in Detail
+
+```
+Test Execution Timeline:
+
+Time 0ms:
+┌─────────────────────────────────────────┐
+│ Test START: "Given user 'systemAdmin' is authenticated"
+└─────────────────────────────────────────┘
+        ↓
+
+Time 50ms:
+┌─────────────────────────────────────────┐
+│ Step: allocations_api_common.steps.ts   │
+│ Code: Given('user {string} is authenticated'...)
+│                                         │
+│ Actions:                                │
+│ 1. Load from users.json:                │
+│    - username: "patans01"               │
+│    - password: from .env (SYS_ADMIN..)  │
+│                                         │
+│ 2. Launch Playwright browser (headless) │
+│    - No GUI (runs in background)        │
+│    - Uses system credentials            │
+│                                         │
+│ 3. Navigate to login URL:               │
+│    GET https://allocate-systest/.../   │
+│    Web server response:                 │
+│    - Redirect to NTLM challenge page    │
+└─────────────────────────────────────────┘
+        ↓
+
+Time 200ms:
+┌─────────────────────────────────────────┐
+│ NTLM Authentication Handshake:          │
+│                                         │
+│ Browser sends NTLM Type 1 message       │
+│ Server responds with Type 2 challenge   │
+│ Browser computes Type 3 response        │
+│ (Cryptographic proof of password)       │
+│                                         │
+│ Server validates:                       │
+│ ✅ Username = patans01                  │
+│ ✅ Password hash correct                │
+│ ✅ Timestamp not too old                │
+│ ✅ Grant access                         │
+└─────────────────────────────────────────┘
+        ↓
+
+Time 300ms:
+┌─────────────────────────────────────────┐
+│ Session Established:                    │
+│                                         │
+│ Browser receives:                       │
+│ - Session cookie (secure, httpOnly)     │
+│ - Redirect to /mvc-app/admin/home       │
+│                                         │
+│ Browser stores cookie automatically     │
+│ (Playwright handles this transparently) │
+│                                         │
+│ requestContext.authenticatedPage        │
+│ = browser with active session ✅        │
+└─────────────────────────────────────────┘
+        ↓
+
+Time 500ms:
+┌─────────────────────────────────────────┐
+│ Step COMPLETE:                          │
+│ ✅ User authenticated successfully      │
+│ ✅ Session ready for API calls          │
+│ ✅ Context stores: authenticatedPage    │
+└─────────────────────────────────────────┘
+```
+
+### Why Browser + NTLM?
+
+You might ask: **"Can't we just send NTLM headers in a plain HTTP request?"**
+
+**Short answer:** No, it's complex. Here's why:
+
+```typescript
+// ❌ WRONG: Manual NTLM in HTTP request
+const response = await fetch(url, {
+  headers: {
+    'Authorization': 'NTLM ' + ntlmType1Message
+  }
+});
+// Problems:
+// 1. NTLM needs multiple request/response exchanges
+// 2. Server expects session state
+// 3. Credentials never leave browser in real NTLM
+// 4. Complex cryptographic calculations needed
+
+// ✅ RIGHT: Let browser handle it
+const browser = await launchPlaywright();
+const page = await browser.newPage();
+// Browser automatically handles:
+// 1. NTLM negotiation
+// 2. Challenge/response
+// 3. Session management
+// 4. Cookie storage & reuse
+await page.goto(url); // Browser does all NTLM
+```
+
+## Integration Suite File Structure
+
+```
+tests/integrated/
+│
+├── features/
+│   └── NP035/
+│       └── allocations_api_edit.feature       ← What to test (plain English)
+│
+├── steps/
+│   └── NP035/
+│       ├── allocations_api_common.steps.ts    ← GIVEN steps (authentication)
+│       ├── allocations_api_edit.steps.ts      ← WHEN/THEN steps (API calls)
+│       ├── allocationApi.config.ts            ← Configuration (endpoints, actions)
+│       └── allocationApi.helper.ts            ← Helper (wrapper for API calls)
+│
+└── helpers/
+    └── (now moved to tests/utils/)
+```
+
+### Key Files Explained
+
+#### 1. Feature File: `allocations_api_edit.feature`
+
+```gherkin
+@allocation-api @smoke
+Feature: Duty Allocation Edit via API
+
+    @post
+    Scenario Outline: Edit allocation with <user> user, <testDataFile> and <scenario> parameters
+        Given user '<user>' is authenticated
+        When the user hits mark-action.php to edit allocation with "<testDataFile>" and "<scenario>" parameters
+        Then verify the edit endpoint returned expected response
+
+        Examples:
+            | user          | testDataFile               | scenario                |
+            | systemAdmin   | allocationApi_PostParams.json | allocation-edit-default |
+```
+
+**Why this structure:**
+- ✅ `<user>` parameter = Works with ANY user from users.json
+- ✅ `<testDataFile>` = Works with ANY test data file
+- ✅ `<scenario>` = Works with ANY scenario within the file
+- ✅ `Scenario Outline` + `Examples` = Easy to add more test cases
+
+#### 2. Authentication Step: `allocations_api_common.steps.ts`
+
+```typescript
+import { createBdd } from 'playwright-bdd';
+import { test } from '@fixtures/fixture';
+import { getSharedContext } from '@helpers/apiHelper';
+
+const { Given } = createBdd(test);
+
+// This step runs ONCE per test
+Given('user {string} is authenticated', async ({ authenticateWithNtlm }, userName: string) => {
+  const requestContext = getSharedContext();
+  
+  console.log(`\n[AUTH] Authenticating as: ${userName}`);
+  
+  // authenticateWithNtlm = Playwright fixture
+  // Returns: browser page with active NTLM session
+  requestContext.authenticatedPage = await authenticateWithNtlm(userName);
+  
+  console.log(`[OK] NTLM session ready for API requests\n`);
+});
+```
+
+**What's happening:**
+- `authenticateWithNtlm(userName)` = Custom fixture from `tests/fixtures/fixture.ts`
+- Loads user from `core/data/users.json`
+- Gets password from `.env` file
+- Authenticates via NTLM (all handled by Playwright)
+- Returns authenticated browser page
+- Stores in shared context for later API calls
+
+#### 3. API Request Step: `allocations_api_edit.steps.ts`
+
+```typescript
+When('the user hits mark-action.php to edit allocation with {string} and {string} parameters', 
+  async ({}, testDataFile: string, scenario: string) => {
+    const requestContext = getSharedContext();
+    
+    // Load test data from JSON file
+    const params = {
+      ...loadTestParameters(`${API_CONFIG.dataPath}/${testDataFile}`, scenario),
+      action: API_CONFIG.actions.EDIT
+    };
+    
+    // Make HTTP request using authenticated session
+    await makeApiRequest(
+      requestContext,
+      'POST',
+      API_CONFIG.endpoints.markAction,
+      params,
+      `EDIT - Modify allocation (scenario: ${scenario})`
+    );
+  }
+);
+```
+
+**What's happening:**
+- `loadTestParameters()` = Load from JSON file (e.g., allocationApi_PostParams.json)
+- Extract scenario key (e.g., "allocation-edit-default")
+- Get all parameters from that scenario
+- Add "action": "edit"
+- Call `makeApiRequest()` with authenticated page
+
+#### 4. Configuration: `allocationApi.config.ts`
+
+```typescript
+export const ALLOCATION_API_CONFIG = {
+  baseUrl: process.env.API_BASE_URL || 'https://allocate-systest-dbr.national.core.bbc.co.uk',
+  dataPath: 'allocations/data',
+  endpoints: {
+    markAction: '/page-includes/allocations/weekly/actions/mark-action.php'
+  },
+  actions: {
+    EDIT: 'edit',
+    VIEW: 'view'
+  }
+};
+```
+
+**Why separate config file:**
+- ✅ Easy to change endpoints without touching code
+- ✅ All allocation-specific settings in one place
+- ✅ Environment variables loaded automatically
+- ✅ Reusable by all allocation tests
+
+#### 5. Helper: `allocationApi.helper.ts`
+
+```typescript
+export async function makeAllocationApiRequest(
+  requestContext: ApiRequestContext,
+  method: string,
+  endpoint: string,
+  params: Record<string, string>,
+  note?: string
+): Promise<void> {
+  // Wrapper that adds allocation-specific config
+  await makeModuleApiRequest(
+    requestContext,
+    method,
+    ALLOCATION_API_CONFIG.baseUrl,    // ← Allocation base URL
+    endpoint,
+    params,
+    note
+  );
+}
+```
+
+**Why a wrapper:**
+- ✅ Steps don't need to know base URL
+- ✅ All allocation requests use same base URL
+- ✅ Easy to switch environments
+- ✅ Reusable across all allocation steps
+
+## Step-by-Step: Complete API Test Flow
+
+### Scenario: Testing allocation edit
+
+**Test Data File:** `workflows/allocations/data/allocationApi_PostParams.json`
+
+```json
+{
+  "allocation-edit-default": {
+    "DutyName": "Job_EDITED_PATANS01",
+    "StartTime": "00:01",
+    "EndTime": "00:05",
+    "breakTimeHour": "0",
+    "breakTimeMinute": "0",
+    "dutyColorId": "None",
+    "isNeedCovering": "off",
+    "DutyDate": "2026-06-30",
+    "DutyID": "6655748",
+    "allocationsDutyId": "6655748",
+    "allocationsSpId": "33720",
+    ...
+  }
+}
+```
+
+### Execution Steps
+
+#### Step 1: Test Starts (Feature File Parsed)
+
+```
+Framework reads: allocations_api_edit.feature
+Finds: Scenario Outline with Examples
+Extracts: user=systemAdmin, testDataFile=allocationApi_PostParams.json, scenario=allocation-edit-default
+Creates: Test execution plan
+```
+
+#### Step 2: SETUP - Authenticate User (1-2 seconds)
+
+```typescript
+// ✅ GIVEN STEP EXECUTES
+Given('user {string} is authenticated', ...)
+
+Actions:
+1. Context accessed: const requestContext = getSharedContext()
+2. Get user details:
+   - users.json["systemAdmin"] → {username: "patans01", ...}
+3. Get password:
+   - .env.systest → SYS_ADMIN_PASSWORD=Jr.ntr@090909
+4. Launch Playwright browser (headless)
+5. Navigate to login URL
+6. NTLM negotiation happens automatically:
+   - Browser ↔ Server: Challenge/Response exchange
+   - Credentials validated
+   - Session established
+7. Browser receives session cookie
+8. Store in context:
+   requestContext.authenticatedPage = browserPageWithActiveSession
+
+✅ READY: Browser now authenticated, can make API calls
+```
+
+#### Step 3: EXECUTE - Make API Request (1-2 seconds)
+
+```typescript
+// ✅ WHEN STEP EXECUTES
+When('the user hits mark-action.php to edit allocation...')
+
+Actions:
+1. Load test parameters:
+   const params = loadTestParameters(
+     'allocations/data/allocationApi_PostParams.json',
+     'allocation-edit-default'
+   )
+   // Returns: { DutyName: "Job_EDITED_PATANS01", StartTime: "00:01", ... }
+
+2. Add action:
+   params.action = 'edit'
+
+3. Build URL with query string:
+   baseUrl = "https://allocate-systest-dbr.national.core.bbc.co.uk"
+   endpoint = "/page-includes/allocations/weekly/actions/mark-action.php"
+   
+   Full URL:
+   https://allocate-systest-dbr.national.core.bbc.co.uk/page-includes/allocations/weekly/actions/mark-action.php?DutyName=Job_EDITED_PATANS01&StartTime=00%3A01&EndTime=00%3A05&...
+
+4. Send HTTP POST request:
+   // Using authenticated browser session
+   response = await requestContext.authenticatedPage.goto(fullUrl)
+   // Browser automatically sends session cookie
+
+5. Capture response:
+   status = response.status()        // 200
+   body = await response.json()      // {"success":true}
+   
+   Store in context:
+   requestContext.status = 200
+   requestContext.body = '{"success":true}'
+
+✅ REQUEST COMPLETE: Data stored for validation
+```
+
+#### Step 4: VERIFY - Assert Response (1-2 seconds)
+
+```typescript
+// ✅ THEN STEP EXECUTES
+Then('verify the edit endpoint returned expected response')
+
+Actions:
+1. Get context from request:
+   const requestContext = getSharedContext()
+   const status = requestContext.status        // 200
+   const body = requestContext.body            // '{"success":true}'
+
+2. Assert status code:
+   expect(status).toBeGreaterThanOrEqual(200)   ✅ PASS
+   expect(status).toBeLessThan(500)             ✅ PASS
+
+3. Parse and assert body:
+   const responseData = JSON.parse(body)       // {success: true}
+   expect(responseData).toHaveProperty('success')   ✅ PASS
+   expect(responseData.success).toBe(true)     ✅ PASS
+
+✅ TEST PASSES!
+```
+
+#### Step 5: Cleanup
+
+```
+- Close browser session
+- Clear context
+- Report: PASSED ✅
+```
+
+## Parallel Integration Tests
+
+Integration tests are **perfect for parallel execution** because:
+
+```
+┌─────────────────┬─────────────────┬─────────────────┐
+│   Thread 1      │   Thread 2      │   Thread 3      │
+├─────────────────┼─────────────────┼─────────────────┤
+│ Allocations     │ Facility        │ Scheduling Team │
+│ Test 1          │ Test 2          │ Test 3          │
+│                 │                 │                 │
+│ User:           │ User:           │ User:           │
+│ systemAdmin     │ areaAdmin_News  │ areaAdmin_Area1 │
+│                 │                 │                 │
+│ Context 1       │ Context 2       │ Context 3       │
+│ Isolated!       │ Isolated!       │ Isolated!       │
+│                 │                 │                 │
+│ 0s: Auth        │ 0s: Auth        │ 0s: Auth        │
+│ 1s: API Call    │ 1s: API Call    │ 1s: API Call    │
+│ 2s: Verify      │ 2s: Verify      │ 2s: Verify      │
+│ 3s: PASS ✅     │ 3s: PASS ✅     │ 3s: PASS ✅     │
+│                 │                 │                 │
+└─────────────────┴─────────────────┴─────────────────┘
+
+Result: 3 API tests in 3 seconds!
+(vs 9 seconds sequential)
+```
+
+## Integration Suite Best Practices
+
+### ✅ DO:
+
+1. **Use parameterized test data:**
+   ```gherkin
+   Examples:
+     | user        | testDataFile               | scenario                |
+     | systemAdmin | allocationApi_PostParams.json | allocation-edit-default |
+     | areaAdmin   | allocationApi_PostParams.json | allocation-edit-with-coverage |
+   ```
+   → Works with ANY user and ANY scenario
+
+2. **Keep test data in separate JSON files:**
+   ```
+   workflows/allocations/data/allocationApi_PostParams.json
+   workflows/facility/data/facilityApi_PostParams.json
+   ```
+   → Easy to maintain, reuse across tests
+
+3. **Use configuration files for module-specific settings:**
+   ```typescript
+   // allocationApi.config.ts
+   export const ALLOCATION_API_CONFIG = {...}
+   ```
+   → Centralized, environment-agnostic
+
+4. **Leverage shared context:**
+   ```typescript
+   const requestContext = getSharedContext()
+   ```
+   → Isolated per test, reusable within test
+
+### ❌ DON'T:
+
+1. **Hardcode URLs or endpoints:**
+   ```typescript
+   // ❌ BAD
+   const response = await fetch('https://allocate-systest-dbr.national.core.bbc.co.uk/page-includes/...')
+   ```
+   → Not reusable, breaks with environment change
+
+2. **Duplicate test data:**
+   ```typescript
+   // ❌ BAD
+   const params = {
+     DutyName: "Job_EDITED_PATANS01",
+     StartTime: "00:01",
+     ...
+   }
+   ```
+   → Hard to maintain across tests
+
+3. **Hardcode user names:**
+   ```gherkin
+   // ❌ BAD
+   Given user 'systemAdmin' is authenticated
+   ```
+   → Can't test with different users easily
+
+4. **Create multi-step tests with no isolation:**
+   → Complex, flaky, hard to debug
+
+## Running Integration Tests
+
+```bash
+# Run all integration tests (systest environment)
+npm run apitest:systest
+
+# Output:
+# ✓ 1 … allocation with allocation-edit-default parameters @allocation-api @smoke @post (1.9s)
+# 1 passed (5.8s)
+```
+
+## Troubleshooting Integration Tests
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| **Missing step definition** | GIVEN/WHEN/THEN not implemented | Create step in steps file, run test again |
+| **NTLM auth fails** | Wrong password in .env | Check credentials match actual user |
+| **API returns 401** | Session expired | Check authenticateWithNtlm fixture |
+| **API returns 404** | Wrong endpoint in config | Verify endpoint in allocationApi.config.ts |
+| **Timeout** | Slow API response | Increase timeout in playwright.config.ts |
 
 ---
 
