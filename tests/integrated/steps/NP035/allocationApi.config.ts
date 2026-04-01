@@ -12,7 +12,7 @@
 
 export const ALLOCATION_API_CONFIG = {
   baseUrl: process.env.API_BASE_URL || 'https://allocate-systest-dbr.national.core.bbc.co.uk',
-  dataPath: 'allocations/data',
+  dataPath: 'integrated/allocations/data',
   
   // API Endpoints - Update here if endpoints change
   endpoints: {

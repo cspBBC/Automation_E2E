@@ -28,7 +28,7 @@ export class ScheduledGroupPage {
 
     await this.page.locator('#facebox').waitFor({ state: 'visible' });
 
-    const jsonPath = `workflows/schedulingGroup/data/${filename}.json`;
+    const jsonPath = `workflows/ui/schedulingGroup/data/${filename}.json`;
     const jsonData = await readJSON(jsonPath);
 
     // Generate a unique name using timestamp + random to avoid duplicates
