@@ -8,6 +8,7 @@ Feature: Duty Allocation Edit via API
         Then verify the edit endpoint returned expected response
 
         Examples:
-            | user          | testDataFile               | scenario                |
-            | systemAdmin   | allocationApi_PostParams.json | allocation-edit-default |
+            | user        | testDataFile                  | scenario                |
+            | systemAdmin | allocationApi_PostParams.json | allocation-edit-default |
+            | systemAdmin | allocationApi_PostParams.json | edit1                   |
 
