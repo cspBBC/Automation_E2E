@@ -1,4 +1,4 @@
-import { createBdd } from "playwright-bdd";
+﻿import { createBdd } from "playwright-bdd";
 import { test } from "@fixtures/pages.fixture";
 import { expect } from '@playwright/test';
 import { scenarioContext } from '@helpers/scenarioContextManager';
@@ -66,7 +66,7 @@ When(
     console.log(`Approving deletion for group: "${groupName}"`);
     
     await scenarioContext.page.locator('#approve-delete-scheduling-group-form').click();
-    console.log(`✓ Approved deletion for group: "${groupName}"`);
+    console.log(` Approved deletion for group: "${groupName}"`);
     
     await scenarioContext.page.waitForLoadState('networkidle');
     await scenarioContext.page.waitForTimeout(1500);
@@ -90,7 +90,7 @@ Then(
       });
       
       await expect(deletedGroupRow).toHaveCount(0, { timeout: 8000 });
-      console.log(`✓ Verified: Group "${groupName}" removed from list`);
+      console.log(` Verified: Group "${groupName}" removed from list`);
     } else {
       const tableRows = scenarioContext.page.locator('tbody tr');
       await expect(tableRows).toBeTruthy();
@@ -109,3 +109,4 @@ Then(
     console.log('Verified record is removed from the database');
   },
 );
+

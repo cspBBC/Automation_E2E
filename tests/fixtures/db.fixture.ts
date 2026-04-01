@@ -1,4 +1,4 @@
-import sql from 'mssql';
+﻿import sql from 'mssql';
 import { test as base } from 'playwright-bdd';
 import { getDbPool } from '../../core/db/connection';
 
@@ -42,7 +42,7 @@ export const test = base.extend<DbFixtures>({
         // Rollback any open transactions to clean up after test
         try {
           await pool.request().query('IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION');
-          console.log('🔙 Transaction rolled back');
+          console.log('Transaction rolled back');
         } catch (err) {
           // Transaction may not exist, that's okay
         }
@@ -62,3 +62,4 @@ export const test = base.extend<DbFixtures>({
 });
 
 export { expect } from '@playwright/test';
+

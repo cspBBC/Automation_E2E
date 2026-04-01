@@ -1,4 +1,4 @@
-import { createBdd } from "playwright-bdd";
+﻿import { createBdd } from "playwright-bdd";
 import { test } from "@fixtures/pages.fixture";
 import { expect } from '@playwright/test';
 import { scenarioContext } from '@helpers/scenarioContextManager';
@@ -156,7 +156,7 @@ Then(
     
     await expect(groupRow.locator('td', { hasText: expectedNotes })).toBeVisible({ timeout: 15000 });
     
-    console.log(`✓ Verified notes "${expectedNotes}" for updated group "${updatedGroupName}"`);
+    console.log(`Verified notes "${expectedNotes}" for updated group "${updatedGroupName}"`);
   },
 );
 
@@ -223,3 +223,4 @@ Then(
     console.log(`Verified Last Amended By displays user: ${userName}`);
   },
 );
+

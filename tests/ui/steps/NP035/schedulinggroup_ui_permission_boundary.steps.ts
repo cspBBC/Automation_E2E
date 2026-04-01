@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+﻿import { expect } from '@playwright/test';
 import { createBdd } from "playwright-bdd";
 import { test } from "@fixtures/pages.fixture";
 import { scenarioContext } from '@helpers/scenarioContextManager';
@@ -64,7 +64,7 @@ Then(
     const groupRowCount = await groupRow.count();
     
     if (groupRowCount === 0) {
-      console.log(`✓ Verified: Group "${groupName}" is not visible to ${role}, so Edit and Delete actions are not available`);
+      console.log(`Verified: Group "${groupName}" is not visible to ${role}, so Edit and Delete actions are not available`);
     } else {
       throw new Error(`Group "${groupName}" should not be visible to ${role}, but found ${groupRowCount} matching rows`);
     }
@@ -88,7 +88,7 @@ Then(
     
     // SystemAdmin should be able to see and interact with all groups
     if (editCount > 0 || deleteCount > 0) {
-      console.log(`✓ Verified: Edit and Delete actions are available for ${role}`);
+      console.log(`Verified: Edit and Delete actions are available for ${role}`);
     } else {
       throw new Error(`Edit and Delete actions not found for ${role}`);
     }
@@ -163,6 +163,7 @@ Then(
       });
     }
 
-    console.log('✓ Verified: Scheduling group is updated successfully');
+    console.log(' Verified: Scheduling group is updated successfully');
   },
 );
+

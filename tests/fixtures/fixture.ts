@@ -1,4 +1,4 @@
-import { test as bddTest} from 'playwright-bdd';
+﻿import { test as bddTest} from 'playwright-bdd';
 import { expect } from '@playwright/test';
 import {
   request,
@@ -68,7 +68,7 @@ export const test = bddTest.extend<TestFixtures>({
       try {
         //only works if test inserted any data into the database, otherwise it will throw an error that there is no transaction to rollback
         await pool.request().query('IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION');
-        console.log('🔙 Transaction cleaned up after test');
+        console.log('Transaction cleaned up after test');
       } catch (err) {
         // Transaction may not exist, that's okay
       }
@@ -111,7 +111,7 @@ export const test = bddTest.extend<TestFixtures>({
         throw new Error(`Password not found in .env for key: ${user.envKey}`);
       }
 
-      console.log(`🔐 Authenticating NTLM user: ${user.username}`);
+      console.log(`Authenticating NTLM user: ${user.username}`);
 
       authContext = await browser.newContext({
         ignoreHTTPSErrors: true,
@@ -125,7 +125,7 @@ export const test = bddTest.extend<TestFixtures>({
       const authUsername = user.upn || user.username;
       const loginUrl = `https://${authUsername}:${encodedPassword}@${baseUrl.hostname}/`;
 
-      console.log(`📝 Using credentials: ${authUsername}:****`);
+      console.log(`Using credentials: ${authUsername}:****`);
 
       // Use page.goto() with embedded credentials to trigger NTLM handshake
       const response = await apiPage.goto(loginUrl);
@@ -134,7 +134,7 @@ export const test = bddTest.extend<TestFixtures>({
         throw new Error(`Failed to authenticate user '${userAlias}'. Status: ${response.status()}`);
       }
 
-      console.log(`✅ NTLM session established for ${user.username}`);
+      console.log(`NTLM session established for ${user.username}`);
       
       // Return the authenticated page for making requests
       return apiPage;
@@ -152,3 +152,4 @@ export const test = bddTest.extend<TestFixtures>({
 
 export { expect };
 export { ApiClient };
+
