@@ -1,11 +1,13 @@
 @allocation-api @smoke
 Feature: Duty Allocation Edit via API
 
-    Background:
-        Given user 'systemAdmin' is authenticated
-
     @post
-    Scenario: Edit allocation with default parameters
-        When the system admin hits mark-action.php to edit allocation with 'allocation-edit-default' parameters
+    Scenario Outline: Edit allocation with <user> user, <testDataFile> and <scenario> parameters
+        Given user '<user>' is authenticated
+        When the user hits mark-action.php to edit allocation with "<testDataFile>" and "<scenario>" parameters
         Then verify the edit endpoint returned expected response
+
+        Examples:
+            | user          | testDataFile               | scenario                |
+            | systemAdmin   | allocationApi_PostParams.json | allocation-edit-default |
 

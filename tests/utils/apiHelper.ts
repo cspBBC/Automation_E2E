@@ -1,5 +1,8 @@
 // [GENERIC API HELPER] Reusable across all API endpoints and modules
 
+import * as fs from 'fs';
+import * as path from 'path';
+
 // ---------- TYPES ----------
 export interface ApiRequestContext {
   authenticatedPage: any;
@@ -24,6 +27,17 @@ const sharedRequestContext: ApiRequestContext = {
 
 export function getSharedContext(): ApiRequestContext {
   return sharedRequestContext;
+}
+
+// ---------- TEST PARAMETERS ----------
+/**
+ * Load test parameters from a JSON file
+ * Supports any module structure (workflows/{module}/data/{filename})
+ */
+export function loadTestParameters(filePath: string, scenario: string): Record<string, string> {
+  const fullPath = path.join(process.cwd(), 'workflows', filePath);
+  const data = JSON.parse(fs.readFileSync(fullPath, 'utf-8'));
+  return data[scenario] || {};
 }
 
 // ---------- QUERY STRING ----------
@@ -72,7 +86,7 @@ export function logResponse(method: string, status: number, bodySize: number, bo
   console.log(`[RESPONSE] Response Body (full):\n${body}`);
 }
 
-// ---------- MAIN API CALL ----------
+// ---------- MAIN API CALLS ----------
 export async function makeApiRequest(
   requestContext: ApiRequestContext,
   method: string,
@@ -96,4 +110,26 @@ export async function makeApiRequest(
   requestContext.body = body;
 
   logResponse(method, status, body.length, body);
+}
+
+/**
+ * Generic API request wrapper
+ * Allows any module to make API requests with its own baseUrl and configuration
+ */
+export async function makeModuleApiRequest(
+  requestContext: ApiRequestContext,
+  method: string,
+  baseUrl: string,
+  endpoint: string,
+  params: Record<string, string>,
+  note?: string
+): Promise<void> {
+  await makeApiRequest(
+    requestContext,
+    method,
+    baseUrl,
+    endpoint,
+    params,
+    note
+  );
 }

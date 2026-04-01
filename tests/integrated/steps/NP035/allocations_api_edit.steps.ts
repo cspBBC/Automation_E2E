@@ -1,20 +1,18 @@
 import { createBdd } from 'playwright-bdd';
 import { test, expect } from '@fixtures/fixture';
+import { getSharedContext, loadTestParameters } from '@helpers/apiHelper';
 import {
   API_CONFIG,
-  loadTestParameters,
-  makeApiRequest,
-  getSharedContext
+  makeApiRequest
 } from './allocationApi.helper';
 
-const { Given, When, Then } = createBdd(test);
+const { When, Then } = createBdd(test);
 
-// Shared Given step: 'user {string} is authenticated' (defined in allocations_api_view.steps.ts)
-
-When('the system admin hits mark-action.php to edit allocation with {string} parameters', async ({}, scenario: string) => {
+When('the user hits mark-action.php to edit allocation with {string} and {string} parameters', async ({}, testDataFile: string, scenario: string) => {
   const requestContext = getSharedContext();
+  
   const params = {
-    ...loadTestParameters('allocations/data/allocationApi_PostParams.json', scenario),
+    ...loadTestParameters(`${API_CONFIG.dataPath}/${testDataFile}`, scenario),
     action: API_CONFIG.actions.EDIT
   };
   
