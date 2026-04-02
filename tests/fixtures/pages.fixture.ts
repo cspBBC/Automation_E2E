@@ -1,6 +1,7 @@
 import { test as base} from 'playwright-bdd';
 import { expect, BrowserContext, Page } from '@playwright/test';
 import users from '@core/data/users.json' with { type: "json" };
+import { setCurrentTestId, cleanupTestContext } from '@helpers/contextVariables';
 
 function getPassword(envKey: string): string {
   const password = process.env[envKey];
@@ -10,8 +11,11 @@ function getPassword(envKey: string): string {
   return password;
 }
 
-// Extend the base test with loginAs fixture
-export const test = base.extend<{ loginAs: (role: keyof typeof users) => Promise<Page> }>({
+// Extend the base test with loginAs and contextManager fixtures
+export const test = base.extend<{ 
+  loginAs: (role: keyof typeof users) => Promise<Page>,
+  contextManager: string
+}>({
 
   loginAs: async ({ browser }, use) => {
     let currentContext: BrowserContext | undefined;
@@ -64,6 +68,22 @@ export const test = base.extend<{ loginAs: (role: keyof typeof users) => Promise
         console.warn('Error closing context:', error);
       }
     }
+  },
+
+  // Context manager to isolate context per test (supports parallel execution)
+  contextManager: async ({ }, use, testInfo) => {
+    // Set unique test ID based on test title and worker index
+    const testId = `${testInfo.title}_${testInfo.workerIndex}`;
+    setCurrentTestId(testId);
+    
+    console.log(`[Context] Initialized for test: ${testId}`);
+    
+    // Provide fixture to test
+    await use(testId);
+    
+    // Cleanup after test
+    cleanupTestContext(testId);
+    console.log(`[Context] Cleaned up for test: ${testId}`);
   },
 
 });

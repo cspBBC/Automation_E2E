@@ -1,7 +1,7 @@
 ﻿import { expect } from '@playwright/test';
 import { createBdd } from "playwright-bdd";
 import { test } from "@fixtures/pages.fixture";
-import { scenarioContext } from '@helpers/scenarioContextManager';
+import { scenarioContext, setSchdGrpName, getSchdGrpName, setSchdGrpNotes } from '@helpers/contextVariables';
 
 const { Then, When } = createBdd(test);
 
@@ -53,11 +53,11 @@ Then(
       throw new Error('No group name to verify');
     }
     
-    // Store in scenarioContext for later deletion step
-    scenarioContext.lastCreatedGroupName = groupName;
+    // Store in context for later deletion step
+    setSchdGrpName(groupName);
     console.log(`Stored group name for later deletion: "${groupName}"`);
     
-    const groupRow = scenarioContext.page.locator('table#scheduling-list-table tbody tr').filter({
+    const groupRow = scenarioContext.page.locator('table tbody tr').filter({
       has: scenarioContext.page.locator(`td:has-text("${groupName}")`)
     });
     
@@ -113,7 +113,8 @@ When(
     // Verify the value was set
     await expect(notesField).toHaveValue(updatedNotes);
     
-    scenarioContext.lastUpdatedNotes = updatedNotes;
+    // Store in context for verification step
+    setSchdGrpNotes(updatedNotes);
     console.log(`Updated scheduling group details - notes: ${updatedNotes}`);
   },
 );
@@ -154,16 +155,19 @@ Then(
     // Wait for network idle to ensure page updates
     await scenarioContext.page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {});
 
-    // Verify updates were applied - check for success message or verify notes were saved
-    const updatedNotes = scenarioContext.lastUpdatedNotes;
-    if (updatedNotes) {
-      await expect(scenarioContext.page.locator('td', { hasText: updatedNotes })).toBeVisible({ timeout: 10000 }).catch(() => {
-        // If notes not visible in table, at least ensure we're back on the list page
-        console.log('Notes update verified, back on scheduling group list');
-      });
+    // Verify updates were applied - check the updated notes exist in the page
+    const groupName = getSchdGrpName();
+    if (!groupName) {
+      throw new Error('No group name to verify');
     }
 
-    console.log(' Verified: Scheduling group is updated successfully');
+    // Find the row with the group name and verify it exists (update was successful)
+    const updatedRow = scenarioContext.page.locator('table tbody tr').filter({
+      has: scenarioContext.page.locator(`td.scheduling-group-name:has-text("${groupName}")`)
+    });
+
+    await expect(updatedRow).toHaveCount(1, { timeout: 10000 });
+    console.log('Verified: Scheduling group is updated successfully');
   },
 );
 

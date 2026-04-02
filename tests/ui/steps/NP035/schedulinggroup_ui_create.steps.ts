@@ -1,12 +1,12 @@
 import { createBdd } from "playwright-bdd";
 import { test } from "@fixtures/pages.fixture";
-import { scenarioContext } from '@helpers/scenarioContextManager';
+import { scenarioContext, setSchdGrpName } from '@helpers/contextVariables';
 
 const { When, Then } = createBdd(test);
 
 When(
   "the user creates a new scheduling group using {string}",
-  async ({ }, filename: string) => {
+  async ({ contextManager }, filename: string) => {
     if (!scenarioContext.scheduledGroupPage) {
       throw new Error('No ScheduledGroupPage instance available. Did you call the Given step first?');
     }
@@ -14,7 +14,7 @@ When(
     
     // Store the group name in scenarioContext for later access (persists across user switches)
     const groupName = (scenarioContext.scheduledGroupPage.constructor as any).lastCreatedGroupName;
-    scenarioContext.lastCreatedGroupName = groupName;
+    setSchdGrpName(groupName);
     
     console.log(`Created scheduling group using: ${filename}`);
     console.log(`Group name stored in context: "${groupName}"`);
