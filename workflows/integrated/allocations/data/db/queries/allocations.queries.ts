@@ -57,4 +57,20 @@ export const AllocationQueries = {
     FROM duties
     WHERE duty_id = (SELECT duty_id FROM allocations WHERE allocation_id = @allocationId)
   `,
+
+  /**
+   * Verify duty created in database - Get allocationsDutyId confirmation
+   * Returns duty record by DutyName and DutyDate (most reliable for verification)
+   */
+  verifyDutyCreated: `
+    SELECT 
+      ad.AD_AllocationsDutyID,
+      ad.AD_AllocationsID,
+      ad.AD_DutyName,
+      ad.AD_DutyDate
+    FROM dbo.AllocationsDuties ad
+    WHERE ad.AD_DutyName = @DutyName
+      AND CAST(ad.AD_DutyDate AS DATE) = CAST(@DutyDate AS DATE)
+    ORDER BY ad.AD_DutyDate DESC, ad.AD_AllocationsDutyID DESC
+  `,
 };
