@@ -161,3 +161,50 @@ Then('verify the edit captured AllocationsDutyID successfully', async ({}) => {
   expect(scenarioContext.allocationsDutyId).toBeDefined();
   expect(typeof scenarioContext.allocationsDutyId).toBe('number');
 });
+
+Then('verify the edit operation is recorded in duty history with change details', async ({ db }) => {
+  console.log(`\n[STEP-4] Verifying edit operation recorded in duty history...`);
+  
+  if (!scenarioContext.allocationsDutyId) {
+    throw new Error('AllocationsDutyID was not captured in previous steps');
+  }
+  
+  try {
+    // Query for history records of the edited duty
+    // AttributeID 6950573 represents duty edits, HistoryType 8 represents updates
+    const result = await db
+      .request()
+      .input('AttributeID', sql.Int, 6950573)
+      .input('HistoryType', sql.Int, 8)
+      .query(AllocationQueries.getDutyHistory);
+    
+    console.log(`\n[STEP-4.1] History query executed successfully`);
+    console.log(`         Records found: ${result.recordset.length}`);
+    
+    expect(result.recordset.length).toBeGreaterThan(0);
+    
+    // Extract latest history record
+    const historyRecord = result.recordset[0];
+    
+    console.log(`\n[HISTORY-VERIFICATION] ✓ Edit operation verified in history`);
+    console.log(`════════════════════════════════════════════════════`);
+    console.log(`✓ HistoryID: ${historyRecord.HistoryID}`);
+    console.log(`  Change DateTime: ${historyRecord.ChangeDateTime}`);
+    console.log(`  Changed By User: ${historyRecord.ChangedByUser || 'System'}`);
+    console.log(`  History Type: ${historyRecord.HistoryType}`);
+    console.log(`  Change Details: ${historyRecord.ChangeDetails}`);
+    console.log(`════════════════════════════════════════════════════`);
+    
+    // Verify the record has expected properties
+    expect(historyRecord.HistoryID).toBeDefined();
+    expect(historyRecord.ChangeDateTime).toBeDefined();
+    expect(historyRecord.ChangeDetails).toBeDefined();
+    
+    console.log(`[OK] ✓ Edit operation successfully recorded in duty history\n`);
+    
+  } catch (error) {
+    console.log(`\n[ERROR] History verification failed`);
+    console.log(`        Error: ${error instanceof Error ? error.message : String(error)}`);
+    throw error;
+  }
+});

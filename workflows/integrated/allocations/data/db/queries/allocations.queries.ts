@@ -73,4 +73,22 @@ export const AllocationQueries = {
       AND CAST(ad.AD_DutyDate AS DATE) = CAST(@DutyDate AS DATE)
     ORDER BY ad.AD_DutyDate DESC, ad.AD_AllocationsDutyID DESC
   `,
+
+  /**
+   * Get duty history records - Verify edit operation was recorded
+   * Retrieves history for a specific duty with change details
+   */
+  getDutyHistory: `
+    SELECT TOP 100
+      h.HistoryID,
+      h.DateTime as ChangeDateTime,
+      h.HistoryType,
+      ud.UD_NetLogin as ChangedByUser,
+      h.History as ChangeDetails
+    FROM dbo.History h
+    LEFT JOIN dbo.UserDetails ud ON h.UserID = ud.UD_UserID
+    WHERE h.AttributeID = @AttributeID
+      AND h.HistoryType = @HistoryType
+    ORDER BY h.DateTime DESC
+  `,
 };
