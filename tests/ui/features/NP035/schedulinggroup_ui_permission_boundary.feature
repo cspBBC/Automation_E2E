@@ -11,12 +11,12 @@ Feature: Scheduling Group CRUD - Permission Boundary
     Then the scheduling group is visible to 'systemAdmin'
 
     # Step 2: AreaAdmin verifies permission boundary - cannot see the group
-    When user '<areaAdminRole>' navigates to the "Scheduled Group" page
+    When user '<areaAdminRole>' is on the "Scheduled Group" page
     Then the scheduling group created by 'systemAdmin' is not visible
     And Edit and Delete actions are not available for '<areaAdminRole>'
 
     # Step 3: SystemAdmin logs back in and deletes the created group
-    When user 'systemAdmin' navigates to the "Scheduled Group" page
+    When user 'systemAdmin' is on the "Scheduled Group" page
     Then the scheduling group is visible
     When the user clicks the Delete button for the scheduling group
     When the user approves the deletion
@@ -33,7 +33,7 @@ Feature: Scheduling Group CRUD - Permission Boundary
     Then the scheduling group is visible to 'areaAdmin_News'
 
     # Step 2: SystemAdmin views and edits the group created by AreaAdmin
-    When user 'systemAdmin' navigates to the "Scheduled Group" page
+    When user 'systemAdmin' is on the "Scheduled Group" page
     Then the scheduling group created by 'areaAdmin_News' is visible
     And Edit and Delete actions are available for 'systemAdmin'
     When the user clicks the Edit button for the scheduling group

@@ -1,7 +1,6 @@
 import { test as base} from 'playwright-bdd';
 import { expect, BrowserContext, Page } from '@playwright/test';
 import users from '@core/data/users.json' with { type: "json" };
-import { setCurrentTestId, cleanupTestContext } from '@helpers/contextVariables';
 
 function getPassword(envKey: string): string {
   const password = process.env[envKey];
@@ -11,10 +10,10 @@ function getPassword(envKey: string): string {
   return password;
 }
 
-// Extend the base test with loginAs and contextManager fixtures
+// Extend the base test with loginAs and testContext fixtures
 export const test = base.extend<{ 
   loginAs: (role: keyof typeof users) => Promise<Page>,
-  contextManager: string
+  testContext: Record<string, any>
 }>({
 
   loginAs: async ({ browser }, use) => {
@@ -70,20 +69,20 @@ export const test = base.extend<{
     }
   },
 
-  // Context manager to isolate context per test (supports parallel execution)
-  contextManager: async ({ }, use, testInfo) => {
-    // Set unique test ID based on test title and worker index
-    const testId = `${testInfo.title}_${testInfo.workerIndex}`;
-    setCurrentTestId(testId);
+  // Test context - shared between all steps (per-test isolation)
+  // Each module defines its own context type (SchedulingGroupContext, FacilityContext, etc.)
+  // Cast testContext to your module's type in steps:
+  //   const ctx = testContext as SchedulingGroupContext;
+  testContext: async ({}, use, testInfo) => {
+    // Generic context object - steps cast to module-specific type
+    const context: Record<string, any> = {};
     
-    console.log(`[Context] Initialized for test: ${testId}`);
+    console.log(`[Context] Initialized for test: ${testInfo.title}`);
     
-    // Provide fixture to test
-    await use(testId);
+    // All steps in this test share the same context instance
+    await use(context);
     
-    // Cleanup after test
-    cleanupTestContext(testId);
-    console.log(`[Context] Cleaned up for test: ${testId}`);
+    console.log(`[Context] Cleaned up for test: ${testInfo.title}`);
   },
 
 });

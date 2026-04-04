@@ -1,7 +1,7 @@
 import { createBdd } from "playwright-bdd";
 import { test } from "@fixtures/pages.fixture";
 import { expect } from '@playwright/test';
-import { scenarioContext, getSchdGrpName } from '@helpers/contextVariables';
+import type { SchedulingGroupContext } from '@workflows/ui/schedulingGroup/context/context';
 
 const { When, Then } = createBdd(test);
 
@@ -9,25 +9,26 @@ const { When, Then } = createBdd(test);
 
 When(
   'the user clicks the History option for the scheduling group',
-  async ({ contextManager }) => {
-    if (!scenarioContext.page || !scenarioContext.scheduledGroupPage) {
+  async ({ testContext }) => {
+    const ctx = testContext as SchedulingGroupContext;
+    if (!ctx.page) {
       throw new Error('Page not available. Did you call the Given step first?');
     }
     
-    const groupName = getSchdGrpName();
+    const groupName = ctx.groupName;
     if (!groupName) {
       throw new Error('No scheduling group name found in context.');
     }
     
-    // Click the history button for the specific group by name (not by position)
-    await scenarioContext.scheduledGroupPage.clickHistoryForGroup(groupName);
+    const scheduledGroupPage = ctx.scheduledGroupPage;
+    if (!scheduledGroupPage) {
+      throw new Error('ScheduledGroupPage not available in context.');
+    }
+    await scheduledGroupPage.clickHistoryForGroup(groupName);
     
-    // Wait for history wrapper to appear
-    await scenarioContext.page.locator('#historyWapper').waitFor({ state: 'visible', timeout: 10000 });
-    
-    // Wait for page to settle
-    await scenarioContext.page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
-    await scenarioContext.page.waitForTimeout(500);
+    await ctx.page.locator('#historyWapper').waitFor({ state: 'visible', timeout: 10000 });
+    await ctx.page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+    await ctx.page.waitForTimeout(500);
     
     console.log(`✓ Clicked History option for group: "${groupName}"`);
   },
@@ -35,18 +36,16 @@ When(
 
 Then(
   'the history popup displays with all historical changes',
-  async ({ }) => {
-    if (!scenarioContext.page) {
+  async ({ testContext }) => {
+    const ctx = testContext as SchedulingGroupContext;
+    if (!ctx.page) {
       throw new Error('Page not available.');
     }
     
-    // Wait for the history wrapper to appear
-    const historyContent = scenarioContext.page.locator('#historyWapper');
+    const historyContent = ctx.page.locator('#historyWapper');
     await expect(historyContent).toBeVisible({ timeout: 10000 });
-
-    // Wait for content to fully load and render
-    await scenarioContext.page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
-    await scenarioContext.page.waitForTimeout(500);
+    await ctx.page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+    await ctx.page.waitForTimeout(500);
 
     console.log('Verified history popup is displayed with Scheduling Group audit trail');
   },
@@ -54,13 +53,13 @@ Then(
 
 Then(
   'history shows timestamps of each modification',
-  async ({ }) => {
-    if (!scenarioContext.page) {
+  async ({ testContext }) => {
+    const ctx = testContext as SchedulingGroupContext;
+    if (!ctx.page) {
       throw new Error('Page not available.');
     }
     
-    // Verify that history contains timestamp in format dd/mm/yyyy hh:mm
-    const historyContent = scenarioContext.page.locator('#historyWapper');
+    const historyContent = ctx.page.locator('#historyWapper');
     const historyText = await historyContent.textContent();
     
     const timestampPattern = /\d{2}\/\d{2}\/\d{4}\s\d{2}:\d{2}/;
@@ -74,13 +73,13 @@ Then(
 
 Then(
   'history shows user names who made each change',
-  async ({ }) => {
-    if (!scenarioContext.page) {
+  async ({ testContext }) => {
+    const ctx = testContext as SchedulingGroupContext;
+    if (!ctx.page) {
       throw new Error('Page not available.');
     }
     
-    // Verify that history contains 'by' followed by user name
-    const historyContent = scenarioContext.page.locator('#historyWapper');
+    const historyContent = ctx.page.locator('#historyWapper');
     const historyText = await historyContent.textContent();
     
     if (!historyText || !/\sby\s/.test(historyText)) {
@@ -93,13 +92,13 @@ Then(
 
 Then(
   'history displays changes for Name, Notes, and other column modifications',
-  async ({ }) => {
-    if (!scenarioContext.page) {
+  async ({ testContext }) => {
+    const ctx = testContext as SchedulingGroupContext;
+    if (!ctx.page) {
       throw new Error('Page not available.');
     }
     
-    // Verify that history contains change action keywords
-    const historyContent = scenarioContext.page.locator('#historyWapper');
+    const historyContent = ctx.page.locator('#historyWapper');
     const historyText = await historyContent.textContent();
     
     const changePattern = /created|changed|updated|modified/i;
@@ -113,19 +112,16 @@ Then(
 
 Then(
   'the user can close the history popup',
-  async ({ }) => {
-    if (!scenarioContext.page) {
+  async ({ testContext }) => {
+    const ctx = testContext as SchedulingGroupContext;
+    if (!ctx.page) {
       throw new Error('Page not available.');
     }
-    // Click the close button using accessible selector
-    await scenarioContext.page.getByRole('link', { name: 'close' }).click();
     
-    // Wait for history wrapper to disappear
-    await scenarioContext.page.locator('#historyWapper').waitFor({ state: 'hidden', timeout: 5000 });
-    
-    // Wait for page to settle after closing
-    await scenarioContext.page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
-    await scenarioContext.page.waitForTimeout(500);
+    await ctx.page.getByRole('link', { name: 'close' }).click();
+    await ctx.page.locator('#historyWapper').waitFor({ state: 'hidden', timeout: 5000 });
+    await ctx.page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+    await ctx.page.waitForTimeout(500);
     
     console.log('Verified history popup is closed');
   },
@@ -133,12 +129,13 @@ Then(
 
 Then(
   /^history shows user '(.+)' who made the changes$/,
-  async ({ }, userName: string) => {
-    if (!scenarioContext.page) {
+  async ({ testContext }, userName: string) => {
+    const ctx = testContext as SchedulingGroupContext;
+    if (!ctx.page) {
       throw new Error('Page not available.');
     }
-    // Verify the specified user appears in history
-    const historyContent = scenarioContext.page.locator('#historyWapper');
+    
+    const historyContent = ctx.page.locator('#historyWapper');
     await expect(historyContent).toContainText(userName, { timeout: 10000 });
     
     console.log(`Verified user "${userName}" found in history`);

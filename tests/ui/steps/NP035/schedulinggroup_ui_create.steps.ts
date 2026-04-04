@@ -1,20 +1,28 @@
 import { createBdd } from "playwright-bdd";
 import { test } from "@fixtures/pages.fixture";
-import { scenarioContext, setSchdGrpName } from '@helpers/contextVariables';
+import type { SchedulingGroupContext } from '@workflows/ui/schedulingGroup/context/context';
 
 const { When, Then } = createBdd(test);
 
+// Helper: validate context has required properties
+const validateContext = (ctx: SchedulingGroupContext) => {
+  if (!ctx.page || !ctx.scheduledGroupPage) {
+    throw new Error('Context incomplete. Did you call the Given step first?');
+  }
+  return ctx.scheduledGroupPage;
+};
+
 When(
   "the user creates a new scheduling group using {string}",
-  async ({ contextManager }, filename: string) => {
-    if (!scenarioContext.scheduledGroupPage) {
-      throw new Error('No ScheduledGroupPage instance available. Did you call the Given step first?');
-    }
-    await scenarioContext.scheduledGroupPage.createScheduledGroup(filename);
+  async ({ testContext }, filename: string) => {
+    const ctx = testContext as SchedulingGroupContext;
+    const scheduledGroupPage = validateContext(ctx);
     
-    // Store the group name in scenarioContext for later access (persists across user switches)
-    const groupName = (scenarioContext.scheduledGroupPage.constructor as any).lastCreatedGroupName;
-    setSchdGrpName(groupName);
+    await scheduledGroupPage.createScheduledGroup(filename);
+    
+    // Store the group name in context for later access (persists across user switches)
+    const groupName = (scheduledGroupPage.constructor as any).lastCreatedGroupName;
+    ctx.groupName = groupName;
     
     console.log(`Created scheduling group using: ${filename}`);
     console.log(`Group name stored in context: "${groupName}"`);
@@ -23,11 +31,11 @@ When(
 
 Then(
   "the scheduling group is visible",
-  async ({ }) => {
-    if (!scenarioContext.scheduledGroupPage) {
-      throw new Error('No ScheduledGroupPage instance available.');
-    }
-    await scenarioContext.scheduledGroupPage.verifyScheduledGroupVisibleForUser();
+  async ({ testContext }) => {
+    const ctx = testContext as SchedulingGroupContext;
+    const scheduledGroupPage = validateContext(ctx);
+    
+    await scheduledGroupPage.verifyScheduledGroupVisibleForUser();
     console.log('Verified: scheduling group is visible');
   },
 );
