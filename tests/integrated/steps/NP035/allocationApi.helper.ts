@@ -11,8 +11,8 @@ import { ALLOCATION_API_CONFIG } from './allocationApi.config';
 // Re-export allocation-specific configuration
 export { ALLOCATION_API_CONFIG as API_CONFIG };
 
-// Allocation-specific wrapper for API requests
-export async function makeAllocationApiRequest(
+// Allocation API request wrapper
+export async function makeApiRequest(
   requestContext: ApiRequestContext,
   method: string,
   endpoint: string,
@@ -28,6 +28,3 @@ export async function makeAllocationApiRequest(
     note
   );
 }
-
-// Convenience alias for backwards compatibility
-export const makeApiRequest = makeAllocationApiRequest;

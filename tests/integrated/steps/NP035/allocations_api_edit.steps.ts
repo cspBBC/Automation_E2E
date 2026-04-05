@@ -21,23 +21,29 @@ const scenarioContext: AllocationContext = {
 const { When, Then } = createBdd(test);
 
 When('the user creates a duty from testDataFile {string} with parameters:', async ({}, testDataFile: string, dataTable: DataTable) => {
+  // requestContext captures the API response for validation in Then steps
   const requestContext = getSharedContext();
+  // normalize and parse parameters from DataTable, supports both key-value and direct formats
   const params = normalizeParameters(parseDataTableToMap(dataTable));
   
   if (scenarioContext.allocationsDutyId) throw new Error('Context validation failed: AllocationsDutyID is not null');
-  
+  //load the request payload template and resolve variables using the parsed parameters and scenario context
   let template = loadTestParameters(`${API_CONFIG.dataPath}/${testDataFile}`, 'duty');
+  //resolveTemplate will substitute {{paramName|defaultValue}} in the template with values from params or scenarioContext
   let payload = resolveTemplate(template, params);
+  // Set action to EDIT for both create and edit operations - backend uses this to determine if it's a create or edit based on presence of AllocationsDutyID
   payload.action = API_CONFIG.actions.EDIT;
   
   console.log(`\n[CREATE-PAYLOAD] Request payload:\n${JSON.stringify(payload, null, 2)}\n`);
   
+  // Store key parameters in scenario context for use in edit step and assertions
   scenarioContext.dutyName = payload.DutyName;
   scenarioContext.schedulingPersonId = payload.SchedulingPersonID;
   scenarioContext.schedulingTeamId = payload.SchedulingTeamID;
   scenarioContext.dutyDate = payload.DutyDate;
   scenarioContext.dutyId = payload.DutyID;
   
+  // Make the API request to create the duty - backend will determine if it's a create or edit based on presence of AllocationsDutyID
   await makeApiRequest(requestContext, 'POST', API_CONFIG.endpoints.markAction, payload, 'API Operation - Create Duty');
 });
 
