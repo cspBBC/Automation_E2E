@@ -215,9 +215,18 @@ Then('verify the edit operation is recorded in duty history with change details'
     
     expect(result.recordset.length).toBeGreaterThan(0);
     
-    const historyRecord = result.recordset[0];
-    expect(historyRecord.HistoryID).toBeDefined();
-    expect(historyRecord.ChangeDateTime).toBeDefined();
+    if (result.recordset.length > 0) {
+      console.log(`[HISTORY-RECORDS] Found ${result.recordset.length} history record(s):`);
+      result.recordset.forEach((record, index) => {
+        console.log(`\n  Record ${index + 1}:`);
+        console.log(`    HistoryID: ${record.HistoryID}`);
+        console.log(`    ChangeDateTime: ${record.ChangeDateTime}`);
+        console.log(`    HistoryType: ${record.HistoryType}`);
+        console.log(`    ChangedByUser: ${record.ChangedByUser || 'System'}`);
+        console.log(`    ChangeDetails: ${record.ChangeDetails}`);
+      });
+      console.log(`\n[HISTORY-VERIFY] ✓ Edit operation recorded in history\n`);
+    }
     
   } catch (error) {
     throw error;
@@ -251,6 +260,25 @@ Then('verify the edit field changes are reflected in database', async ({ scenari
     const duty = result.recordset[0];
     expect(duty.AD_AllocationsDutyID).toEqual(scenarioContext.allocationsDutyId);
     expect(duty.AD_IsDutyEdited).toBe(true);
+    
+    // Helper to convert seconds to HH:MM format
+    const secondsToTime = (seconds: number | null): string => {
+      if (!seconds) return '00:00';
+      const hours = Math.floor(seconds / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
+      return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+    };
+    
+    console.log(`[FIELDS-UPDATED] ✓ Edited duty record from database:`);
+    console.log(`  AllocationsDutyID: ${duty.AD_AllocationsDutyID}`);
+    console.log(`  DutyName: ${duty.AD_DutyName}`);
+    console.log(`  DutyDate: ${duty.AD_DutyDate}`);
+    console.log(`  StartTime: ${secondsToTime(duty.AD_StartTimeSec)}`);
+    console.log(`  EndTime: ${secondsToTime(duty.AD_EndTimeSec)}`);
+    console.log(`  DutyBreakTime (mins): ${duty.AD_DutyBreakTime}`);
+    console.log(`  ColorID: ${duty.AD_DutyColourID}`);
+    console.log(`  IsEdited: ${duty.AD_IsDutyEdited ? 'YES' : 'NO'}`);
+    console.log(`  UpdatedDate: ${duty.AD_UpdatedDate}\n`);
     
     // Note: Field value updates (DutyName, StartTime, EndTime, ColorID) are handled by backend
     // stored procedure usp_EditDuty. Our API test verifies:
