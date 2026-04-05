@@ -103,7 +103,7 @@ export default defineConfig({
       name: 'uitest',
       testDir: './.features-gen/ui',
       testMatch: '**/*.feature.spec.*',
-      workers: process.env.CI ? 4 : 4,  // 2 workers locally for parallel execution
+      workers: process.env.CI ? 8 : 4,  // 4 workers locally, 8 in CI for parallel execution
       outputDir: 'test-results/ui',
       use: {
         ...devices['Desktop Chrome'],
@@ -118,7 +118,7 @@ export default defineConfig({
       name: 'apitest',
       testDir: './.features-gen/api',
       testMatch: '**/*.feature.spec.*',
-      workers: process.env.CI ? 4 : 2,  // 2 workers locally for parallel execution
+      workers: process.env.CI ? 8 : 4,  // 4 workers locally, 8 in CI for parallel execution
       outputDir: 'test-results/api',
       use: {
         baseURL: process.env.API_BASE_URL,

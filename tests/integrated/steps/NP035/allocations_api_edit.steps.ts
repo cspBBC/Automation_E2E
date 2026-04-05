@@ -4,20 +4,12 @@ import { test, expect } from '@fixtures/fixture';
 import { getSharedContext, loadTestParameters } from '@helpers/apiHelper';
 import { AllocationQueries } from '@workflows/integrated/allocations/data/db/queries/allocations.queries';
 import { AllocationContext } from '@workflows/integrated/allocations/context/context';
-import {
-  API_CONFIG,
-  makeApiRequest
-} from './allocationApi.helper';
-import {
-  parseDataTableToMap,
-  resolveTemplate,
-  DutyContextBuilder
-} from '@workflows/integrated/allocations/helpers/dutyBuilder';
+import { API_CONFIG, makeApiRequest } from './allocationApi.helper';
+import { parseDataTableToMap, resolveTemplate, normalizeParameters } from '@workflows/integrated/allocations/helpers/dutyBuilder';
 
 // Stores context per scenario - persists captured IDs across steps
 const scenarioContext: AllocationContext = {
   allocationsDutyId: null,
-  allocationsSpId: null,
   dutyName: null,
   dutyId: null,
   schedulingPersonId: null,
@@ -25,116 +17,52 @@ const scenarioContext: AllocationContext = {
   dutyDate: null
 };
 
-// Merge fixtures for both API and DB access
+// BDD step definitions
 const { When, Then } = createBdd(test);
 
 When('the user creates a duty from testDataFile {string} with parameters:', async ({}, testDataFile: string, dataTable: DataTable) => {
   const requestContext = getSharedContext();
-  const parameters = parseDataTableToMap(dataTable);
+  const params = normalizeParameters(parseDataTableToMap(dataTable));
   
-  // VALIDATION: Ensure this is a fresh CREATE, not leftover from previous run
-  if (scenarioContext.allocationsDutyId !== null && scenarioContext.allocationsDutyId !== undefined) {
-    throw new Error(`Context validation failed: AllocationsDutyID is not null. Expected null for fresh CREATE.`);
-  }
+  if (scenarioContext.allocationsDutyId) throw new Error('Context validation failed: AllocationsDutyID is not null');
   
-  // Load unified template
   let template = loadTestParameters(`${API_CONFIG.dataPath}/${testDataFile}`, 'duty');
+  let payload = resolveTemplate(template, params);
+  payload.action = API_CONFIG.actions.EDIT;
   
-  // Build context from user parameters
-  const builder = new DutyContextBuilder(parameters);
-  const context = builder.buildContext();
+  console.log(`\n[CREATE-PAYLOAD] Request payload:\n${JSON.stringify(payload, null, 2)}\n`);
   
-  // Resolve template placeholders with context and defaults
-  let params = resolveTemplate(template, context);
-  params.action = API_CONFIG.actions.EDIT;
+  scenarioContext.dutyName = payload.DutyName;
+  scenarioContext.schedulingPersonId = payload.SchedulingPersonID;
+  scenarioContext.schedulingTeamId = payload.SchedulingTeamID;
+  scenarioContext.dutyDate = payload.DutyDate;
+  scenarioContext.dutyId = payload.DutyID;
   
-  console.log(`\n[CREATE-PAYLOAD] Request payload:\n${JSON.stringify(params, null, 2)}\n`);
-  
-  // Store context for later use in edit step
-  scenarioContext.dutyName = params.DutyName;
-  scenarioContext.schedulingPersonId = params.SchedulingPersonID;
-  scenarioContext.schedulingTeamId = params.SchedulingTeamID;
-  scenarioContext.dutyDate = params.DutyDate;
-  // Store DutyID and ID from feature file so EDIT can use them
-  scenarioContext.dutyId = params.DutyID;  // Will be used during EDIT
-  
-  await makeApiRequest(
-    requestContext,
-    'POST',
-    API_CONFIG.endpoints.markAction,
-    params,
-    'API Operation - Create Duty'
-  );
+  await makeApiRequest(requestContext, 'POST', API_CONFIG.endpoints.markAction, payload, 'API Operation - Create Duty');
 });
 
-/**
- * CAPTURE ALLOCATIONDUTYID FROM API RESPONSE (OPTIONAL)
- * Attempts to extract created duty ID from POST response body immediately after CREATE
- * If ID is not in response, DB verification step will capture it from database
- * 
- * Expected response format (optional):
- * { success: true, allocationsDutyId: 6952793, ... }
- */
-Then('capture allocationsDutyId from API response into context', async ({}) => {
-  const requestContext = getSharedContext();
-  
-  try {
-    const responseData = requestContext.body ? JSON.parse(requestContext.body) : {};
-    
-    // Extract allocationsDutyId from response (optional - may not be present)
-    const allocationsDutyId = responseData.allocationsDutyId || responseData.AllocationsDutyID || responseData.dutyId;
-    
-    if (allocationsDutyId) {
-      // Store in context for edit operations
-      scenarioContext.allocationsDutyId = allocationsDutyId;
-      console.log(`[CAPTURE-FROM-RESPONSE] ✓ AllocationsDutyID from response: ${allocationsDutyId}`);
-    } else {
-      // ID not in response - will be captured from DB in verify step
-      console.log(`[CAPTURE-FROM-RESPONSE] ℹ AllocationsDutyID not in response, will capture from DB verification`);
-    }
-    
-  } catch (error) {
-    // Parsing error - still OK, DB verification will capture it
-    console.log(`[CAPTURE-FROM-RESPONSE] ℹ Could not parse response, will capture from DB verification`);
-  }
-});
-
-/**
- * EDIT DUTY STEP
- * Unified approach: Load template, merge with captured scenario context, resolve
- * Template automatically fills in allocationsDutyId from scenario context
- */
 When('the user edits the duty from testDataFile {string} with parameters:', async ({}, testDataFile: string, dataTable: DataTable) => {
   const requestContext = getSharedContext();
-  const editParameters = parseDataTableToMap(dataTable);
+  if (!scenarioContext.allocationsDutyId) throw new Error('Cannot edit duty: allocationsDutyId not captured from creation step');
   
-  if (!scenarioContext.allocationsDutyId) {
-    throw new Error('Cannot edit duty: allocationsDutyId not captured from creation step');
-  }
+  const editParams = normalizeParameters(parseDataTableToMap(dataTable));
+  // Merge with scenario context
+  const merged = { ...editParams };
+  if (!merged.allocationsDutyId) merged.allocationsDutyId = String(scenarioContext.allocationsDutyId);
+  if (!merged.DutyID && scenarioContext.dutyId) merged.DutyID = scenarioContext.dutyId;
+  if (!merged.ID && scenarioContext.dutyId) merged.ID = scenarioContext.dutyId;
+  if (!merged.SchedulingPersonID && scenarioContext.schedulingPersonId) merged.SchedulingPersonID = scenarioContext.schedulingPersonId;
+  if (!merged.SchedulingTeamID && scenarioContext.schedulingTeamId) merged.SchedulingTeamID = scenarioContext.schedulingTeamId;
   
-  // Load unified template
   let template = loadTestParameters(`${API_CONFIG.dataPath}/${testDataFile}`, 'duty');
+  let payload = resolveTemplate(template, merged);
+  payload.isEdited = '1';
+  payload.action = API_CONFIG.actions.EDIT;
   
-  // Build context: merge edit parameters with scenario context
-  const builder = new DutyContextBuilder(editParameters, scenarioContext);
-  const context = builder.buildContext();
+  console.log(`\n[EDIT-PAYLOAD] Request payload:\n${JSON.stringify(payload, null, 2)}\n`);
   
-  // Resolve template placeholders with merged context and defaults
-  let params = resolveTemplate(template, context);
-  params.action = API_CONFIG.actions.EDIT;
-  
-  console.log(`\n[EDIT-PAYLOAD] Request payload:\n${JSON.stringify(params, null, 2)}\n`);
-  
-  // Update scenario context with edited name for verification
-  scenarioContext.dutyName = params.DutyName;
-  
-  await makeApiRequest(
-    requestContext,
-    'POST',
-    API_CONFIG.endpoints.markAction,
-    params,
-    `API Operation - Edit Duty (AllocationsDutyID: ${scenarioContext.allocationsDutyId})`
-  );
+  scenarioContext.dutyName = payload.DutyName;
+  await makeApiRequest(requestContext, 'POST', API_CONFIG.endpoints.markAction, payload, `API Operation - Edit Duty (AllocationsDutyID: ${scenarioContext.allocationsDutyId})`);
 });
 
 /**
@@ -219,14 +147,6 @@ Then('verify duty operation completed in database', async ({ db }) => {
  * VERIFY EDIT IN HISTORY
  * Confirms edit operation was recorded in duty history table
  */
-Then('verify the edit captured AllocationsDutyID successfully', async ({}) => {
-  if (!scenarioContext.allocationsDutyId) {
-    throw new Error('AllocationsDutyID was not captured in previous steps');
-  }
-  
-
-});
-
 Then('verify the edit operation is recorded in duty history with change details', async ({ db }) => {
   if (!scenarioContext.allocationsDutyId) {
     throw new Error('AllocationsDutyID was not captured in previous steps');

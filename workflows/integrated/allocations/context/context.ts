@@ -6,21 +6,19 @@
  * 
  * DESIGN PATTERN:
  * - allocationsDutyId: Captured from DB after duty creation, used in edit operations
- * - allocationsSpId: Captured from DB after duty creation, required for edit requests
  * - dutyName: Created duty name, used for assertions and verification
  * - schedulingPersonId: Person ID from creation, stored for context
  * - schedulingTeamId: Team ID from creation, stored for context
  * - dutyDate: Date of duty creation, used for assertions
  *
  * FLOW:
- * 1. Create scenario: Stores allocationsDutyId, allocationsSpId, dutyName after DB confirmation
+ * 1. Create scenario: Stores allocationsDutyId, dutyName after DB confirmation
  * 2. Edit scenario: Retrieves stored values and substitutes them in edit payload before API call
  * 3. Enables cross-scenario data sharing within same test execution
  *
  * @example
  * // In Create step - store after DB confirmation:
  * ctx.allocationsDutyId = dbResult.AD_AllocationsDutyID;
- * ctx.allocationsSpId = dbResult.AD_AllocationsSpId;
  * ctx.dutyName = testParams.DutyName;
  *
  * // In Edit step - retrieve and use:
@@ -35,14 +33,6 @@ export interface AllocationContext {
    * Null until duty is successfully created.
    */
   allocationsDutyId: number | null;
-
-  /**
-   * Unique identifier for the allocation scheduling person record.
-   * Captured from AD_AllocationsSpId after duty creation.
-   * Required for edit requests to link duty to person allocation.
-   * Null until duty is successfully created.
-   */
-  allocationsSpId: number | null;
 
   /**
    * Name of the duty created in this scenario.
