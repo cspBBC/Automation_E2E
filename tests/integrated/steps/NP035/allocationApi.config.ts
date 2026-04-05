@@ -12,24 +12,24 @@
 
 export const ALLOCATION_API_CONFIG = {
   baseUrl: process.env.API_BASE_URL || 'https://allocate-systest-dbr.national.core.bbc.co.uk',
-  dataPath: 'integrated/allocations/data',
+  dataPath: 'integrated/allocations/data/requestPayload',
   
   // API Endpoints - Update here if endpoints change
   endpoints: {
     // Allocation Operations
     markAction: '/page-includes/allocations/weekly/actions/mark-action.php',
-    create: '/api/allocations/create',        // Future: separate create endpoint
-    edit: '/api/allocations/edit',            // Future: separate edit endpoint
-    delete: '/api/allocations/delete',        // Future: separate delete endpoint
-    view: '/api/allocations/view'             // Future: separate view endpoint
+    // create: '/api/allocations/create',        // Future: separate create endpoint
+    // edit: '/api/allocations/edit',            // Future: separate edit endpoint
+    // delete: '/api/allocations/delete',        // Future: separate delete endpoint
+    // view: '/api/allocations/view'             // Future: separate view endpoint
   },
   
   // Business Actions - Map to API parameters or endpoints
   // Can be extended for future operations
   actions: {
     EDIT: 'edit',
-    VIEW: 'view',
-    CREATE: 'create',
-    DELETE: 'delete'
+    // VIEW: 'view',
+    // CREATE: 'create',
+    // DELETE: 'delete'
   }
 };

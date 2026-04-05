@@ -67,11 +67,35 @@ export const AllocationQueries = {
       ad.AD_AllocationsDutyID,
       ad.AD_AllocationsID,
       ad.AD_DutyName,
-      ad.AD_DutyDate
+      ad.AD_DutyDate,
+      ad.AD_StartTimeSec,
+      ad.AD_EndTimeSec,
+      ad.AD_DutyBreakTime,
+      ad.AD_DutyColourID,
+      ad.AD_IsDutyEdited
     FROM dbo.AllocationsDuties ad
     WHERE ad.AD_DutyName = @DutyName
       AND CAST(ad.AD_DutyDate AS DATE) = CAST(@DutyDate AS DATE)
     ORDER BY ad.AD_DutyDate DESC, ad.AD_AllocationsDutyID DESC
+  `,
+
+  /**
+   * Verify duty was edited in database - Query by AllocationsDutyID
+   * Returns all duty fields to confirm edit was applied
+   */
+  verifyDutyEdited: `
+    SELECT 
+      ad.AD_AllocationsDutyID,
+      ad.AD_DutyName,
+      ad.AD_StartTimeSec,
+      ad.AD_EndTimeSec,
+      ad.AD_DutyBreakTime,
+      ad.AD_DutyColourID,
+      ad.AD_DutyDate,
+      ad.AD_IsDutyEdited,
+      ad.AD_UpdatedDate
+    FROM dbo.AllocationsDuties ad
+    WHERE ad.AD_AllocationsDutyID = @AllocationsDutyID
   `,
 
   /**

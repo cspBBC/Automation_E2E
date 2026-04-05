@@ -2,8 +2,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { config as dotenvConfig } from 'dotenv';
 import { defineConfig, devices } from '@playwright/test';
-import { defineBddConfig } from 'playwright-bdd';
+import bddModule from 'playwright-bdd';
 
+const { defineBddConfig } = bddModule;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Load environment-specific .env file
@@ -18,8 +19,15 @@ if (!loadedEnv) {
   process.env.LOADED_ENVIRONMENT = environment;  // Mark as loaded
 }
 
-// Determine which test type based on env variable
-const testType = process.env.TEST_TYPE || 'ui';
+// Determine which test type based on env variable or command-line args
+let testType = process.env.TEST_TYPE || 'ui';
+
+// If argv contains project filter, infer test type from that
+if (process.argv.includes('--project=apitest')) {
+  testType = 'api';
+} else if (process.argv.includes('--project=uitest')) {
+  testType = 'ui';
+}
 
 // Log configuration ONLY ONCE per process (prevents double logging from bddgen + playwright)
 if (!process.env.CONFIG_LOGGED) {
@@ -38,36 +46,36 @@ if (!process.env.CONFIG_LOGGED) {
   process.env.CONFIG_LOGGED = 'true';
 }
 
-// BDD config - ONLY define the one we need to avoid processing both
-let bddConfig;
+// BDD configs for both API and UI - define both and let projects use what they need
+const bddConfigApi = defineBddConfig({
+  features: [
+    'tests/integrated/features/**/*.feature',
+  ],
+  steps: [
+    'tests/integrated/steps/**/*.steps.ts',
+    'tests/fixtures/fixture.ts',
+  ],
+  outputDir: '.features-gen/api',
+});
 
-if (testType === 'api') {
-  bddConfig = defineBddConfig({
-    features: [
-      'tests/integrated/features/**/*.feature',
-    ],
-    steps: [
-      'tests/integrated/steps/**/*.steps.ts',
-      'tests/fixtures/fixture.ts',
-    ],
-    outputDir: '.features-gen/api',
-  });
-} else {
-  bddConfig = defineBddConfig({
-    features: [
-      'tests/ui/features/**/*.feature',
-    ],
-    steps: [
-      'tests/ui/steps/**/*.steps.ts',
-      'tests/fixtures/pages.fixture.ts',
-    ],
-    outputDir: '.features-gen/ui',
-  });
-}
+const bddConfigUi = defineBddConfig({
+  features: [
+    'tests/ui/features/**/*.feature',
+  ],
+  steps: [
+    'tests/ui/steps/**/*.steps.ts',
+    'tests/fixtures/pages.fixture.ts',
+  ],
+  outputDir: '.features-gen/ui',
+});
+
+// Export the appropriate config for bddgen based on test type
+const bddConfig = testType === 'api' ? bddConfigApi : bddConfigUi;
 
 export { bddConfig };
 
 export default defineConfig({
+ 
   timeout: 60 * 1000,
   expect: {
     timeout: 10 * 1000,
