@@ -13,8 +13,7 @@ Feature: Scheduling Group CRUD - Edit
     And the user updates the scheduling group name to "<updatedName>"
     And the user updates the notes to "<updatedNotes>"
     And the user clicks the Update scheduling group button
-    Then the scheduling group name is updated to "<updatedName>"
-    And the notes are updated to "<updatedNotes>"
+    Then the scheduling group is updated in the table with the new name and notes
     And the Last Amended By displays current user
 
     When the user clicks the Delete button for the scheduling group
@@ -23,8 +22,7 @@ Feature: Scheduling Group CRUD - Edit
     Then the scheduling group is no longer visible in the list
 
     Examples:
-      | role           | testDataFile                        | updatedName             | updatedNotes        |
-      # | systemAdmin    | schdGroupCreate_SystemAdmin_UIdata  | Updated_Group_Name      | Updated group notes |
-      | areaAdmin_News | schdGroupCreate_AreaAdminNews_UIdata | AreaAdmin_Updated_Group | Edited by AreaAdmin |
+      | role           | testDataFile                        | updatedName    | updatedNotes   |
+      # | systemAdmin    | schdGroupCreate_SystemAdmin_UIdata  | RANDOM_NAME    | RANDOM_NOTES  |
+      | areaAdmin_News | schdGroupCreate_AreaAdminNews_UIdata | RANDOM_NAME    | RANDOM_NOTES  |
 
-  

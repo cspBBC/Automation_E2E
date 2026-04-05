@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "report": "npx playwright show-report",
-    "_ui:run": "npx bddgen && npx playwright test --project=uitest",
-    "_api:run": "npx bddgen && npx playwright test --project=apitest",
+    "_ui:run": "cross-env TEST_TYPE=ui npx bddgen && npx playwright test --project=uitest",
+    "_api:run": "cross-env TEST_TYPE=api npx bddgen && npx playwright test --project=apitest",
     "uidevtest": "cross-env ENVIRONMENT=dev TEST_TYPE=ui npm run _ui:run",
     "uisystesttest": "cross-env ENVIRONMENT=systest TEST_TYPE=ui npm run _ui:run",
     "apitest": "cross-env ENVIRONMENT=dev TEST_TYPE=api npm run _api:run",
@@ -21,7 +21,7 @@
   "license": "ISC",
   "type": "module",
   "devDependencies": {
-    "@playwright/test": "^1.58.2",
+    "@playwright/test": "^1.59.1",
     "@types/mssql": "^9.1.9",
     "@types/node": "^25.2.3",
     "cross-env": "^10.1.0",
@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "dotenv": "^17.2.3",
+    "httpntlm": "^1.8.13",
     "mssql": "^12.2.0"
   }
 }

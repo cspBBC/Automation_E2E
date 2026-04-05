@@ -23,8 +23,7 @@ Feature: Scheduling Group CRUD - History
     And the user updates the scheduling group name to "<updatedName>"
     And the user updates the notes to "<updatedNotes>"
     And the user clicks the Update scheduling group button
-    Then the scheduling group name is updated to "<updatedName>"
-    And the notes are updated to "<updatedNotes>"
+    Then the scheduling group is updated in the table with the new name and notes
 
     # Step 4: Check History after edit
     When the user clicks the History option for the scheduling group
@@ -41,6 +40,5 @@ Feature: Scheduling Group CRUD - History
     Then the scheduling group is no longer visible in the list
 
     Examples:
-      | role           | testDataFile                        | updatedName             | updatedNotes             |
-      | areaAdmin_News | schdGroupCreate_AreaAdminNews_UIdata | AreaAdmin_Updated_Group | Updated Notes Content |
-      # | systemAdmin    | schdGroupCreate_SystemAdmin_UIdata  | SystemAdmin_Updated_Group | Updated Notes Content |
+      | role           | testDataFile                        | updatedName | updatedNotes |
+      | areaAdmin_News | schdGroupCreate_AreaAdminNews_UIdata | RANDOM_NAME | RANDOM_NOTES |
