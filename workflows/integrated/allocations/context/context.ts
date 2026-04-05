@@ -65,4 +65,18 @@ export interface AllocationContext {
    * Set during creation, used for DB queries and assertions.
    */
   dutyDate: string | null;
+
+  /**
+   * Allocations date from creation.
+   * Set during creation, preserved for edit operations.
+   * Must remain unchanged during edit.
+   */
+  allocationsDate: string | null;
+
+  /**
+   * Allocations scheduling person ID from creation.
+   * Set during creation, reused in edit operations to maintain consistency.
+   * Ensures edit payload uses same person ID as creation.
+   */
+  allocationsSchPer: string | null;
 }

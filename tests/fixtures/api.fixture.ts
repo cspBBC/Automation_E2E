@@ -1,4 +1,4 @@
-﻿import { test as bddTest} from 'playwright-bdd';
+import { test as bddTest} from 'playwright-bdd';
 import { expect } from '@playwright/test';
 import {
   request,
@@ -8,6 +8,7 @@ import {
 } from '@playwright/test';
 import sql from 'mssql';
 import { getDbPool } from '@core/db/connection'
+import { getSharedContext } from '@helpers/apiHelper';
 import { ApiClient } from '@core/api/apiClient';
 import { readJSON } from '@helpers/readJson';
 import { verifyUser } from '@core/db/dbseed';
@@ -153,3 +154,32 @@ export const test = bddTest.extend<TestFixtures>({
 export { expect };
 export { ApiClient };
 
+/**
+ * API FIXTURES FACTORY - Generic for all API test modules
+ * Use directly in step files - no separate fixture file needed!
+ * 
+ * USAGE:
+ * const test = createAPIFixture<YourContext>(() => ({
+ *   field1: null,
+ *   field2: null,
+ * }));
+ */
+
+type APIFixtureType<T> = {
+  scenarioContext: T;
+  requestContext: any;
+};
+
+export function createAPIFixture<T>(contextFactory: () => T) {
+  return test.extend<APIFixtureType<T>>({
+    scenarioContext: async ({}, use: (value: T) => Promise<void>) => {
+      const context = contextFactory();
+      await use(context);
+      // Auto-cleanup after test
+    },
+
+    requestContext: async ({}, use: (value: any) => Promise<void>) => {
+      await use(getSharedContext());
+    },
+  });
+}

@@ -7,11 +7,25 @@
 
 export const AllocationQueries = {
   /**
+   * Call stored procedure to get AllocationsDutyID after creating a duty
+   * This SP returns the newly generated ID
+   */
+  getLatestAllocationsDutyId: `
+    DECLARE @AllocationsDutyID INT
+    EXEC usp_GetLatestAllocationsDutyID 
+      @DutyName = @DutyName,
+      @DutyDate = @DutyDate,
+      @AllocationsDutyID = @AllocationsDutyID OUTPUT
+    SELECT @AllocationsDutyID AS AD_AllocationsDutyID
+  `,
+
+  /**
    * Verify duty created in database - Get allocationsDutyId confirmation
-   * Returns duty record by DutyName and DutyDate (most reliable for verification)
+   * Returns most recently created duty record by DutyName only (ordered by highest ID = most recent)
+   * Uses unique DutyName with timestamp to avoid conflicts
    */
   verifyDutyCreated: `
-    SELECT 
+    SELECT TOP 1
       ad.AD_AllocationsDutyID,
       ad.AD_AllocationsID,
       ad.AD_DutyName,
@@ -23,8 +37,7 @@ export const AllocationQueries = {
       ad.AD_IsDutyEdited
     FROM dbo.AllocationsDuties ad
     WHERE ad.AD_DutyName = @DutyName
-      AND CAST(ad.AD_DutyDate AS DATE) = CAST(@DutyDate AS DATE)
-    ORDER BY ad.AD_DutyDate DESC, ad.AD_AllocationsDutyID DESC
+    ORDER BY ad.AD_AllocationsDutyID DESC
   `,
 
   /**

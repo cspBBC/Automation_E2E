@@ -35,5 +35,5 @@ Feature: Duty Allocation API Operations
         And verify the edit field changes are reflected in database
 
         Examples:
-            | user        | testDataFile                  | dutyName        | DutyID | ID    | allocationsSchPer | SchedulingPersonID | SchedulingTeamID | dutyDate   | allocationsDate | editStartTime | editEndTime | editDutyColorId | editBreakTimeHour | editBreakTimeMinute | editDutyName      | editCurrDurationVal |
-            | systemAdmin | allocationApi_PostParams.json | U_API_Create_P1 | 35386  | 35386 | 9350              | 9350               | 275              | 2026-04-04 | 2026-04-04     | 10:00         | 11:30       | 2               | 0                 | 30                  | U_API_Edit_P1_v2  | 00:30               |
+            | user        | testDataFile                  | dutyName        | DutyID | ID    | allocationsSchPer | SchedulingPersonID | SchedulingTeamID | dutyDate   | allocationsDate | editStartTime | editEndTime | editDutyColorId | editBreakTimeHour | editBreakTimeMinute | editDutyName     | editCurrDurationVal |
+            | systemAdmin | allocationApi_PostParams.json | U_API_Create_P1 | 35386  | 35386 | 8577              | 8577               | 275              | 2026-04-04 | 2026-04-04      | 10:00         | 11:30       | 5               | 0                 | 30                  | U_API_Edit_P1_v2 | 00:30               |

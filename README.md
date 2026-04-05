@@ -2037,15 +2037,27 @@ Feature: My API Feature
 ```typescript
 // File: tests/integrated/steps/NP035/my_api_feature.steps.ts
 import { createBdd, DataTable } from 'playwright-bdd';
-import { test, expect } from '@fixtures/fixture';
-import { getSharedContext } from '@helpers/apiHelper';
+import { createAPIFixture, expect } from '@fixtures/api.fixture';
+import { MyModuleContext } from '@workflows/integrated/mymodule/context/context';
+
+// Create extended test with module-specific context (once per module)
+const test = createAPIFixture<MyModuleContext>(() => ({
+  resourceId: null,
+  resourceName: null,
+  // ... other context properties
+}));
+
+// Export for bddgen
+export { test };
 
 const { When, Then } = createBdd(test);
 
-When('user creates resource with parameters:', async ({}, dataTable: DataTable) => {
-  const requestContext = getSharedContext();
+When('user creates resource with parameters:', async ({ scenarioContext, requestContext }, dataTable: DataTable) => {
+  const params = parseDataTableToMap(dataTable);
   
-  const params = dataTable.rowsHash();
+  // Get payload template and resolve variables
+  const payload = buildPayload(resourceTemplate, params);
+  
   // Make API call
   const response = await fetch('https://api.example.com/resource', {
     method: 'POST',

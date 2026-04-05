@@ -43,7 +43,13 @@ export function loadTestParameters(filePath: string, scenario: string): Record<s
 // ---------- QUERY STRING ----------
 export function buildQueryString(params: Record<string, string>): string {
   return Object.entries(params)
-    .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+    .map(([key, value]) => {
+      // For empty values, return just the key without '='
+      if (value === '' || value === null || value === undefined) {
+        return key;
+      }
+      return `${key}=${encodeURIComponent(value)}`;
+    })
     .join('&');
 }
 

@@ -53,9 +53,10 @@ const bddConfigApi = defineBddConfig({
   ],
   steps: [
     'tests/integrated/steps/**/*.steps.ts',
-    'tests/fixtures/fixture.ts',
+    'tests/fixtures/api.fixture.ts',
   ],
   outputDir: '.features-gen/api',
+  disableWarnings: { importTestFrom: true },
 });
 
 const bddConfigUi = defineBddConfig({
