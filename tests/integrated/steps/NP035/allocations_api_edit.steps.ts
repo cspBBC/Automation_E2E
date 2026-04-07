@@ -59,45 +59,26 @@ When('the user creates a duty from testDataFile {string} with parameters:', asyn
 When('the user edits the duty from testDataFile {string} with parameters:', async ({ scenarioContext, requestContext }, testDataFile: string, dataTable: DataTable) => {
   if (!scenarioContext.allocationsDutyId) throw new Error('Cannot edit duty: allocationsDutyId not captured from creation step');
   
-  // Parse edit parameters from DataTable
   const editParams = parseDataTableToMap(dataTable);
   
-  // Normalize edit parameter names by removing 'edit' prefix and adjusting casing
   const normalized: Record<string, any> = {};
   for (const [key, value] of Object.entries(editParams)) {
-    if (key.startsWith('edit')) {
-      // Remove 'edit' prefix
-      const withoutPrefix = key.substring(4);
-      
-      // For compound field names, lowercase first char (breakTimeHour, dutyColorId, currDurationVal)
-      // For simple fields, keep PascalCase (StartTime, EndTime, DutyName)
-      let fieldName: string;
-      if (withoutPrefix.startsWith('BreakTime') || 
-          withoutPrefix.startsWith('CurrDuration') || 
-          withoutPrefix === 'DutyColorId') {
-        fieldName = withoutPrefix.charAt(0).toLowerCase() + withoutPrefix.slice(1);
-      } else {
-        fieldName = withoutPrefix;
-      }
-      
-      normalized[fieldName] = value;
-    } else {
-      normalized[key] = value;
-    }
+    const fieldName = key.startsWith('edit') ? key.substring(4) : key;
+    normalized[fieldName] = value;
   }
   
-  // Merge with scenario context - only add if not already in normalized params
-  const merged: Record<string, any> = { ...normalized };
-  if (!merged.allocationsDutyId) merged.allocationsDutyId = String(scenarioContext.allocationsDutyId);
-  if (!merged.DutyID && scenarioContext.dutyId) merged.DutyID = scenarioContext.dutyId;
-  if (!merged.ID && scenarioContext.dutyId) merged.ID = scenarioContext.dutyId;
-  if (!merged.SchedulingPersonID && scenarioContext.schedulingPersonId) merged.SchedulingPersonID = scenarioContext.schedulingPersonId;
-  if (!merged.SchedulingTeamID && scenarioContext.schedulingTeamId) merged.SchedulingTeamID = scenarioContext.schedulingTeamId;
-  if (!merged.DutyDate && scenarioContext.dutyDate) merged.DutyDate = scenarioContext.dutyDate;
-  if (!merged.allocationsDate && scenarioContext.allocationsDate) merged.allocationsDate = scenarioContext.allocationsDate;
-  if (!merged.allocationsSchPer && scenarioContext.allocationsSchPer) merged.allocationsSchPer = scenarioContext.allocationsSchPer;
+  const merged: Record<string, any> = {
+    ...normalized,
+    allocationsDutyId: normalized.allocationsDutyId ?? String(scenarioContext.allocationsDutyId),
+    DutyID: normalized.DutyID ?? scenarioContext.dutyId,
+    ID: normalized.ID ?? scenarioContext.dutyId,
+    SchedulingPersonID: normalized.SchedulingPersonID ?? scenarioContext.schedulingPersonId,
+    SchedulingTeamID: normalized.SchedulingTeamID ?? scenarioContext.schedulingTeamId,
+    DutyDate: normalized.DutyDate ?? scenarioContext.dutyDate,
+    allocationsDate: normalized.allocationsDate ?? scenarioContext.allocationsDate,
+    allocationsSchPer: normalized.allocationsSchPer ?? scenarioContext.allocationsSchPer,
+  };
   
-  // Load template and resolve with merged parameters
   let template = loadTestParameters(`${API_CONFIG.dataPath}/${testDataFile}`, 'duty');
   let payload = resolveTemplate(template, merged);
   payload.isEdited = '1';
