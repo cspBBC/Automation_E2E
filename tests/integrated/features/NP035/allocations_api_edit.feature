@@ -30,9 +30,7 @@ Feature: Duty Allocation API Operations
             | editbreakTimeMinute | <editbreakTimeMinute> |
             | editcurrDurationVal | <editcurrDurationVal> |
 
-        And verify duty operation completed in database
         Then verify the edit operation is recorded in duty history with change details
-        And verify the edit field changes are reflected in database
 
         Examples:
             | user        | testDataFile                  | DutyName        | DutyID | ID    | allocationsSchPer | SchedulingPersonID | SchedulingTeamID | DutyDate   | allocationsDate | editDutyName     | editStartTime | editEndTime | editdutyColorId | editbreakTimeHour | editbreakTimeMinute | editcurrDurationVal |

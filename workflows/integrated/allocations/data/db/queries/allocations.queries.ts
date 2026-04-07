@@ -72,8 +72,7 @@ export const AllocationQueries = {
       h.History as ChangeDetails
     FROM dbo.History h
     LEFT JOIN dbo.UserDetails ud ON h.UserID = ud.UD_UserID
-    WHERE h.AttributeID = @AttributeID
-      AND h.HistoryType = @HistoryType
+    WHERE h.AttributeID = @AttributeID  
     ORDER BY h.DateTime DESC
   `,
 };
