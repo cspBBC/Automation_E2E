@@ -2,16 +2,14 @@ import { test as bddTest} from 'playwright-bdd';
 import { expect } from '@playwright/test';
 import {
   request,
-  APIRequestContext,
-  APIResponse,
-  Browser,
+  APIRequestContext
 } from '@playwright/test';
 import sql from 'mssql';
 import { getDbPool } from '@core/db/connection'
 import { getSharedContext } from '@helpers/apiHelper';
 import { ApiClient } from '@core/api/apiClient';
 import { readJSON } from '@helpers/readJson';
-import { verifyUser } from '@core/db/dbseed';
+
 import path from 'path';
 
 type TestFixtures = {
@@ -36,30 +34,6 @@ export const test = bddTest.extend<TestFixtures>({
     await ctx.dispose();
   },
 
-  // Authentication method - uses Basic Auth for API requests
-  authenticateAs: async ({ apiClient }, use) => {
-    await use(async (userAlias: string) => {
-      const usersData = await readJSON(path.resolve(process.cwd(), 'core/data/users.json'));
-      const user = (usersData as any)[userAlias];
-
-      if (!user) {
-        throw new Error(`User '${userAlias}' not found in core/data/users.json`);
-      }
-
-      console.log(`Using Basic Auth for user: ${userAlias}`);
-      const password = process.env[user.envKey];
-
-      if (!password) {
-        throw new Error(`Password not found in .env. Expected env variable: ${user.envKey}`);
-      }
-
-      const credentials = btoa(`${user.username}:${password}`);
-      apiClient.setAuthHeaders({ 'Authorization': `Basic ${credentials}` });
-
-      console.log(`Authenticated as user ${user.id} (${user.username})`);
-    });
-  },
-
   db: async ({}, use) => {
     const pool = await getDbPool();
     try {
@@ -77,21 +51,6 @@ export const test = bddTest.extend<TestFixtures>({
     }
   },
 
-  // Verify specific user exists by alias from users.json
-  ensureUserExists: async ({ db }, use) => {
-    await use(async (userAlias: string) => {
-      const usersData = await readJSON(path.resolve(process.cwd(), 'core/data/users.json'));
-      const user = usersData[userAlias];
-      
-      if (!user) {
-        throw new Error(`User '${userAlias}' not found in core/data/users.json`);
-      }
-
-      // Verify user exists in database using dbseed utility
-      await verifyUser(db, user);
-      return user;
-    });
-  },
 
   // NTLM authentication via browser context and page.goto()
   // page.goto() maintains NTLM session socket - only approach that works
@@ -154,16 +113,7 @@ export const test = bddTest.extend<TestFixtures>({
 export { expect };
 export { ApiClient };
 
-/**
- * API FIXTURES FACTORY - Generic for all API test modules
- * Use directly in step files - no separate fixture file needed!
- * 
- * USAGE:
- * const test = createAPIFixture<YourContext>(() => ({
- *   field1: null,
- *   field2: null,
- * }));
- */
+// Generic fixture creator for API tests with scenario context and shared request context
 
 type APIFixtureType<T> = {
   scenarioContext: T;

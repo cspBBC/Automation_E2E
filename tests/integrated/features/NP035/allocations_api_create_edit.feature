@@ -1,7 +1,7 @@
-@allocation-api @smoke
+@allocation-api-systemAdmin @smoke
 Feature: Duty Allocation API Operations
 
-    @post @create @edit
+    @post @createSysyemAdmin
     Scenario Outline: Create and Edit duty with different parameters for <user>
         Given user '<user>' is authenticated
 
@@ -17,7 +17,7 @@ Feature: Duty Allocation API Operations
             | DutyDate           | <DutyDate>           |
             | allocationsDate    | <allocationsDate>    |
 
-        And verify duty operation completed in database
+        And verify duty creation completed successfully with correct details in database
 
         # EDIT DUTY STEP
         When the user edits the duty from testDataFile "<testDataFile>" with parameters:
@@ -34,4 +34,4 @@ Feature: Duty Allocation API Operations
 
         Examples:
             | user        | testDataFile                  | DutyName        | DutyID | ID    | allocationsSchPer | SchedulingPersonID | SchedulingTeamID | DutyDate   | allocationsDate | editDutyName     | editStartTime | editEndTime | editdutyColorId | editbreakTimeHour | editbreakTimeMinute | editcurrDurationVal |
-            | systemAdmin | allocationApi_PostParams.json | U_API_Create_P1 | 35386  | 35386 | 8577              | 8577               | 275              | 2026-04-04 | 2026-04-04      | U_API_Edit_P1_v2 | 10:00         | 11:30       | 5               | 0                 | 30                  | 00:30               |
+            | systemAdmin | allocationApi_PostParams.json | U_API_Create_P1 | 35386  | 35386 | 8577              | 8577               | 275              | 2026-04-04 | 2026-04-04      | U_API_Edit_P1_v3 | 10:00         | 11:30       | 5               | 0                 | 30                  | 00:30               |

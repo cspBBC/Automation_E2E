@@ -6,19 +6,7 @@
  */
 
 export const AllocationQueries = {
-  /**
-   * Call stored procedure to get AllocationsDutyID after creating a duty
-   * This SP returns the newly generated ID
-   */
-  getLatestAllocationsDutyId: `
-    DECLARE @AllocationsDutyID INT
-    EXEC usp_GetLatestAllocationsDutyID 
-      @DutyName = @DutyName,
-      @DutyDate = @DutyDate,
-      @AllocationsDutyID = @AllocationsDutyID OUTPUT
-    SELECT @AllocationsDutyID AS AD_AllocationsDutyID
-  `,
-
+  
   /**
    * Verify duty created in database - Get allocationsDutyId confirmation
    * Returns most recently created duty record by DutyName only (ordered by highest ID = most recent)

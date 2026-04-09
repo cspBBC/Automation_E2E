@@ -93,7 +93,7 @@ When('the user edits the duty from testDataFile {string} with parameters:', asyn
   await makeApiRequest(requestContext, 'POST', API_CONFIG.endpoints.markAction, payload, `API Operation - Edit Duty (AllocationsDutyID: ${scenarioContext.allocationsDutyId})`);
 });
 
-Then('verify duty operation completed in database', async ({ scenarioContext, requestContext, db }) => {
+Then('verify duty creation completed successfully with correct details in database', async ({ scenarioContext, requestContext, db }) => {
   // Verify API success
   const responseData = requestContext.body ? JSON.parse(requestContext.body) : {};
   expect(requestContext.status).toBeGreaterThanOrEqual(200);
