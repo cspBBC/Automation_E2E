@@ -1,4 +1,4 @@
-# BBC Automation E2E Framework - Coding Standards & Commit Instructions
+﻿# BBC Automation E2E Framework - Coding Standards & Commit Instructions
 
 > **Team-Wide Guidelines for Code Quality, Consistency & Framework Integrity**  
 > All team members, contributors, and LLMs must follow these standards.
@@ -28,19 +28,19 @@
 Maintain consistent, maintainable, and high-quality test automation code across the entire BBC Automation E2E Framework through standardized practices and clear guidelines.
 
 ### **Scope**
-- ✅ Feature files (Gherkin/.feature)
-- ✅ Step implementations (TypeScript/.steps.ts)
-- ✅ Page objects (TypeScript/.ts)
-- ✅ Configuration files
-- ✅ Test data files
-- ✅ Documentation files
+-  Feature files (Gherkin/.feature)
+-  Step implementations (TypeScript/.steps.ts)
+-  Page objects (TypeScript/.ts)
+-  Configuration files
+-  Test data files
+-  Documentation files
 
 ### **Who Should Follow**
-- ✅ All team members
-- ✅ External contributors
-- ✅ LLM assistants (Claude, ChatGPT, etc.)
-- ✅ CI/CD pipelines
-- ✅ Code review processes
+-  All team members
+-  External contributors
+-  LLM assistants (Claude, ChatGPT, etc.)
+-  CI/CD pipelines
+-  Code review processes
 
 ---
 
@@ -48,29 +48,29 @@ Maintain consistent, maintainable, and high-quality test automation code across 
 
 ### **1. Code Quality**
 
-```typescript
-// ✅ DO: Clear, readable code with meaningful names
+typescript
+//  DO: Clear, readable code with meaningful names
 Given(
   'user {string} is on Show {string} page',
   async ({ loginAs }, userAlias: string, pageName: string) => {
     const page = await loginAs(userAlias as keyof typeof users);
     const pageObject = getPageObject(pageName, page);
     await pageObject.open();
-    console.log(`User '${userAlias}' navigated to ${pageName} page`);
+    console.log(User '{userAlias}' navigated to {pageName} page);
   },
 );
 
-// ❌ DON'T: Cryptic or abbreviated code
+//  DON'T: Cryptic or abbreviated code
 Given('user is on page', async ({ loginAs }, u, p) => {
   const p = await loginAs(u);
   await p.o();
 });
-```
+
 
 ### **2. Error Handling**
 
-```typescript
-// ✅ DO: Validate prerequisites and throw meaningful errors
+typescript
+//  DO: Validate prerequisites and throw meaningful errors
 When('user clicks the Edit button', async ({ }) => {
   if (!scenarioContext.page) {
     throw new Error('Page not available. Did you call the Given step first?');
@@ -78,48 +78,48 @@ When('user clicks the Edit button', async ({ }) => {
   await scenarioContext.page.locator('.fas.fa-edit').first().click();
 });
 
-// ❌ DON'T: Silent failures or vague error messages
+//  DON'T: Silent failures or vague error messages
 When('user clicks the Edit button', async ({ }) => {
   await page.locator('.fas.fa-edit').click(); // page may be undefined
 });
-```
+
 
 ### **3. Async/Await**
 
-```typescript
-// ✅ DO: Always use async/await with proper waits
+typescript
+//  DO: Always use async/await with proper waits
 await scenarioContext.page.waitForLoadState('networkidle');
 await expect(element).toBeVisible({ timeout: 5000 });
 
-// ❌ DON'T: Hardcoded delays or missing waits
+//  DON'T: Hardcoded delays or missing waits
 await page.waitForTimeout(3000);
 // element might not be ready
-```
+
 
 ### **4. DRY Principle**
 
-```typescript
-// ✅ DO: Extract common logic into reusable functions
+typescript
+//  DO: Extract common logic into reusable functions
 export function setPageContext(page: Page) {
   scenarioContext.page = page;
 }
 
-// ❌ DON'T: Duplicate the same code in multiple steps
+//  DON'T: Duplicate the same code in multiple steps
 // (scenario context setup repeated in every .steps.ts file)
-```
+
 
 ### **5. TypeScript Best Practices**
 
-```typescript
-// ✅ DO: Use strict typing
+typescript
+//  DO: Use strict typing
 let scenarioContext: { page: Page | null; scheduledGroupPage: PageObject | null } = {
   page: null,
   scheduledGroupPage: null,
 };
 
-// ❌ DON'T: Use 'any' or loose typing
+//  DON'T: Use 'any' or loose typing
 let scenarioContext: any = {};
-```
+
 
 ---
 
@@ -127,65 +127,65 @@ let scenarioContext: any = {};
 
 ### **Approved Directory Structure**
 
-```
+
 Automation_E2E/
-├── .github/
-│   ├── INSTRUCTIONS.md                 ← This file
-│   ├── PULL_REQUEST_TEMPLATE.md
-│   ├── workflows/
-│   │   └── pre-commit-validation.yml   ← Automated checks
-│   └── ISSUE_TEMPLATE/
-├── core/
-│   ├── api/
-│   ├── config/
-│   ├── data/
-│   └── db/
-├── tests/
-│   ├── ui/
-│   │   ├── features/
-│   │   │   └── [REQUIREMENT]/
-│   │   │       ├── [feature]_create.feature
-│   │   │       ├── [feature]_edit.feature
-│   │   │       └── [feature]_delete.feature
-│   │   ├── steps/
-│   │   │   └── [REQUIREMENT]/
-│   │   │       ├── [feature]_create.steps.ts
-│   │   │       ├── [feature]_edit.steps.ts
-│   │   │       └── [feature]_delete.steps.ts
-│   │   ├── page/
-│   │   │   └── [REQUIREMENT]/
-│   │   │       └── [PageName]Page.ts
-│   │   └── fixtures/
-│   ├── integrated/                     ← API tests
-│   └── utils/
-├── workflows/
-│   └── [FEATURE_AREA]/
-│       ├── data/
-│       └── db/
-├── playwright.config.ts
-├── package.json
-├── tsconfig.json
-└── README.md
-```
+ .github/
+    INSTRUCTIONS.md                  This file
+    PULL_REQUEST_TEMPLATE.md
+    workflows/
+       pre-commit-validation.yml    Automated checks
+    ISSUE_TEMPLATE/
+ core/
+    api/
+    config/
+    data/
+    db/
+ tests/
+    ui/
+       features/
+          [REQUIREMENT]/
+              [feature]_create.feature
+              [feature]_edit.feature
+              [feature]_delete.feature
+       steps/
+          [REQUIREMENT]/
+              [feature]_create.steps.ts
+              [feature]_edit.steps.ts
+              [feature]_delete.steps.ts
+       page/
+          [REQUIREMENT]/
+              [PageName]Page.ts
+       fixtures/
+    integrated/                      API tests
+    utils/
+ workflows/
+    [FEATURE_AREA]/
+        data/
+        db/
+ playwright.config.ts
+ package.json
+ tsconfig.json
+ README.md
+
 
 ### **File Naming Conventions**
 
 | Type | Pattern | Example |
 |------|---------|---------|
-| Feature files | `[feature]_[operation].feature` | `schedulinggroup_ui_create.feature` |
-| Step files | `[feature]_[operation].steps.ts` | `schedulinggroup_ui_create.steps.ts` |
-| Page objects | `[PageName]Page.ts` | `ScheduledGroupPage.ts` |
-| Test data | `[feature]_[scenario]_UIdata.json` | `schdGroupCreate_AreaAdminNews_UIdata.json` |
-| Database queries | `[feature].queries.ts` | `schedulinggroup.queries.ts` |
+| Feature files | [feature]_[operation].feature | schedulinggroup_ui_create.feature |
+| Step files | [feature]_[operation].steps.ts | schedulinggroup_ui_create.steps.ts |
+| Page objects | [PageName]Page.ts | ScheduledGroupPage.ts |
+| Test data | [feature]_[scenario]_UIdata.json | schdGroupCreate_AreaAdminNews_UIdata.json |
+| Database queries | [feature].queries.ts | schedulinggroup.queries.ts |
 
 ### **Requirement-Based Folders**
 
-```
-tests/ui/features/NP035/          ← Requirement code
-tests/ui/steps/NP035/              ← Requirement code
-tests/ui/page/NP035/               ← Requirement code
-workflows/schedulingGroup/          ← Feature name
-```
+
+tests/ui/features/NP035/           Requirement code
+tests/ui/steps/NP035/               Requirement code
+tests/ui/page/NP035/                Requirement code
+workflows/schedulingGroup/           Feature name
+
 
 ---
 
@@ -195,7 +195,7 @@ workflows/schedulingGroup/          ← Feature name
 
 Every feature file **MUST** have these comments:
 
-```gherkin
+gherkin
 @schdGroupCreateUI @ui
 Feature: Scheduling Group CRUD
   # COVERAGE: NP035.01 (Feature Name) | NP035.02 (Feature Name)
@@ -205,19 +205,19 @@ Feature: Scheduling Group CRUD
 
   Scenario: [Clear scenario description matching business context]
     Given user 'role' is on Show "Page Name" page
-```
+
 
 **Required Comment Elements:**
-- `COVERAGE`: Which requirements/user stories this covers
-- `VALIDATES`: What business rules are tested
-- `ROLE`: Who can perform this operation
-- `INDEPENDENT`: Yes (all scenarios must be independent)
+- COVERAGE: Which requirements/user stories this covers
+- VALIDATES: What business rules are tested
+- ROLE: Who can perform this operation
+- INDEPENDENT: Yes (all scenarios must be independent)
 
 ### **2. Step File Comments (MANDATORY)**
 
 Every step file **MUST** have:
 
-```typescript
+typescript
 import { Page } from '@playwright/test';
 import users from '@core/data/users.json' with { type: 'json' };
 import { createBdd } from "playwright-bdd";
@@ -243,21 +243,21 @@ Given(
     // Context: [why this is stored in scenario context]
     scenarioContext.page = page;
     
-    console.log(`User '${userAlias}' navigated to ${pageName} page`);
+    console.log(User '{userAlias}' navigated to {pageName} page);
   },
 );
-```
+
 
 **Required Comment Elements:**
-- File-level `COVERAGE` & `PURPOSE`
-- Inline `Locator` comments for every selector
-- `Context` comments explaining state management
-- `console.log` for debugging trace
+- File-level COVERAGE & PURPOSE
+- Inline Locator comments for every selector
+- Context comments explaining state management
+- console.log for debugging trace
 
 ### **3. Inline Code Comments**
 
-```typescript
-// ✅ DO: Comment WHY, not WHAT
+typescript
+//  DO: Comment WHY, not WHAT
 
 // Locator: .fas.fa-edit - Edit icon in actions column
 await scenarioContext.page.locator('.fas.fa-edit').first().click();
@@ -265,19 +265,19 @@ await scenarioContext.page.locator('.fas.fa-edit').first().click();
 // Wait for API calls and DOM updates to complete
 await scenarioContext.page.waitForLoadState('networkidle');
 
-// ❌ DON'T: Comment obvious code
+//  DON'T: Comment obvious code
 
 // Click the edit button
 await page.locator('.fas.fa-edit').click();
 
 // Wait for network
 await page.waitForLoadState('networkidle');
-```
+
 
 ### **4. Documentation Standards**
 
-```markdown
-# ✅ DO: Clear, structured documentation
+markdown
+#  DO: Clear, structured documentation
 
 ## Purpose
 Brief description of what this does
@@ -293,11 +293,11 @@ Code examples
 |---------|----------|-------------|
 | Edit Button | .fas.fa-edit | Actions column edit icon |
 
-# ❌ DON'T: Vague or incomplete docs
+#  DON'T: Vague or incomplete docs
 
 some documentation here
 edit button is .fas.fa-edit
-```
+
 
 ---
 
@@ -305,58 +305,58 @@ edit button is .fas.fa-edit
 
 ### **Variables**
 
-```typescript
-// ✅ DO: Descriptive, camelCase
+typescript
+//  DO: Descriptive, camelCase
 let scenarioContext: { page: Page | null; scheduledGroupPage: PageObject | null };
 const editButton = scenarioContext.page.locator('.fas.fa-edit');
 const lastAmendedDateField = page.locator('[data-testid="last-amended-date"]');
 
-// ❌ DON'T: Abbreviated or unclear
+//  DON'T: Abbreviated or unclear
 let ctx: any;
 const btn = page.locator('.fas.fa-edit');
 const lad = page.locator('[data-testid="last-amended-date"]');
-```
+
 
 ### **Functions**
 
-```typescript
-// ✅ DO: Verb + noun, clear intent
+typescript
+//  DO: Verb + noun, clear intent
 function setPageContext(page: Page) { }
 function verifyScheduledGroupVisibleForUser() { }
 async function waitForDeleteConfirmation() { }
 
-// ❌ DON'T: Vague or single-letter names
+//  DON'T: Vague or single-letter names
 function setup() { }
 function check() { }
 async function wait() { }
-```
+
 
 ### **Test Data**
 
-```typescript
-// ✅ DO: Descriptive, context-based
+typescript
+//  DO: Descriptive, context-based
 schdGroupCreate_AreaAdminNews_UIdata.json
 schdGroupCreate_SystemAdmin_UIdata.json
 schedulinggroup.queries.ts
 
-// ❌ DON'T: Generic or unclear
+//  DON'T: Generic or unclear
 test_data.json
 data.json
 queries.ts
-```
+
 
 ### **Tags**
 
-```gherkin
-# ✅ DO: Specific, searchable tags
+gherkin
+#  DO: Specific, searchable tags
 @schdGroupCreateUI @ui @smoke
 @schdGroupEditAreaAdminUI @ui @P1
 @schdGroupDeleteUI @ui @critical
 
-# ❌ DON'T: Generic or too broad
+#  DON'T: Generic or too broad
 @test @ui @feature
 @create @smoke
-```
+
 
 ---
 
@@ -364,7 +364,7 @@ queries.ts
 
 ### **Feature File Template**
 
-```gherkin
+gherkin
 @[tagName] @ui
 Feature: [Feature Name] CRUD
 
@@ -379,12 +379,12 @@ Feature: [Feature Name] CRUD
     Then the [entity] should be visible in the list
     When user [action on entity]
     Then [expected result]
-```
+
 
 ### **Scenario Guidelines**
 
-```gherkin
-# ✅ DO: Descriptive, business-focused scenarios
+gherkin
+#  DO: Descriptive, business-focused scenarios
 
 Scenario: systemAdmin creates a scheduling group successfully
   Given user 'systemAdmin' is on Show "Scheduled Group" page
@@ -392,18 +392,18 @@ Scenario: systemAdmin creates a scheduling group successfully
   Then the scheduling group should be visible in the list
   And the Last Amended By should display current user name
 
-# ❌ DON'T: Vague or technical scenarios
+#  DON'T: Vague or technical scenarios
 
 Scenario: Create test
   Given user is logged in
   When user does something
   Then something happens
-```
+
 
 ### **Independent Scenarios (CRITICAL)**
 
-```gherkin
-# ✅ DO: Each scenario creates its own data
+gherkin
+#  DO: Each scenario creates its own data
 
 Scenario: areaAdmin_News edits a scheduling group successfully
   Given user 'areaAdmin_News' is on Show "Scheduled Group" page
@@ -413,13 +413,13 @@ Scenario: areaAdmin_News edits a scheduling group successfully
   And user updates the scheduling group name to "Updated_Group_Name"
   Then the scheduling group name should be updated to "Updated_Group_Name"
 
-# ❌ DON'T: Depend on data created by other scenarios
+#  DON'T: Depend on data created by other scenarios
 
 Scenario: areaAdmin_News edits a pre-existing group
   # Assumes previous scenario created a group - FAILS in isolation!
   When user clicks the Edit button for the scheduling group
   Then the scheduling group should be editable
-```
+
 
 ---
 
@@ -427,7 +427,7 @@ Scenario: areaAdmin_News edits a pre-existing group
 
 ### **Step File Template**
 
-```typescript
+typescript
 import { Page } from '@playwright/test';
 import users from '@core/data/users.json' with { type: 'json' };
 import { createBdd } from "playwright-bdd";
@@ -457,7 +457,7 @@ Given(
     scenarioContext.page = page;
     scenarioContext.scheduledGroupPage = pageObject;
     
-    console.log(`User '${userAlias}' navigated to ${pageName} page`);
+    console.log(User '{userAlias}' navigated to {pageName} page);
   },
 );
 
@@ -473,12 +473,12 @@ When(
     console.log('Clicked Edit button for scheduling group');
   },
 );
-```
+
 
 ### **Error Handling Standards**
 
-```typescript
-// ✅ DO: Always validate prerequisites
+typescript
+//  DO: Always validate prerequisites
 When('user updates the group name', async ({ }) => {
   if (!scenarioContext.page) {
     throw new Error('Page not available. Did you call the Given step first?');
@@ -491,17 +491,17 @@ When('user updates the group name', async ({ }) => {
   await scenarioContext.page.locator('#group_name').fill('New Name');
 });
 
-// ❌ DON'T: Assume context exists
+//  DON'T: Assume context exists
 When('user updates the group name', async ({ }) => {
   await scenarioContext.page.locator('#group_name').fill('New Name');
-  // scenarioContext.page might be null → Runtime error
+  // scenarioContext.page might be null  Runtime error
 });
-```
+
 
 ### **Locator Documentation**
 
-```typescript
-// ✅ DO: Always document locators with description
+typescript
+//  DO: Always document locators with description
 
 // Locator: .fas.fa-edit - Edit icon in actions column
 await page.locator('.fas.fa-edit').click();
@@ -515,10 +515,10 @@ await page.locator('#group_name').fill('New Name');
 // Locator: textarea[name="notes"] - Notes text area for additional information
 await page.locator('textarea[name="notes"]').fill('Updated notes');
 
-// ❌ DON'T: Undocumented selectors
+//  DON'T: Undocumented selectors
 await page.locator('.fas.fa-edit').click();
 await page.locator('#group_name').fill('New Name');
-```
+
 
 ---
 
@@ -526,24 +526,24 @@ await page.locator('#group_name').fill('New Name');
 
 ### **Branch Naming**
 
-```bash
-# ✅ DO: Feature/requirement based branches
+bash
+#  DO: Feature/requirement based branches
 git checkout -b feature/NP035-scheduling-group-e2e
 git checkout -b fix/login-step-timeout
 git checkout -b docs/update-readme
 
-# ❌ DON'T: Generic or dated branches
+#  DON'T: Generic or dated branches
 git checkout -b feature/test
 git checkout -b fix/bug
 git checkout -b updates-march-19
-```
+
 
 ### **Commit Message Format**
 
 [Use Conventional Commits](https://www.conventionalcommits.org/):
 
-```bash
-# ✅ DO: Structured, descriptive commits
+bash
+#  DO: Structured, descriptive commits
 
 git commit -m "feat(NP035): Add scheduling group E2E test automation
 
@@ -553,35 +553,35 @@ git commit -m "feat(NP035): Add scheduling group E2E test automation
 - Permission boundary & data isolation validation
 
 COVERAGE:
-- NP035.01: View Scheduling Groups ✅
-- NP035.02: Create/Add Scheduling Groups ✅
-- NP035.03: Edit Scheduling Groups (with area change warning) ✅
-- NP035.04: Delete Scheduling Groups ✅
-- NP035.05: View History of Changes ✅
+- NP035.01: View Scheduling Groups 
+- NP035.02: Create/Add Scheduling Groups 
+- NP035.03: Edit Scheduling Groups (with area change warning) 
+- NP035.04: Delete Scheduling Groups 
+- NP035.05: View History of Changes 
 
 Test Execution:
   npx playwright test --grep @ui"
 
-# ❌ DON'T: Vague commit messages
+#  DON'T: Vague commit messages
 git commit -m "add tests"
 git commit -m "updates"
 git commit -m "fix stuff"
-```
+
 
 ### **Commit Types**
 
 | Type | Use Case | Example |
 |------|----------|---------|
-| `feat` | New feature/test | `feat(NP035): Add scheduling group tests` |
-| `fix` | Bug fix | `fix(login): Increase timeout for slow networks` |
-| `docs` | Documentation | `docs: Update README with new commands` |
-| `refactor` | Code improvement | `refactor: Extract duplicate step logic` |
-| `test` | Test-only changes | `test: Add edge case scenarios` |
-| `chore` | Dependencies, config | `chore: Update playwright to v1.40` |
+| feat | New feature/test | feat(NP035): Add scheduling group tests |
+| fix | Bug fix | fix(login): Increase timeout for slow networks |
+| docs | Documentation | docs: Update README with new commands |
+| refactor | Code improvement | refactor: Extract duplicate step logic |
+| test | Test-only changes | test: Add edge case scenarios |
+| chore | Dependencies, config | chore: Update playwright to v1.40 |
 
 ### **Pre-Commit Workflow**
 
-```bash
+bash
 # 1. Verify all files present and properly commented
 grep -l "# COVERAGE:" tests/ui/features/NP035/*.feature
 grep -l "# VALIDATES:" tests/ui/features/NP035/*.feature
@@ -605,7 +605,7 @@ git commit
 
 # 7. Push
 git push origin feature/NP035-scheduling-group-e2e
-```
+
 
 ---
 
@@ -615,51 +615,51 @@ git push origin feature/NP035-scheduling-group-e2e
 
 ### **1. Generate BDD Feature Structure**
 
-```bash
+bash
 # Generate new feature module structure
 npx bddgen
 
 # Options:
 npx bddgen --path tests/ui/features/NP035  # Generate in specific path
 npx bddgen --name schedulinggroup           # Generate with specific name
-```
+
 
 ### **2. Feature File Generation**
 
-```bash
-# ✅ DO: Use following structure
+bash
+#  DO: Use following structure
 npx bddgen --path tests/ui/features/NP035 --name schedulinggroup_ui_create
 
 # Creates:
 # tests/ui/features/NP035/schedulinggroup_ui_create.feature
 # tests/ui/steps/NP035/schedulinggroup_ui_create.steps.ts
 
-# ✅ Then manually edit .feature file and add:
+#  Then manually edit .feature file and add:
 # - @tags for easy test filtering
 # - # COVERAGE: [Requirement]
 # - # VALIDATES: [Business rules]
 # - Gherkin scenarios matching business context
-```
+
 
 ### **3. Step Definition Generation**
 
-```bash
+bash
 # Generate step definitions from existing feature file
 npx bddgen --feature tests/ui/features/NP035/schedulinggroup_ui_create.feature
 
 # This creates skeleton steps.ts with all Gherkin steps
 # Then manually implement step logic
 
-# ✅ After generation, add:
+#  After generation, add:
 # - File-level COVERAGE & PURPOSE comments
 # - Locator comments for all selectors
 # - Error handling for prerequisites
 # - console.log for debugging
-```
+
 
 ### **4. Running BDD Tests**
 
-```bash
+bash
 # Run ALL tests
 npx playwright test
 
@@ -689,11 +689,11 @@ npx playwright test tests/ui/features/NP035/schedulinggroup_ui_create.feature
 npx playwright test --grep @ui --reporter=html
 npx playwright test --grep @ui --reporter=json
 npx playwright test --grep @ui --reporter=list
-```
+
 
 ### **5. View Generated Test List**
 
-```bash
+bash
 # List all tests that would be executed
 npx playwright test --list --grep @ui
 
@@ -703,11 +703,11 @@ npx playwright test --list --grep @schdGroupEditUI
 
 # Count total tests
 npx playwright test --list --grep @ui | wc -l
-```
+
 
 ### **6. BDD Workflow - Complete Example**
 
-```bash
+bash
 # Step 1: Create new feature requirement (NP035)
 mkdir -p tests/ui/features/NP035
 mkdir -p tests/ui/steps/NP035
@@ -748,11 +748,11 @@ git add tests/ui/features/NP035/
 git add tests/ui/steps/NP035/
 git commit -m "feat(NP035): Add scheduling group create tests"
 git push
-```
+
 
 ### **7. Common BDD Commands Cheat Sheet**
 
-```bash
+bash
 # Generate new feature
 npx bddgen
 
@@ -794,14 +794,14 @@ npx playwright test --screenshot=only-on-failure
 
 # Run with trace (debugging)
 npx playwright test --trace=on
-```
+
 
 ### **8. BDD Best Practices**
 
 #### **Feature File Best Practices**
 
-```gherkin
-# ✅ DO: Business-focused Gherkin
+gherkin
+#  DO: Business-focused Gherkin
 
 @schdGroupCreateUI @ui @smoke
 Feature: Scheduling Group CRUD
@@ -817,7 +817,7 @@ Feature: Scheduling Group CRUD
     Then the scheduling group should be visible in the list
     And the Last Amended By should display current user name
 
-# ❌ DON'T: Technical or vague scenarios
+#  DON'T: Technical or vague scenarios
 
 @test
 Feature: Test feature
@@ -825,12 +825,12 @@ Feature: Test feature
     Given user is logged in
     When user clicks button
     Then page loads
-```
+
 
 #### **Step Definition Best Practices**
 
-```typescript
-// ✅ DO: Clear, reusable, well-commented steps
+typescript
+//  DO: Clear, reusable, well-commented steps
 
 Given(
   'user {string} is on Show {string} page',
@@ -844,22 +844,22 @@ Given(
     scenarioContext.page = page;
     scenarioContext.scheduledGroupPage = pageObject;
     
-    console.log(`User '${userAlias}' navigated to ${pageName} page`);
+    console.log(User '{userAlias}' navigated to {pageName} page);
   },
 );
 
-// ❌ DON'T: Hardcoded values or missing comments
+//  DON'T: Hardcoded values or missing comments
 
 Given('user is on page', async ({ }) => {
   const page = await loginAs('admin');
   await page.goto('http://localhost:3000/admin');
   // Missing context storage, no comments
 });
-```
+
 
 ### **9. Troubleshooting BDD Commands**
 
-```bash
+bash
 # Error: "Command not found: bddgen"
 # Solution: Ensure playwright-bdd is installed
 npm install --save-dev @cucumber/cucumber playwright-bdd
@@ -879,11 +879,11 @@ npx playwright test --list tests/ui/features/NP035/*.feature
 # Error: Step implementation missing
 # Solution: Generate steps from feature
 npx bddgen --feature tests/ui/features/NP035/schedulinggroup_ui_create.feature
-```
+
 
 ### **10. CI/CD Integration with BDD**
 
-```yaml
+yaml
 # .github/workflows/test.yml example
 
 name: BDD Tests
@@ -914,7 +914,7 @@ jobs:
       - name: Generate report
         if: always()
         run: npx playwright show-report
-```
+
 
 ---
 
@@ -924,72 +924,72 @@ jobs:
 
 Run this before every commit:
 
-```bash
+bash
 #!/bin/bash
 # Pre-commit validation script
 
-echo "🔍 Starting pre-commit validation..."
+echo " Starting pre-commit validation..."
 
 # 1. Check COVERAGE comments
-echo -n "✓ Checking COVERAGE comments... "
+echo -n " Checking COVERAGE comments... "
 if grep -q "# COVERAGE:" tests/ui/features/**/*.feature 2>/dev/null; then
-  echo "✅"
+  echo ""
 else
-  echo "❌ FAILED: Missing COVERAGE comments"
+  echo " FAILED: Missing COVERAGE comments"
   exit 1
 fi
 
 # 2. Check VALIDATES comments
-echo -n "✓ Checking VALIDATES comments... "
+echo -n " Checking VALIDATES comments... "
 if grep -q "# VALIDATES:" tests/ui/features/**/*.feature 2>/dev/null; then
-  echo "✅"
+  echo ""
 else
-  echo "❌ FAILED: Missing VALIDATES comments"
+  echo " FAILED: Missing VALIDATES comments"
   exit 1
 fi
 
 # 3. Check locator comments in steps
-echo -n "✓ Checking locator comments... "
+echo -n " Checking locator comments... "
 if grep -q "// Locator:" tests/ui/steps/**/*.ts 2>/dev/null; then
-  echo "✅"
+  echo ""
 else
-  echo "❌ FAILED: Missing locator comments"
+  echo " FAILED: Missing locator comments"
   exit 1
 fi
 
 # 4. TypeScript compilation
-echo -n "✓ Checking TypeScript compilation... "
+echo -n " Checking TypeScript compilation... "
 if npx tsc --noEmit 2>&1 | grep -q error; then
-  echo "❌ FAILED: TypeScript compilation errors"
+  echo " FAILED: TypeScript compilation errors"
   npx tsc --noEmit
   exit 1
 else
-  echo "✅"
+  echo ""
 fi
 
 # 5. File count validation
-echo -n "✓ Verifying file counts... "
-FEATURE_COUNT=$(ls -1 tests/ui/features/NP035/*.feature 2>/dev/null | wc -l)
-STEPS_COUNT=$(ls -1 tests/ui/steps/NP035/*.ts 2>/dev/null | wc -l)
-if [ "$FEATURE_COUNT" -ge 1 ] && [ "$STEPS_COUNT" -ge 1 ]; then
-  echo "✅ ($FEATURE_COUNT features, $STEPS_COUNT steps)"
+echo -n " Verifying file counts... "
+FEATURE_COUNT=(ls -1 tests/ui/features/NP035/*.feature 2>/dev/null | wc -l)
+STEPS_COUNT=(ls -1 tests/ui/steps/NP035/*.ts 2>/dev/null | wc -l)
+if [ "FEATURE_COUNT" -ge 1 ] && [ "STEPS_COUNT" -ge 1 ]; then
+  echo " (FEATURE_COUNT features, STEPS_COUNT steps)"
 else
-  echo "❌ FAILED: Missing feature or step files"
+  echo " FAILED: Missing feature or step files"
   exit 1
 fi
 
 echo ""
-echo "✅ All pre-commit checks passed!"
+echo " All pre-commit checks passed!"
 echo "Ready to commit and push."
-```
+
 
 ### **Manual Verification Checklist**
 
-- [ ] All feature files have `# COVERAGE:` comment
-- [ ] All feature files have `# VALIDATES:` comment
-- [ ] All step files have file-level `// COVERAGE:` comment
-- [ ] All step files have `// Locator:` comments for selectors
-- [ ] No TypeScript compilation errors (`npx tsc --noEmit`)
+- [ ] All feature files have # COVERAGE: comment
+- [ ] All feature files have # VALIDATES: comment
+- [ ] All step files have file-level // COVERAGE: comment
+- [ ] All step files have // Locator: comments for selectors
+- [ ] No TypeScript compilation errors (npx tsc --noEmit)
 - [ ] All scenarios are independent (create data before testing)
 - [ ] Role-based scenarios include role specification
 - [ ] No hardcoded timeouts (use proper waits)
@@ -1002,7 +1002,7 @@ echo "Ready to commit and push."
 
 ### **For Code Reviewers**
 
-```markdown
+markdown
 ## Feature File Review
 
 - [ ] COVERAGE comment present and accurate
@@ -1037,7 +1037,7 @@ echo "Ready to commit and push."
 - [ ] Follows framework conventions
 - [ ] No hardcoded credentials or sensitive data
 - [ ] Tests are deterministic (no flakiness)
-```
+
 
 ---
 
@@ -1057,7 +1057,7 @@ Always ask for and understand:
 
 #### **2. Feature File Generation**
 
-```gherkin
+gherkin
 # ALWAYS include these elements:
 @tagName @ui
 Feature: [Feature Name]
@@ -1070,11 +1070,11 @@ Feature: [Feature Name]
     Given [setup]
     When [action with data creation first]
     Then [verification]
-```
+
 
 #### **3. Step File Generation**
 
-```typescript
+typescript
 // ALWAYS include:
 import { Page } from '@playwright/test';
 import users from '@core/data/users.json' with { type: 'json' };
@@ -1086,7 +1086,7 @@ import users from '@core/data/users.json' with { type: 'json' };
 // Locator: [selector] - [description]
 // Error handling for missing context
 // console.log for debugging
-```
+
 
 #### **4. Validation Checklist**
 
@@ -1102,7 +1102,7 @@ Before output, LLM must verify:
 
 #### **5. Quality Standards**
 
-- Generate code that passes `npx tsc --noEmit`
+- Generate code that passes npx tsc --noEmit
 - Include meaningful comments
 - Use async/await correctly
 - Validate context/prerequisites
@@ -1115,7 +1115,7 @@ Before output, LLM must verify:
 
 ### **Compilation Errors**
 
-```bash
+bash
 # Error: Property 'offsetParent' does not exist
 # Fix: Use offsetHeight or other DOM properties
 
@@ -1127,14 +1127,14 @@ await page.waitForFunction(() => {
 # Error: Expected 2-3 arguments, but got 1
 # Fix: Use correct Playwright API
 
-# ❌ WRONG: page.press('Escape')
-# ✅ RIGHT: page.keyboard.press('Escape')
+#  WRONG: page.press('Escape')
+#  RIGHT: page.keyboard.press('Escape')
 await page.keyboard.press('Escape');
-```
+
 
 ### **Missing Comments**
 
-```bash
+bash
 # Error: Feature file missing COVERAGE comment
 # Fix: Add required comments to all feature files
 
@@ -1144,36 +1144,36 @@ grep -L "# COVERAGE:" tests/ui/features/**/*.feature
 # Use this template:
 # COVERAGE: NP035.XX ([Requirement])
 # VALIDATES: [Business rule 1], [Business rule 2]
-```
+
 
 ### **Context Not Found**
 
-```bash
+bash
 # Error: "Page not available. Did you call the Given step first?"
 # Cause: Step executed without prerequisite Given step
 # Fix: Ensure all scenarios start with proper Given step
 
 Scenario: Edit scheduling group
-  Given user 'systemAdmin' is on Show "Scheduled Group" page  # ← Always required!
+  Given user 'systemAdmin' is on Show "Scheduled Group" page  #  Always required!
   When user creates a new scheduling group...
-  When user clicks the Edit button...  # ← Now page context exists
-```
+  When user clicks the Edit button...  #  Now page context exists
+
 
 ### **Test Flakiness**
 
-```bash
+bash
 # Problem: Tests pass/fail inconsistently
 # Solution: Use proper waits, not hardcoded delays
 
-# ❌ DON'T: await page.waitForTimeout(3000);
-# ✅ DO: await page.waitForLoadState('networkidle');
-# ✅ DO: await expect(element).toBeVisible();
-# ✅ DO: await page.locator('selector').waitFor();
-```
+#  DON'T: await page.waitForTimeout(3000);
+#  DO: await page.waitForLoadState('networkidle');
+#  DO: await expect(element).toBeVisible();
+#  DO: await page.locator('selector').waitFor();
+
 
 ### **Locator Issues**
 
-```bash
+bash
 # Problem: "Timeout waiting for locator"
 # Solution: Verify locator and wait strategies
 
@@ -1184,11 +1184,11 @@ Scenario: Edit scheduling group
 4. Use page.waitForSelector() if element loads dynamically
 
 # Use specific locators:
-# ✅ getByRole('button', { name: 'Delete' })
-# ✅ locator('#group_name')
-# ✅ locator('textarea[name="notes"]')
-# ❌ locator('div.button')  # Too generic
-```
+#  getByRole('button', { name: 'Delete' })
+#  locator('#group_name')
+#  locator('textarea[name="notes"]')
+#  locator('div.button')  # Too generic
+
 
 ---
 
@@ -1196,7 +1196,7 @@ Scenario: Edit scheduling group
 
 ### **Essential BDD Commands**
 
-```bash
+bash
 # Generate new feature structure
 npx bddgen                                    # Interactive generation
 npx bddgen --path tests/ui/features/NP035    # Generate in specific path
@@ -1219,11 +1219,11 @@ npx playwright test --reporter=html            # HTML report
 npx playwright test --grep @ui --workers=4     # Parallel execution
 npx playwright test --grep @ui --video=on      # Record videos
 npx playwright test --grep @ui --trace=on      # Enable tracing
-```
+
 
 ### **Essential Code Validation Commands**
 
-```bash
+bash
 # Validate code before commit
 npx tsc --noEmit                            # TypeScript check
 grep -r "# COVERAGE:" tests/                # Check coverage comments
@@ -1236,11 +1236,11 @@ npx prettier --check tests/                 # Format check
 
 # Feature file syntax
 npx playwright test --list --grep @ui 2>&1  # Validate feature files
-```
+
 
 ### **Essential Commands**
 
-```bash
+bash
 # Validate code before commit
 npx tsc --noEmit                          # TypeScript check
 grep -r "# COVERAGE:" tests/              # Check coverage comments
@@ -1254,37 +1254,37 @@ npx playwright test --grep @schdGroupEditUI --headed  # Headed mode
 # Code quality
 npx eslint tests/                         # Lint check
 npx prettier --check tests/               # Format check
-```
+
 
 ### **File Templates**
 
 **Feature File:**
-```
+
 @tag @ui
 Feature: [Name]
 # COVERAGE: REQ.XX
 # VALIDATES: rule1, rule2
 Scenario: [Description]
   Given...
-```
+
 
 **Step File:**
-```
+
 import { Page } from '@playwright/test';
 import users from '@core/data/users.json' with { type: 'json' };
 // COVERAGE: Feature - Description
 let scenarioContext = { page: null };
 Given('...', async ({ }) => {...});
-```
+
 
 **Test Data:**
-```json
+json
 {
   "groupName": "Test_Group",
   "notes": "Test notes",
   "area": "News"
 }
-```
+
 
 ---
 
@@ -1311,7 +1311,7 @@ Given('...', async ({ }) => {...});
 ## **QUESTIONS OR UPDATES?**
 
 For clarifications or to propose updates:
-1. Open an issue with label `documentation`
+1. Open an issue with label documentation
 2. Reference this file and specific section
 3. Provide use case or example
 4. Submit PR with updated guidelines
@@ -1322,3 +1322,6 @@ For clarifications or to propose updates:
 **Last Updated:** March 19, 2026  
 **Maintained By:** QA Automation Team  
 **Applies To:** All team members, contributors, and LLMs
+
+
+

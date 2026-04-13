@@ -1,4 +1,4 @@
-import sql from 'mssql';
+﻿import sql from 'mssql';
 
 /**
  * Core database seed utilities for user validation
@@ -54,5 +54,6 @@ export async function verifyUser(
     throw new Error(`User ${user.id} (${user.username}) not found in database`);
   }
 
-  console.log(`✓ User ${user.id} (${user.username}) verified in database`);
+  console.log(`User ${user.id} (${user.username}) verified in database`);
 }
+

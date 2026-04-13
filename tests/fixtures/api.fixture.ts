@@ -1,0 +1,135 @@
+import { test as bddTest} from 'playwright-bdd';
+import { expect } from '@playwright/test';
+import {
+  request,
+  APIRequestContext
+} from '@playwright/test';
+import sql from 'mssql';
+import { getDbPool } from '@core/db/connection'
+import { getSharedContext } from '@helpers/apiHelper';
+import { ApiClient } from '@core/api/apiClient';
+import { readJSON } from '@helpers/readJson';
+
+import path from 'path';
+
+type TestFixtures = {
+  request: APIRequestContext;
+  apiClient: ApiClient;
+  db: sql.ConnectionPool;
+  authenticateAs: (userAlias: string) => Promise<void>;
+  ensureUserExists: (userAlias: string) => Promise<{ id: number; username: string }>;
+  authenticateWithNtlm: (userAlias: string) => Promise<any>;
+};
+
+export const test = bddTest.extend<TestFixtures>({
+  // Base API client with auth header support
+  apiClient: async ({}, use) => {
+    const ctx = await request.newContext({
+      baseURL: process.env.API_BASE_URL,
+      ignoreHTTPSErrors: true,
+    });
+
+    const client = new ApiClient(ctx);
+    await use(client);
+    await ctx.dispose();
+  },
+
+  db: async ({}, use) => {
+    const pool = await getDbPool();
+    try {
+      await use(pool);
+    } finally {
+      // Rollback any open transactions to clean up after test
+      try {
+        //only works if test inserted any data into the database, otherwise it will throw an error that there is no transaction to rollback
+        await pool.request().query('IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION');
+        console.log('Transaction cleaned up after test');
+      } catch (err) {
+        // Transaction may not exist, that's okay
+      }
+      await pool.close();
+    }
+  },
+
+
+  // NTLM authentication via browser context and page.goto()
+  // page.goto() maintains NTLM session socket - only approach that works
+  authenticateWithNtlm: async ({ browser }, use) => {
+    let authContext: any = null;
+    let apiPage: any = null;
+
+    await use(async (userAlias: string) => {
+      const usersData = await readJSON(path.resolve(process.cwd(), 'core/data/users.json'));
+      const user = (usersData as any)[userAlias];
+
+      if (!user) {
+        throw new Error(`User '${userAlias}' not found in users.json`);
+      }
+
+      const password = process.env[user.envKey];
+      if (!password) {
+        throw new Error(`Password not found in .env for key: ${user.envKey}`);
+      }
+
+      console.log(`Authenticating NTLM user: ${user.username}`);
+
+      authContext = await browser.newContext({
+        ignoreHTTPSErrors: true,
+      });
+
+      apiPage = await authContext.newPage();
+      const baseUrl = new URL(process.env.API_BASE_URL || 'https://allocate-systest-wp.national.core.bbc.co.uk');
+      const encodedPassword = encodeURIComponent(password);
+      
+      // Try UPN format first, fallback to username
+      const authUsername = user.upn || user.username;
+      const loginUrl = `https://${authUsername}:${encodedPassword}@${baseUrl.hostname}/`;
+
+      console.log(`Using credentials: ${authUsername}:****`);
+
+      // Use page.goto() with embedded credentials to trigger NTLM handshake
+      const response = await apiPage.goto(loginUrl);
+
+      if (response.status() !== 200) {
+        throw new Error(`Failed to authenticate user '${userAlias}'. Status: ${response.status()}`);
+      }
+
+      console.log(`NTLM session established for ${user.username}`);
+      
+      // Return the authenticated page for making requests
+      return apiPage;
+    });
+
+    // Cleanup after test
+    if (apiPage) {
+      await apiPage.close();
+    }
+    if (authContext) {
+      await authContext.close();
+    }
+  },
+});
+
+export { expect };
+export { ApiClient };
+
+// Generic fixture creator for API tests with scenario context and shared request context
+
+type APIFixtureType<T> = {
+  scenarioContext: T;
+  requestContext: any;
+};
+
+export function createAPIFixture<T>(contextFactory: () => T) {
+  return test.extend<APIFixtureType<T>>({
+    scenarioContext: async ({}, use: (value: T) => Promise<void>) => {
+      const context = contextFactory();
+      await use(context);
+      // Auto-cleanup after test
+    },
+
+    requestContext: async ({}, use: (value: any) => Promise<void>) => {
+      await use(getSharedContext());
+    },
+  });
+}

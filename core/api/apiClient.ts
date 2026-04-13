@@ -9,17 +9,36 @@ export interface RequestOptions {
 }
 
 /**
- * Enhanced API Client with support for custom headers and options
+ * Enhanced API Client with support for custom headers, authentication, and options
  */
 export class ApiClient {
+  private authHeaders: Record<string, string> = {};
+
   constructor(private request: APIRequestContext) {}
+
+  /**
+   * Set authentication headers for all subsequent requests
+   */
+  setAuthHeaders(headers: Record<string, string>): void {
+    this.authHeaders = headers;
+  }
+
+  /**
+   * Merge auth headers with request-specific headers
+   */
+  private mergeHeaders(options?: RequestOptions): Record<string, string> | undefined {
+    if (!this.authHeaders && !options?.headers) {
+      return undefined;
+    }
+    return { ...this.authHeaders, ...options?.headers };
+  }
 
   /**
    * GET request
    */
   async get(url: string, options?: RequestOptions): Promise<APIResponse> {
     return this.request.get(url, {
-      headers: options?.headers,
+      headers: this.mergeHeaders(options),
     });
   }
 
@@ -29,7 +48,7 @@ export class ApiClient {
   async post<T>(url: string, payload?: T, options?: RequestOptions): Promise<APIResponse> {
     return this.request.post(url, {
       data: payload || options?.data,
-      headers: options?.headers,
+      headers: this.mergeHeaders(options),
     });
   }
 
@@ -39,7 +58,7 @@ export class ApiClient {
   async put<T>(url: string, payload?: T, options?: RequestOptions): Promise<APIResponse> {
     return this.request.put(url, {
       data: payload || options?.data,
-      headers: options?.headers,
+      headers: this.mergeHeaders(options),
     });
   }
 
@@ -48,7 +67,7 @@ export class ApiClient {
    */
   async delete(url: string, options?: RequestOptions): Promise<APIResponse> {
     return this.request.delete(url, {
-      headers: options?.headers,
+      headers: this.mergeHeaders(options),
     });
   }
 
@@ -58,7 +77,7 @@ export class ApiClient {
   async patch<T>(url: string, payload?: T, options?: RequestOptions): Promise<APIResponse> {
     return this.request.patch(url, {
       data: payload || options?.data,
-      headers: options?.headers,
+      headers: this.mergeHeaders(options),
     });
   }
 }

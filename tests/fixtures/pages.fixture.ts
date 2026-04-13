@@ -10,8 +10,11 @@ function getPassword(envKey: string): string {
   return password;
 }
 
-// Extend the base test with loginAs fixture
-export const test = base.extend<{ loginAs: (role: keyof typeof users) => Promise<Page> }>({
+// Extend the base test with loginAs and testContext fixtures
+export const test = base.extend<{ 
+  loginAs: (role: keyof typeof users) => Promise<Page>,
+  testContext: Record<string, any>
+}>({
 
   loginAs: async ({ browser }, use) => {
     let currentContext: BrowserContext | undefined;
@@ -64,6 +67,22 @@ export const test = base.extend<{ loginAs: (role: keyof typeof users) => Promise
         console.warn('Error closing context:', error);
       }
     }
+  },
+
+  // Test context - shared between all steps (per-test isolation)
+  // Each module defines its own context type (SchedulingGroupContext, FacilityContext, etc.)
+  // Cast testContext to your module's type in steps:
+  //   const ctx = testContext as SchedulingGroupContext;
+  testContext: async ({}, use, testInfo) => {
+    // Generic context object - steps cast to module-specific type
+    const context: Record<string, any> = {};
+    
+    console.log(`[Context] Initialized for test: ${testInfo.title}`);
+    
+    // All steps in this test share the same context instance
+    await use(context);
+    
+    console.log(`[Context] Cleaned up for test: ${testInfo.title}`);
   },
 
 });

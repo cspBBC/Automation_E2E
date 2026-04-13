@@ -1,2463 +1,2287 @@
-# 🚀 E2E Test Automation Framework - Complete Developer Guide
+# BBC Automation E2E Framework - Complete Developer Guide
 
-**Welcome!** This comprehensive guide will help you understand and master this enterprise-grade test automation framework. Whether you're writing your first test or debugging complex scenarios, you'll find detailed explanations, real examples, and best practices here.
-
----
-
-## 📋 Table of Contents
-
-### Getting Started
-1. [Framework Overview](#1-framework-overview)
-2. [Prerequisites & Setup](#2-prerequisites--setup)
-3. [Quick Start (5 Minutes)](#3-quick-start-5-minutes)
-
-### Understanding the Architecture
-4. [Project Structure Explained](#4-project-structure-explained)
-5. [How the Framework Really Works](#5-how-the-framework-really-works)
-6. [Complete Test Execution Flow](#6-complete-test-execution-flow)
-
-### Deep Dives
-7. [Test Execution Commands - Complete Reference](#7-test-execution-commands--complete-reference)
-8. [Understanding Each Utils Module](#8-understanding-each-utils-module)
-9. [Writing Your First Test - Step by Step](#9-writing-your-first-test--step-by-step)
-
-### Advanced Topics
-10. [Page Objects Explained](#10-page-objects-explained)
-11. [Test Data & Form Filling](#11-test-data--form-filling)
-12. [Parallel Execution & Context Isolation](#12-parallel-execution--context-isolation)
-13. [Fixtures & Reusable Setup](#13-fixtures--reusable-setup)
-
-### Reference & Support
-14. [Common Workflows & Patterns](#14-common-workflows--patterns)
-15. [Troubleshooting Guide](#15-troubleshooting-guide)
-16. [Best Practices](#16-best-practices)
-17. [FAQ](#17-faq)
+## Table of Contents
+1. [Setup & Installation](#setup--installation)
+2. [Project Architecture Overview](#project-architecture-overview)
+3. [Folder Structure & Purpose](#folder-structure--purpose)
+4. [Core Concepts & Components](#core-concepts--components)
+5. [Detailed UI Test Walkthrough](#detailed-ui-test-walkthrough)
+6. [Detailed Integrated (API) Test Walkthrough](#detailed-integrated-api-test-walkthrough)
+7. [End-to-End Test Execution Flow](#end-to-end-test-execution-flow)
+8. [Running Tests from Console](#running-tests-from-console)
+9. [Key Files Reference](#key-files-reference)
+10. [Common Workflows](#common-workflows)
+11. [Coding Standards](#coding-standards)
 
 ---
 
-# 1. Framework Overview
+## Setup & Installation
 
-## What Problem Does This Solve?
+### Prerequisites
+Before starting, ensure you have:
+- **Node.js** (v16 or higher) installed
+- **npm** package manager
+- **Git** for cloning the repository
+- **SQL Server** database access (for integrated tests)
+- **Test Environment** credentials (usernames, passwords)
 
-Before this framework, teams faced:
-- ❌ Flaky tests that fail randomly
-- ❌ Tests that interfere with each other in parallel
-- ❌ Slow test execution (1 test = 5+ minutes)
-- ❌ Hard to maintain selectors and test logic
-- ❌ Tests written in code-only format (non-technical people can't understand)
-
-**Our Solution:** A comprehensive framework that addresses all these challenges.
-
-## What Technology Stack Are We Using?
-
-```
-┌─────────────────────────────────────────────────────────┐
-│             Test Automation Framework Stack             │
-├─────────────────────────────────────────────────────────┤
-│ BDD Layer      │ Gherkin (.feature files)               │
-│                │ Playwright-BDD (step matching)         │
-├─────────────────────────────────────────────────────────┤
-│ Test Layer     │ API Tests (REST client)                │
-│                │ UI Tests (Playwright browser)          │
-│                │ DB Tests (Direct SQL execution)        │
-├─────────────────────────────────────────────────────────┤
-│ Utility Layer  │ Form Filler (auto-fill forms)         │
-│                │ JSON Reader (load test data)           │
-│                │ Page Factory (page object creation)    │
-│                │ Context Manager (parallel isolation)   │
-├─────────────────────────────────────────────────────────┤
-│ Framework Foundation                                     │
-│ Playwright (browser) | Node.js | TypeScript            │
-└─────────────────────────────────────────────────────────┘
-```
-
-## Key Capabilities
-
-| Capability | What It Means | Example |
-|-----------|---------------|---------| 
-| **BDD Format** | Write tests in plain English, not just code | "When user creates a scheduling group" (non-technical team can read) |
-| **UI Testing** | Automate browser interactions | Click buttons, fill forms, verify text appears |
-| **API Testing** | Test backend endpoints directly | POST /api/groups, verify response |
-| **Database Testing** | Run SQL queries and stored procedures | Execute SP_CreateGroup, verify results |
-| **Parallel Execution** | Run multiple tests at same time | 100 tests in 2 minutes (vs 30+ minutes sequentially) |
-| **Page Objects** | Encapsulate UI selectors and interactions | Update one place = all tests still work |
-| **Context Isolation** | Each test has isolated storage | Test 1's data doesn't affect Test 2 |
-| **CI/CD Integration** | Automatic GitHub Actions integration | Tests run on every git push |
-
----
-
-# 2. Prerequisites & Setup
-
-## System Requirements
+### Step 1: Clone the Repository
 
 ```bash
-# Check what you have installed
-node --version        # Should be 16.x or higher
-npm --version         # Should be 8.x or higher
-git --version         # Any recent version
+# Clone the repository
+git clone <repository-url> BBC_Automation
+
+# Navigate to the project directory
+cd BBC_Automation/E2E_Framework/Automation_E2E
 ```
 
-## Step 1: Clone & Install
+### Step 2: Install Dependencies
 
 ```bash
-# Clone repository
-git clone <YOUR_REPO_URL>
-cd Automation_E2E
-
-# Install all dependencies
+# Install all npm packages defined in package.json
 npm install
+
 # This installs:
-# - Playwright (browser automation)
-# - Playwright-BDD (step matching)
-# - TypeScript (type checking)
-# - All testing libraries
+# - Playwright (@playwright/test) - browser automation (v1.59.1)
+# - Playwright-BDD (playwright-bdd) - BDD test framework (v8.4.2)
+# - TypeScript - for type-safe code (v5.9.3)
+# - MSSQL - database connections (v12.2.0)
+# - dotenv - environment variable management (v17.2.3)
+# - httpntlm - NTLM authentication support (v1.8.13)
 ```
 
-## Step 2: Create Environment Configuration Files
+### Step 3: Configure Environment Variables
 
-The framework needs `.env` files to know which environment to test and what credentials to use.
-
-### Create `.env.dev` (Development Environment)
+The framework uses environment-specific `.env` files. Create them in the root directory:
 
 ```bash
-# .env.dev - DEV Environment Configuration
-# Database Connection Details
-DB_AUTH_TYPE=sql
-DB_HOST=dev-clus15-lsn1.national.core.bbc.co.uk  # Your dev database server
-DB_NAME=BBCSchedules_WP                           # Your database name
-DB_USER=ALLOCATE-D                               # Database user
-DB_PASSWORD=ALLOCATE-D1                          # Database password
-
-# Application URLs
-API_BASE_URL=https://allocate-dev-wp.national.core.bbc.co.uk/api  # Dev API endpoint
-UI_BASE_URL=https://allocate-dev-wp.national.core.bbc.co.uk      # Dev application URL
-
-# User Credentials (from core/data/users.json)
-SYS_ADMIN_PASSWORD=Jr.ntr@090909                # System Admin password
-AREA_ADMIN_PASSWORD=BBC@2025@                   # Area Admin password
-AREA_ADMIN_1_PASSWORD=your_actual_password      # Additional Area Admin
-REGULAR_USER_PASSWORD=your_actual_password      # Regular user password
-
-ENVIRONMENT=dev                                 # Always "dev" for this file
+# Create environment-specific files
+# .env.dev          (for development environment)
+# .env.systest      (for system testing environment)
+# .env.staging      (for staging environment)
 ```
 
-**Key Concepts:**
-- `DB_HOST` + `DB_USER` + `DB_PASSWORD` = How to connect to development database
-- `API_BASE_URL` + `UI_BASE_URL` = Where the dev application is hosted
-- Passwords = Must match the users defined in `core/data/users.json`
-- `ENVIRONMENT=dev` = Tells framework to use this file
+**Example `.env.systest` file:**
+```
+# UI Application
+UI_BASE_URL=https://systest-app.example.com
 
-### Create `.env.systest` (Staging/System Test Environment)
+# API Endpoint
+API_BASE_URL=https://api.systest.example.com
 
-```bash
-# .env.systest - STAGING Environment Configuration
-# Database Connection Details (Staging/Pre-Production)
-DB_AUTH_TYPE=sql
-DB_HOST=systest-clus15-lsn1.national.core.bbc.co.uk  # Your staging database server
-DB_NAME=BBCSchedules_WP                              # Same database name
-DB_USER=ALLOCATE-SYSTEST                            # Staging database user
-DB_PASSWORD=ALLOCATE-SYSTEST-PWD                    # Staging database password
+# Database Connection
+DB_HOST=systest-db-server.example.com
+DB_NAME=TestDatabase
+DB_USER=sa_user
+DB_PASSWORD=your_database_password
 
-# Application URLs
-API_BASE_URL=https://allocate-systest-wp.national.core.bbc.co.uk/api  # Staging API endpoint
-UI_BASE_URL=https://allocate-systest-wp.national.core.bbc.co.uk      # Staging app URL
-
-# User Credentials (from core/data/users.json)
-SYS_ADMIN_PASSWORD=Jr.ntr@090909                # System Admin password (same as dev)
-AREA_ADMIN_PASSWORD=BBC@2025@                   # Area Admin password (same as dev)
-AREA_ADMIN_1_PASSWORD=your_actual_password      # Additional Area Admin
-REGULAR_USER_PASSWORD=your_actual_password      # Regular user password
-
-ENVIRONMENT=systest                             # Always "systest" for this file
+# User Credentials (referenced in core/data/users.json)
+SYS_ADMIN_PASSWORD=system_admin_password
+AREA_ADMIN_PASSWORD=area_admin_password
+AREA_ADMIN_1_PASSWORD=area_admin_1_password
 ```
 
-**Key Concepts:**
-- **Same structure as .env.dev** - only the host/URL values differ
-- Uses **staging database server** instead of dev
-- Used by **CI/CD pipelines** for automated testing before production
-- Passwords should be **same as dev** (user accounts replicated between environments)
+**Note:** Never commit `.env` files with real passwords to Git. Use `.env.example` as template.
 
-## Step 3: Verify Installation
+### Step 4: Verify Installation
 
 ```bash
-# Run this command to verify everything is installed
-npm run uidevtest --help
+# Check if all dependencies are installed correctly
+npm list
 
-# You should see Playwright test runner help text
-# If you get an error, something isn't installed correctly
+# Build TypeScript (optional, happens automatically during test)
+npm run build
+```
+
+### Step 5: Browser Installation (One-time)
+
+Playwright requires browser binaries. Install them:
+
+```bash
+# Install Chromium, Firefox, and WebKit browsers
+npx playwright install
+
+# Or install specific browser
+npx playwright install chromium
 ```
 
 ---
 
-# 3. Quick Start (5 Minutes)
+## Project Architecture Overview
 
-## Scenario: You want to run a test
+This is a **BDD-based (Behavior Driven Development) Test Automation Framework** with the following characteristics:
 
-### Command 1: Run UI Tests (See the browser)
-
-```bash
-npm run uidevtest
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Test Runner (Playwright)                  │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  ┌────────────────┐              ┌────────────────┐         │
+│  │  UI Tests      │              │  API Tests     │         │
+│  │ (Browser)      │              │ (HTTP)         │         │
+│  └────────┬───────┘              └────────┬───────┘         │
+│           │                               │                  │
+│           └───────────────┬───────────────┘                  │
+│                           │                                  │
+│           ┌───────────────▼───────────────┐                 │
+│           │   BDD Step Definitions         │                 │
+│           │  (Gherkin: Given/When/Then)   │                 │
+│           └───────────────┬───────────────┘                 │
+│                           │                                  │
+│        ┌──────────────────┼──────────────────┐              │
+│        │                  │                  │              │
+│   ┌────▼───┐       ┌──────▼──────┐    ┌─────▼────┐         │
+│   │ Page   │       │   Helpers   │    │Database  │         │
+│   │Objects │       │   & Utils   │    │Queries   │         │
+│   └────────┘       └─────────────┘    └──────────┘         │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**What happens:**
-1. ✅ Loads `.env.dev` configuration
-2. ✅ Launches Chrome browser (you can see it)
-3. ✅ Runs all UI tests marked with `@ui` tag
-4. ✅ Tests execute one-by-one (single worker)
-5. ✅ Results shown in terminal + HTML report
+### Key Technologies
 
-**Output:**
-```
-PASS  tests/ui/features/NP035/schedulinggroup_ui_create.feature
-  ✓ AreaAdmin creates a scheduling group (5s)
-  ✓ SystemAdmin edits the group (8s)
-  ✓ SystemAdmin deletes the group (3s)
-
-==== 3 passed (16s) ====
-```
-
-### Command 2: Run API Tests (No browser)
-
-```bash
-npm run apitest
-```
-
-**What happens:**
-1. ✅ Makes HTTP requests directly to API
-2. ✅ No browser needed (faster)
-3. ✅ Runs headless (background)
-4. ✅ Verifies API responses, status codes, data
-
-### Command 3: Run Everything
-
-```bash
-npm run test:dev
-```
-
-**What happens:**
-1. ✅ Runs both UI tests + API tests
-2. ✅ UI tests with visible browser
-3. ✅ API tests headless
-4. ✅ Both use DEV environment config
-
-### View Results
-
-```bash
-npm run report
-```
-
-This opens an interactive HTML report showing:
-- ✅ Passed/failed tests
-- ⏱️ Execution time
-- 📹 Video recordings of failures
-- 📸 Screenshots
-- 📋 Full test logs
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| **Test Framework** | Playwright-BDD | Write tests in Gherkin (cucumber-like) language |
+| **Language** | TypeScript | Type-safe, maintainable code |
+| **Assertions** | Playwright expect() | Verify UI and API behaviors |
+| **UI Testing** | Playwright Browser | Automate web application testing |
+| **API Testing** | Playwright APIRequestContext | Test REST API endpoints |
+| **Database** | MSSQL | Verify data persistence and state |
+| **Configuration** | dotenv | Manage environment-specific settings |
 
 ---
 
-# 4. Project Structure Explained
+## Folder Structure & Purpose
 
-## Directory Tree with Explanations
+### Root Level Files
 
 ```
-📦 Automation_E2E/
+.env.example                    # Template for environment variables (copy to .env.{env})
+.env.systest                    # Environment variables for systest environment
+.env.dev                        # Environment variables for dev environment
+.github/INSTRUCTIONS.md         # Team coding standards and commit guidelines
+package.json                    # NPM dependencies and test scripts
+playwright.config.ts            # Playwright & BDD configuration
+tsconfig.json                   # TypeScript compiler options
+```
+
+---
+
+### `/core` - Core Framework Components
+
+**Purpose:** Reusable infrastructure for database, API, and configuration.
+
+```
+core/
+├── config/
+│   └── envConfig.ts              # Load environment variables using loadEnvironment()
 │
-├── 📁 tests/                              ← ALL TEST CODE LIVES HERE
+├── api/
+│   └── apiClient.ts              # Enhanced API client with auth headers support
+│                                  # Methods: get(), post(), put(), delete()
+│                                  # setAuthHeaders(headers) for Basic Auth
+│
+├── data/
+│   └── users.json                # User credentials for test roles (systemAdmin, areaAdmin_News)
+│                                  # Format: { "role": { id, username, envKey, ... } }
+│
+└── db/
+    ├── connection.ts             # Database connection pool management
+    │                              # getDbPool() - returns SQL connection pool
+    │
+    ├── dbseed.ts                 # Database initialization and test data setup
+    │                              # verifyUser(userId) - confirms user exists
+    │
+    ├── executeSp.ts              # Execute stored procedures
+    │
+    └── queries.ts                # Common database queries
+```
+
+**Key Files:**
+
+- **`users.json`**: Defines test users with roles, credentials, and IDs
+  ```json
+  {
+    "systemAdmin": { "id": 10773, "username": "patans01", "envKey": "SYS_ADMIN_PASSWORD" },
+    "areaAdmin_News": { "id": 10769, "username": "pandec01", "envKey": "AREA_ADMIN_PASSWORD" },
+    "areaAdmin_Area1": { "id": 1003, "username": "area_admin_11", "envKey": "AREA_ADMIN_1_PASSWORD" }
+  }
+  ```
+
+- **`envConfig.ts`**: Centralizes environment configuration loading
+  ```typescript
+  const config = loadEnvironment(); // Reads .env.{ENVIRONMENT} file
+  // Returns: { environment, apiBaseUrl, uiBaseUrl, dbHost, dbName, ... }
+  ```
+
+- **`apiClient.ts`**: Wrapper around Playwright's requestContext for API testing
+  ```typescript
+  const client = new ApiClient(requestContext);
+  client.setAuthHeaders({ 'Authorization': `Basic ${btoa(credentials)}` });
+  const response = await client.post('/api/endpoint', { data: payload });
+  ```
+
+---
+
+### `/tests` - Test Suites (UI & Integrated/API)
+
+**Purpose:** Contains all test cases organized by type (UI, API) and feature.
+
+```
+tests/
+├── fixtures/
+│   ├── fixture.ts                # API test fixtures (db, apiClient, authenticateAs)
+│   │                              # - request: APIRequestContext
+│   │                              # - apiClient: Enhanced API client with auth
+│   │                              # - db: SQL connection pool
+│   │                              # - authenticateAs(userAlias): Sets up Basic Auth
 │   │
-│   ├── 📁 ui/                             ← Browser/UI automation tests
-│   │   ├── 📁 features/                   ← Feature files (what to test, in English)
-│   │   │   └── 📁 NP035/
-│   │   │       ├── schedulinggroup_ui_create.feature     ← Test scenario in Gherkin
-│   │   │       ├── schedulinggroup_ui_edit.feature
-│   │   │       ├── schedulinggroup_ui_delete.feature
-│   │   │       └── schedulinggroup_ui_permission_boundary.feature
-│   │   │
-│   │   ├── 📁 steps/                      ← Step implementations (how to test, in code)
-│   │   │   └── 📁 NP035/
-│   │   │       ├── schedulinggroup_ui_common.steps.ts    ← Shared steps (Given/When)
-│   │   │       ├── schedulinggroup_ui_create.steps.ts    ← Create logic
-│   │   │       ├── schedulinggroup_ui_edit.steps.ts      ← Edit logic
-│   │   │       ├── schedulinggroup_ui_delete.steps.ts    ← Delete logic
-│   │   │       ├── schedulinggroup_ui_history.steps.ts   ← History logic
-│   │   │       └── schedulinggroup_ui_permission_boundary.steps.ts
-│   │   │
-│   │   ├── 📁 page/                       ← Page objects (UI elements & methods)
-│   │   │   └── 📁 NP035/
-│   │   │       └── ScheduledGroupPage.ts   ← All interactions with Scheduling Group page
-│   │   │
-│   │   └── 📁 fixtures/                   ← Reusable test setup
-│   │       ├── db.fixture.ts              ← Database fixture
-│   │       ├── fixture.ts                 ← Base fixture
-│   │       └── pages.fixture.ts           ← Login fixture
-│   │
-│   ├── 📁 integrated/                     ← API & Database tests
-│   │   ├── 📁 features/                   ← API test scenarios
-│   │   │   └── 📁 NP035/
-│   │   │       └── schedulinggroup_api_create.feature
-│   │   │
-│   │   └── 📁 steps/                      ← API test implementations
-│   │       └── 📁 NP035/
-│   │           └── schedulinggroup_api_create.steps.ts
-│   │
-│   ├── 📁 fixtures/                       ← Shared fixtures (entire project)
-│   │   ├── db.fixture.ts                  ← Database connection setup
-│   │   ├── fixture.ts                     ← Base test setup
-│   │   └── pages.fixture.ts               ← Login & browser setup
-│   │
-│   └── 📁 utils/                          ← Utility functions (everyone uses these)
-│       ├── formFilledType.ts              ← TypeScript types for forms
-│       ├── formFiller.ts                  ← Auto-fill HTML forms with data
-│       ├── pageFactory.ts                 ← Get page objects by name
-│       ├── readJson.ts                    ← Load JSON test data files
-│       └── scenarioContextManager.ts      ← Isolated context per test (for parallel)
+│   └── pages.fixture.ts           # UI test fixtures (loginAs, testContext)
+│                                   # - loginAs(role): Logs in user, returns Page
+│                                   # - testContext: Shared data between steps
 │
-├── 📁 core/                               ← Framework core services
-│   ├── 📁 api/                            ← HTTP client for API calls
-│   │   └── apiClient.ts                   ← Make requests to backend API
+├── integrated/                    # API/Integrated tests (no browser UI)
+│   ├── features/
+│   │   └── NP035/
+│   │       └── allocations_api_edit.feature    # Gherkin scenarios for API tests
 │   │
-│   ├── 📁 db/                             ← Database automation
-│   │   ├── connection.ts                  ← Database connection setup
-│   │   ├── executeSp.ts                   ← Execute stored procedures
-│   │   ├── queries.ts                     ← Execute SQL queries
-│   │   └── dbseed.ts                      ← Seed database with test data
-│   │
-│   ├── 📁 config/                         ← Environment configuration
-│   │   └── envConfig.ts                   ← Load .env files and expose variables
-│   │
-│   └── 📁 data/                           ← Reference data
-│       └── users.json                     ← User credentials (systemAdmin, areaAdmin, etc)
+│   └── steps/
+│       └── NP035/
+│           ├── allocationApi.config.ts         # API configuration (endpoints, actions)
+│           ├── allocationApi.helper.ts         # Helper functions for duty operations
+│           ├── allocations_api_common.steps.ts # Shared step definitions
+│           └── allocations_api_edit.steps.ts   # Specific edit operation steps
 │
-├── 📁 workflows/                          ← Test data organized by feature
-│   ├── 📁 schedulingGroup/                ← All data for Scheduling Group feature
-│   │   ├── 📁 data/                       ← Form fill data (JSON files)
-│   │   │   ├── schdGroupCreate_AreaAdminNews_UIdata.json
-│   │   │   ├── schdGroupCreate_SystemAdmin_UIdata.json
-│   │   │   └── schdGroupCreate_ApiRequestPayload.json
-│   │   │
-│   │   └── 📁 db/                         ← Database operations
-│   │       └── queries/
-│   │           └── schedulingGroup.queries.ts
-│   │
-│   ├── 📁 facility/                       ← All data for Facility feature
-│   │   └── 📁 data/
-│   │       └── facilityCreate_AreaAdminNewsUIdata.json
-│   │
-│   └── 📁 schedulingTeam/                 ← All data for Scheduling Team feature
-│       └── 📁 data/
-│           └── schdTeamCreate_UIdata.json
-│
-├── 📁 playwright-report/                  ← Generated HTML test report
-│   └── index.html                         ← Open this in browser to see results
-│
-├── 📁 test-results/                       ← Test artifacts
-│   ├── 📁 ui/                             ← UI test results
-│   ├── 📹 video files                     ← Failure recordings
-│   └── 📸 screenshots                     ← Failure screenshots
-│
-├── 📄 package.json                        ← Project dependencies & npm scripts
-├── 📄 playwright.config.ts                ← Playwright configuration
-├── 📄 tsconfig.json                       ← TypeScript configuration
-├── 📄 .env.dev                            ← DEV environment config (YOU CREATE)
-├── 📄 .env.systest                        ← STAGING environment config (YOU CREATE)
-└── 📄 README.md                           ← This file!
+└── ui/                            # UI tests (browser-based)
+    ├── features/
+    │   └── NP035/
+    │       ├── schedulinggroup_ui_create.feature
+    │       ├── schedulinggroup_ui_edit.feature
+    │       ├── schedulinggroup_ui_delete.feature
+    │       ├── schedulinggroup_ui_history.feature
+    │       └── schedulinggroup_ui_permission_boundary.feature
+    │
+    ├── page/
+    │   └── NP035/
+    │       └── ScheduledGroupPage.ts             # Page Object Model for Scheduling Group page
+    │                                              # Methods: open(), createScheduledGroup(), delete()
+    │
+    ├── steps/
+    │   └── NP035/
+    │       ├── schedulinggroup_ui_common.steps.ts    # Shared steps
+    │       ├── schedulinggroup_ui_create.steps.ts    # Create operation steps
+    │       ├── schedulinggroup_ui_delete.steps.ts    # Delete operation steps
+    │       └── ...
+    │
+    └── utils/
+        ├── pageFactory.ts                   # Factory pattern for creating page objects
+        ├── formFiller.ts                    # Fill HTML forms dynamically
+        ├── formFilledType.ts                # TypeScript types for form fields
+        ├── apiHelper.ts                     # API utilities (request context, parameters)
+        ├── payloadBuilder.ts                # Generic payload builder for template variable substitution
+        └── readJson.ts                      # Read JSON test data files
 ```
 
-## Folder Purpose Summary
-
-| Folder | Purpose | Owner | Created By |
-|--------|---------|-------|-----------|
-| `tests/ui/features/` | **What** to test (Gherkin) | QA/Business | Business analyst writes these |
-| `tests/ui/steps/` | **How** to test for UI (Code) | QA/Automation | Automation engineer |
-| `tests/ui/page/` | **UI element interactions** | Automation | Automation engineer (once, reused by all) |
-| `tests/integrated/` | **API/DB tests** | QA/Backend | Automation engineer + Backend |
-| `tests/utils/` | **Reusable utilities** | Framework | Framework developers (not changed often) |
-| `core/` | **Framework services** | Framework | Framework developers |
-| `workflows/` | **Test data** | QA | Data specialists or QA |
-| `core/data/users.json` | **User credentials** | DevOps/Admin | Environment admins |
+**Important Distinctions:**
+- **`/ui`**: Tests that interact with browser UI (Selenium-like)
+- **`/integrated`**: API tests that have no UI interaction (pure backend testing)
 
 ---
 
-# 5. How the Framework Really Works
+### `/workflows` - Test Data & Business Logic
 
-## The Complete Picture
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    TEST EXECUTION FLOW DIAGRAM                      │
-└─────────────────────────────────────────────────────────────────────┘
-
-Step 1: YOU WRITE
-┌─────────────────────┐
-│ Feature File        │
-│ (Gherkin - plain    │
-│  English)           │
-│                     │
-│ Scenario: User      │
-│ creates a group     │
-└─────────────────────┘
-        ↓
-
-Step 2: FRAMEWORK MATCHES
-┌─────────────────────┐
-│ Step Definitions    │
-│ (TypeScript code)   │
-│                     │
-│ Match each step     │
-│ to code             │
-└─────────────────────┘
-        ↓
-
-Step 3: CODE EXECUTES
-┌─────────────────────┐
-│ Fixtures            │
-│ (Setup: login user) │
-│                     │
-│ Page Objects        │
-│ (Interact with UI)  │
-│                     │
-│ Utilities           │
-│ (Fill forms, etc)   │
-└─────────────────────┘
-        ↓
-
-Step 4: VERIFY
-┌─────────────────────┐
-│ Assertions          │
-│ (Check results)     │
-│                     │
-│ Database queries    │
-│ (Verify backend)    │
-│                     │
-│ API calls           │
-│ (Check responses)   │
-└─────────────────────┘
-        ↓
-
-Step 5: REPORT
-┌─────────────────────┐
-│ HTML Report         │
-│ - Pass/Fail         │
-│ - Screenshots       │
-│ - Videos            │
-│ - Logs              │
-└─────────────────────┘
-```
-
-## Real Concrete Example: Creating a Scheduling Group
-
-**Below is the EXACT sequence of what happens when you run ONE test:**
-
-### Phase 1: Test Initialization (0ms)
-
-```typescript
-// File: tests/ui/features/NP035/schedulinggroup_ui_create.feature
-// 💡 What the test is supposed to do (written in plain English)
-
-@schdGroupCreateUI @ui
-Feature: Scheduling Group CRUD - Create
-
-  Scenario: SystemAdmin creates a scheduling group successfully
-    Given user 'systemAdmin' is on the "Scheduled Group" page
-    When the user creates a new scheduling group using "schdGroupCreate_SystemAdmin_UIdata"
-    Then the scheduling group is visible to 'systemAdmin'
-```
-
-**What the framework does:**
-1. ✅ Reads the feature file
-2. ✅ Parses each step (Given/When/Then)
-3. ✅ Finds matching step definitions in TypeScript files
-4. ✅ Prepares test execution
-5. ✅ Initializes a new context for this test (isolated storage)
-
-### Phase 2: Login (1-2 seconds)
-
-```typescript
-// File: tests/ui/steps/NP035/schedulinggroup_ui_common.steps.ts
-// STEP: "user 'systemAdmin' is on the Scheduled Group page"
-
-Given('user {string} is on the {string} page',
-  async ({ loginAs }, userAlias: string, pageName: string) => {
-    
-    // Initialize context for this test
-    initializeScenarioContext();
-    
-    // Use fixture to login
-    const page = await loginAs(userAlias);  // ← Fixture: uses users.json
-    // Result: Logged in as systemAdmin in Chrome browser
-    
-    // Get page object
-    const pageObject = getPageObject(pageName, page);  // ← Factory: creates ScheduledGroupPage
-    
-    // Navigate to page
-    await pageObject.open();  // ← Page navigates to /mvc-app/admin/scheduling-group
-    
-    // Store for later use
-    scenarioContext.page = page;  // ← Stored in isolated context
-    scenarioContext.scheduledGroupPage = pageObject;
-    scenarioContext.currentUserAlias = userAlias;
-    
-    console.log(`✅ User '${userAlias}' logged in and on Scheduling Group page`);
-  }
-);
-```
-
-**Behind the scenes:**
-
-| What | Where | Why |
-|------|-------|-----|
-| User data (username, password) | `core/data/users.json` | Framework knows who to login |
-| Password from environment | `.env.dev` | Sensitive data kept secure |
-| Browser launched | Playwright | Needed to interact with UI |
-| Page opened | `https://dev-url/mvc-app/admin/scheduling-group` | Where user navigates |
-| Context created | `contextStore[testId]` | Isolated storage for this test |
-
-### Phase 3: Create Scheduling Group (3-5 seconds)
-
-```typescript
-// File: tests/ui/steps/NP035/schedulinggroup_ui_create.steps.ts
-// STEP: "the user creates a new scheduling group using..."
-
-When('the user creates a new scheduling group using {string}',
-  async ({ }, filename: string) => {
-    
-    // Get page object from context
-    const pageObject = scenarioContext.scheduledGroupPage;  // ← From Phase 2
-    
-    // Call page object method to create
-    await pageObject.createScheduledGroup(filename);
-    // This calls: createScheduledGroup('schdGroupCreate_SystemAdmin_UIdata')
-    
-    // Get created group name
-    const groupName = ScheduledGroupPage.lastCreatedGroupName;
-    scenarioContext.lastCreatedGroupName = groupName;  // ← Store for next step
-    
-    console.log(`✅ Created group: "${groupName}"`);
-  }
-);
-```
-
-**Inside `ScheduledGroupPage.createScheduledGroup()`:**
-
-```typescript
-// File: tests/ui/page/NP035/ScheduledGroupPage.ts
-
-async createScheduledGroup(filename: string) {
-  // Step 1: Click "Add Scheduling Group" button
-  await this.page.getByRole('button', { name: 'Add Scheduling Group' }).click();
-  
-  // Step 2: Wait for modal to appear
-  await this.page.locator('#facebox').waitFor({ state: 'visible' });
-  
-  // Step 3: Load test data from JSON
-  const jsonPath = `workflows/schedulingGroup/data/${filename}.json`;
-  //        ↑ Loads: schdGroupCreate_SystemAdmin_UIdata.json
-  const jsonData = await readJSON(jsonPath);
-  // Result: { "group_name": { type: "text", value: "..." }, ... }
-  
-  // Step 4: Generate unique group name (to avoid duplicates)
-  const timestamp = Date.now();  // 1710000000000
-  const randomNum = Math.floor(Math.random() * 10000);  // 5678
-  jsonData['group_name'].value = `Test_SchdGrp_${timestamp}_${randomNum}`;
-  // ↑ Result: "Test_SchdGrp_1710000000000_5678"
-  
-  // Step 5: Store group name in static property
-  ScheduledGroupPage.lastCreatedGroupName = jsonData['group_name'].value;
-  
-  // Step 6: Fill form with data
-  await this.fill(jsonData);
-  // This calls formFiller utility internally:
-  // - Fills text inputs
-  // - Selects dropdowns
-  // - Checks checkboxes
-  // - Selects date pickers
-  // - Clicks submit button
-}
-```
-
-**Test data file being used:**
-
-```json
-// File: workflows/schedulingGroup/data/schdGroupCreate_SystemAdmin_UIdata.json
-{
-  "group_name": {
-    "type": "text",
-    "value": "Default Name",  // ← Gets replaced with unique name above
-    "selector": "#group_name"
-  },
-  "division_id": {
-    "type": "dropdown",
-    "value": "1",  // ← Selects option with value="1"
-    "selector": "#division_id"
-  },
-  "description": {
-    "type": "textarea",
-    "value": "Test description",
-    "selector": "#description"
-  },
-  "submit_button": {
-    "type": "button",
-    "selector": "button[type='submit']"
-  }
-}
-```
-
-### Phase 4: Verify Scheduling Group Exists (1-2 seconds)
-
-```typescript
-// File: tests/ui/steps/NP035/schedulinggroup_ui_create.steps.ts
-// STEP: "the scheduling group is visible"
-
-Then('the scheduling group is visible to {string}',
-  async ({ }, userName: string) => {
-    
-    // Get page object and group name from context
-    const pageObject = scenarioContext.scheduledGroupPage;  // ← From Phase 2
-    const groupName = scenarioContext.lastCreatedGroupName;  // ← From Phase 3
-    
-    // Call page object method to verify
-    await pageObject.verifyScheduledGroupVisibleForUser();
-    
-    console.log(`✅ Verified: Group "${groupName}" is visible for '${userName}'`);
-  }
-);
-```
-
-**Inside `ScheduledGroupPage.verifyScheduledGroupVisibleForUser()`:**
-
-```typescript
-// File: tests/ui/page/NP035/ScheduledGroupPage.ts
-
-async verifyScheduledGroupVisibleForUser() {
-  // Get group name from static property
-  const groupName = ScheduledGroupPage.lastCreatedGroupName;
-  
-  // Search for group in table
-  const groupRow = this.page.locator('table#scheduling-list-table tbody tr').filter({
-    has: this.page.locator(`td.scheduling-group-name:has-text("${groupName}")`)
-  });
-  
-  // Assert: exactly 1 row found (group exists)
-  await expect(groupRow).toHaveCount(1);  // ← If not 1, test FAILS ❌
-  
-  // If we get here, test PASSES ✅
-}
-```
-
-### Phase 5: Test Complete - Report
-
-```
-✅ PASSED: user 'systemAdmin' is on the "Scheduled Group" page (2.1s)
-✅ PASSED: the user creates a new scheduling group using "schdGroupCreate_SystemAdmin_UIdata" (4.3s)
-✅ PASSED: the scheduling group is visible to 'systemAdmin' (1.8s)
-
-Total: 8.2 seconds
-Status: PASSED ✅
-```
-
----
-
-# 6. Complete Test Execution Flow
-
-## Visual Execution Timeline
-
-```
-Test Starts
-├─ 0ms: Read feature file
-├─ 10ms: Find matching steps
-├─ 20ms: Initialize context (contextStore[testId] created)
-│
-├─ 30ms: GIVEN STEP - Login user
-│   ├─ Load user from users.json
-│   ├─ Launch Chrome browser
-│   ├─ Navigate to login URL
-│   ├─ Web server validates credentials
-│   ├─ Redirect to /mvc-app/admin/scheduling-group
-│   └─ ✅ Login Complete (2s elapsed)
-│
-├─ 2030ms: WHEN STEP - Create group
-│   ├─ Click "Add Scheduling Group" button
-│   ├─ Modal appears on UI
-│   ├─ Load test data from schdGroupCreate_SystemAdmin_UIdata.json
-│   ├─ Generate unique group name
-│   ├─ Fill form fields using formFiller utility
-│   ├─ Click submit button
-│   ├─ Wait for backend to create group in DB
-│   ├─ UI refreshes with new group
-│   └─ ✅ Group Created (6s elapsed)
-│
-├─ 6030ms: THEN STEP - Verify visibility
-│   ├─ Search for group name in table
-│   ├─ Assert found exactly 1 row
-│   └─ ✅ Verification Complete (9s elapsed)
-│
-└─ 9030ms: TEST COMPLETE
-   ├─ Cleanup context
-   ├─ Take final screenshot if needed
-   ├─ Close browser (if --no-headed)
-   └─ Report: PASSED ✅
-```
-
-## Parallel Execution Example
-
-When running `npm run test:ci`, multiple tests run AT THE SAME TIME:
-
-```
-┌──────────────────────┬──────────────────────┬──────────────────────┐
-│   Worker Thread 1    │   Worker Thread 2    │   Worker Thread 3    │
-├──────────────────────┼──────────────────────┼──────────────────────┤
-│ Test A               │ Test B               │ Test C               │
-│ contextStore[1]      │ contextStore[2]      │ contextStore[3]      │
-│                      │                      │                      │
-│ 0ms:                 │ 0ms:                 │ 0ms:                 │
-│ Login systemAdmin    │ Login areaAdmin_News │ Login facilityAdmin  │
-│                      │                      │                      │
-│ 2s:                  │ 2s:                  │ 2s:                  │
-│ Create Group A       │ Create Group B       │ Create Group C       │
-│ groupName: "TeamA"   │ groupName: "TeamB"   │ groupName: "TeamC"   │
-│ contextStore[1]      │ contextStore[2]      │ contextStore[3]      │
-│ .lastCreated..="A"   │ .lastCreated..="B"   │ .lastCreated..="C"   │
-│                      │                      │                      │
-│ 8s:                  │ 8s:                  │ 8s:                  │
-│ Verify Group A       │ Verify Group B       │ Verify Group C       │
-│ Searches table for   │ Searches table for   │ Searches table for   │
-│ "TeamA" ✅           │ "TeamB" ✅           │ "TeamC" ✅           │
-│                      │                      │                      │
-│ 10s: COMPLETE ✅    │ 10s: COMPLETE ✅    │ 10s: COMPLETE ✅    │
-│                      │                      │                      │
-└──────────────────────┴──────────────────────┴──────────────────────┘
-
-Result: 3 tests in 10 seconds (vs 30 seconds sequential)
-Memory: Each test has isolated context = No collisions ✅
-```
-
----
-
-# 7. Test Execution Commands - Complete Reference
-
-## Understanding NPM Scripts & Environments
-
-### Important: Base Scripts vs Environment Variants
-
-Your `package.json` has **two types of scripts:**
-
-| Type | Example | Environment | Use |
-|------|---------|-------------|-----|
-| **Base Scripts** | `npm run _ui:run` | Uses `.env.systest` (default) | Internal - don't use directly |
-| **Environment Variants** | `npm run uidevtest` | Uses `.env.dev` (explicit) | Use these! |
-
-**Why?** Base scripts don't set `ENVIRONMENT`, so they default to `'systest'` in `playwright.config.ts`:
-```typescript
-const environment = loadedEnv || process.env.ENVIRONMENT || 'systest';
-                                                              ↑ DEFAULT
-```
-
----
-
-## Local Development
-
-### Run UI Tests (See the browser - best for debugging)
-
-```bash
-npm run uidevtest
-```
-
-**Configuration:**
-- ✅ Environment: DEV (loads `.env.dev` explicitly)
-- ✅ Browser: Chrome (HEADED - you see it)
-- ✅ Workers: 1 (tests run one at a time)
-- ✅ Speed: Slower (but easy to debug)
-
-**When to use:**
-- 👨‍💻 Writing new tests
-- 🐛 Debugging failing tests
-- 💪 Testing locally before commit
-
-**⚠️ Common Mistake:**
-```bash
-# ❌ DON'T use this - it uses .env.systest!
-npm run _ui:run
-
-# ✅ DO use this - it uses .env.dev
-npm run uidevtest
-```
-
-**Real output:**
-```
-Running 5 tests in 1 worker
-
- ✓ tests/ui/features/NP035/schedulinggroup_ui_create.feature:5 (8s)
- ✓ tests/ui/features/NP035/schedulinggroup_ui_edit.feature:6 (9s)
-✗ tests/ui/features/NP035/schedulinggroup_ui_delete.feature:7 (12s)
-    AssertionError: group not found in table
- ✓ tests/ui/features/NP035/schedulinggroup_ui_permission_boundary.feature:7 (7s)
- ✓ tests/ui/features/NP035/schedulinggroup_ui_history.feature:8 (6s)
-
-4 passed, 1 failed (42s total)
-```
-
-### Run UI Tests on Staging Environment
-
-```bash
-npm run uisystesttest
-```
-
-**Configuration:**
-- ✅ Environment: SYSTEST (loads `.env.systest`)
-- ✅ Browser: Chrome (HEADED)
-- ✅ Workers: 1
-- ✅ Runs against staging servers
-
-### Run API Tests Only
-
-```bash
-npm run apitest
-```
-
-**Configuration:**
-- ✅ Environment: DEV
-- ✅ No browser needed
-- ✅ Makes direct HTTP requests
-- ✅ Tests backend API endpoints
-
-### Run API Tests on Staging
-
-```bash
-npm run apitest:systest
-```
-
-### Run Both UI + API Tests (Full Suite)
-
-```bash
-npm run test:dev
-```
-
-OR
-
-```bash
-npm run test:systest
-```
-
-**Configuration:**
-- ✅ UI tests with visible browser
-- ✅ API tests headless
-- ✅ All tests in sequence
-
-## Continuous Integration (GitHub Actions)
-
-```bash
-npm run test:ci
-```
-
-**Configuration:**
-- ✅ Environment: SYSTEST (fixed, no choice)
-- ✅ Browser: Chrome (HEADLESS - not visible)
-- ✅ Workers: 4 parallel workers
-- ✅ Fastest execution
-- ✅ Full reporting
-
-**When this runs:**
-- ✅ Every time you `git push` to main/develop
-- ✅ Every time you create a Pull Request
-- ✅ Automatically, no manual intervention
-
-**Real output in GitHub:**
-```
-Test Results Summary
-✅ 47 passed
-❌ 2 failed
-⏭️ 1 skipped
-⏱️ Execution time: 2m 34s
-📊 Report: https://github.com/.../actions/runs/xxxxx
-```
-
-### View Test Report in Browser
-
-```bash
-npm run report
-```
-
-**Opens:** `playwright-report/index.html` in your default browser
-
-**Shows:**
-- ✅/❌ Pass/fail status for each test
-- ⏱️ Execution time
-- 📹 Video recordings (failures only)
-- 📸 Screenshots
-- 📋 Full logs
-- 🔍 Detailed error messages
-
-## Command Reference Table
-
-| Command | UI | API | Browser | Workers | Environment | Use Case | Notes |
-|---------|----|----|---------|---------|-------------|----------|-------|
-| `_ui:run` | ✅ | ❌ | Chrome Headed | 2 | **SYSTEST** | ⚠️ **Don't use** | Base script - uses default env |
-| `_api:run` | ❌ | ✅ | None | 2 | **SYSTEST** | ⚠️ **Don't use** | Base script - uses default env |
-| `uidevtest` | ✅ | ❌ | Chrome Headed | 1 | **DEV** ✅ | Local UI debugging | **Recommended for dev** |
-| `uisystesttest` | ✅ | ❌ | Chrome Headed | 1 | **SYSTEST** | Staging validation | For pre-prod testing |
-| `apitest` | ❌ | ✅ | None | 1 | **DEV** ✅ | Local API testing | **Recommended for dev** |
-| `apitest:systest` | ❌ | ✅ | None | 1 | **SYSTEST** | Staging API testing | For pre-prod testing |
-| `test:dev` | ✅ | ✅ | Chrome Headed | 1 | **DEV** ✅ | Full suite locally | UI + API together |
-| `test:systest` | ✅ | ✅ | Chrome Headed | 1 | **SYSTEST** | Full suite staging | UI + API together |
-| `test` | ✅ | ✅ | Chrome Headed | 1 | **SYSTEST** | Default full run | Alias for test:systest |
-| `test:ci` | ✅ | ✅ | Chrome Headless | 4 | **SYSTEST** | CI/CD automation | GitHub Actions |
-| `report` | - | - | HTML Browser | - | - | View test results | Opens `playwright-report/` |
-
----
-
-# 8. Understanding Each Utils Module
-
-## Module 1: `scenarioContextManager.ts` - Context Isolation
-
-**Purpose:** Each test has isolated storage so parallel tests don't interfere with each other.
-
-**The Problem (Without Context Manager):**
-```
-Test 1 runs:
-  lastCreatedGroupName = "Team A"
-  
-Test 2 runs AT SAME TIME:
-  lastCreatedGroupName = "Team B"  ← OVERWRITES Test 1's value!
-  
-Test 1 tries to verify:
-  Searches for `lastCreatedGroupName` → Gets "Team B" ❌
-  Test 1 FAILS (but it should pass!)
-```
-
-**The Solution (Context Manager):**
-```
-Test 1 runs:
-  contextStore[1].lastCreatedGroupName = "Team A" ✅
-  
-Test 2 runs AT SAME TIME:
-  contextStore[2].lastCreatedGroupName = "Team B" ✅
-  (Separate storage!)
-  
-Test 1 tries to verify:
-  Retrieves contextStore[1].lastCreatedGroupName → "Team A" ✅
-  Test 1 PASSES ✓
-```
-
-**How to Use:**
-
-```typescript
-import { scenarioContext, initializeScenarioContext } from '@helpers/scenarioContextManager';
-
-// At start of test (usually in Given step)
-initializeScenarioContext();  // Creates contextStore[testId] for this test
-
-// Store data during test
-scenarioContext.page = browserPage;
-scenarioContext.lastCreatedGroupName = "Team A";
-scenarioContext.currentUserAlias = "systemAdmin";
-scenarioContext.anyCustomData = "anything";
-
-// Retrieve data later (even in different step)
-const groupName = scenarioContext.lastCreatedGroupName;  // Gets "Team A"
-const user = scenarioContext.currentUserAlias;  // Gets "systemAdmin"
-```
-
-**Under the Hood (Advanced):**
-
-The Proxy pattern automatically routes to the correct test:
-
-```typescript
-// When you write:
-scenarioContext.page = page1;
-
-// Proxy intercepts:
-1. Get current test ID: proxy.__testId = 1
-2. Find context: contextStore[1]
-3. Store value: contextStore[1].page = page1 ✓
-
-// When you read:
-const myPage = scenarioContext.page;
-
-// Proxy intercepts:
-1. Get current test ID: proxy.__testId = 1
-2. Find context: contextStore[1]
-3. Return value: contextStore[1].page ✓
-```
-
-## Module 2: `formFiller.ts` - Auto-Fill HTML Forms
-
-**Purpose:** Automatically fill any HTML form with test data.
-
-**The Problem (Without Form Filler):**
-```typescript
-// You'd have to write this for EVERY test:
-await page.locator('#group_name').fill('Team A');
-await page.locator('#division').selectOption('1');
-await page.locator('#description').fill('Test description');
-await page.locator('#active').check();
-await page.locator('#submit').click();
-// × 50 fields = 250 lines of code per form!
-```
-
-**The Solution (Form Filler):**
-```typescript
-// One line of code:
-await fillForm(page, testData);
-// Done! All fields filled automatically ✓
-```
-
-**How to Use:**
-
-```typescript
-import { fillForm } from '@helpers/formFiller';
-import { readJSON } from '@helpers/readJson';
-
-async createGroup(filename: string) {
-  // Load test data from JSON file
-  const testData = await readJSON(`workflows/schedulingGroup/data/${filename}.json`);
-  
-  // Fill ALL form fields automatically
-  await fillForm(page, testData);
-  // Handles: text, dropdowns, checkboxes, date pickers, buttons, etc.
-}
-```
-
-**Test Data JSON Format:**
-
-```json
-{
-  "group_name": {
-    "type": "text",
-    "value": "Team A",
-    "selector": "#group_name"
-  },
-  "division": {
-    "type": "dropdown",
-    "value": "1",
-    "selector": "#division"
-  },
-  "active": {
-    "type": "checkbox",
-    "value": true,
-    "selector": "#active"
-  },
-  "start_date": {
-    "type": "date",
-    "value": "2025-03-20",
-    "selector": "#start_date"
-  },
-  "submit": {
-    "type": "button",
-    "selector": "button[type='submit']"
-  }
-}
-```
-
-**Supported Field Types:**
-
-| Type | Example | How It Works |
-|------|---------|------------|
-| `text` | Input field | `page.fill(selector, value)` |
-| `textarea` | Large text | `page.fill(selector, value)` |
-| `dropdown` | Select option | `page.selectOption(selector, value)` |
-| `multiDropdown` | Multi-select | Selects multiple options |
-| `checkbox` | Checkbox | `page.check(selector)` if true |
-| `radio` | Radio button | Clicks associated label |
-| `date` | Date picker | Opens picker, selects date |
-| `button` | Button | `page.click(selector)` |
-
-## Module 3: `readJson.ts` - Load Test Data
-
-**Purpose:** Load test data from JSON files into your tests.
-
-**The Problem (Without JSON Reader):**
-```typescript
-// Hard-coded data scattered everywhere:
-const groupName = "Team A";
-const division = "1";
-const description = "Test description";
-// × 100 fields = maintenance nightmare!
-// Change one value? Search entire codebase!
-```
-
-**The Solution (JSON Reader):**
-```typescript
-// All data in one place (organized by feature):
-// workflows/schedulingGroup/data/schdGroupCreate_SystemAdmin_UIdata.json
-// Just load it:
-const testData = await readJSON('workflows/schedulingGroup/data/schdGroupCreate_SystemAdmin_UIdata.json');
-```
-
-**How to Use:**
-
-```typescript
-import { readJSON } from '@helpers/readJson';
-
-// Load form data
-const formData = await readJSON('workflows/schedulingGroup/data/mydata.json');
-console.log(formData.group_name.value);  // "Team A"
-
-// Load users
-const users = await readJSON('core/data/users.json');
-console.log(users.systemAdmin.username);  // "patans01"
-
-// Load API payload
-const apiPayload = await readJSON('workflows/schedulingGroup/data/schdGroupCreate_ApiRequestPayload.json');
-```
-
-**Benefits:**
-- ✅ All test data in one place (easy to find)
-- ✅ Easy to modify test data (just edit JSON)
-- ✅ Non-technical people can update test data
-- ✅ Reuse same data across multiple tests
-- ✅ Organized by feature (scaling)
-
-## Module 4: `pageFactory.ts` - Get Page Objects
-
-**Purpose:** Centrally manage all page objects by name.
-
-**The Problem (Without Factory):**
-```typescript
-// Scattered imports and instantiation:
-import { ScheduledGroupPage } from '@pages/NP035/ScheduledGroupPage';
-import { SchedulingTeamPage } from '@pages/NP035/SchedulingTeamPage';
-import { FacilityPage } from '@pages/NP035/FacilityPage';
-
-// In every step file:
-const scheduledGroupPage = new ScheduledGroupPage(page);
-const schedulingTeamPage = new SchedulingTeamPage(page);
-const facilityPage = new FacilityPage(page);
-// × 50 step files = A LOT of repeated imports!
-```
-
-**The Solution (Page Factory):**
-```typescript
-// One function to get any page:
-const pageObject = getPageObject('Scheduled Group', page);
-// Returns: new ScheduledGroupPage(page)
-
-// Want a different page?
-const pageObject = getPageObject('Scheduling Team', page);
-// Returns: new SchedulingTeamPage(page)
-```
-
-**How to Use:**
-
-```typescript
-import { getPageObject } from '@helpers/pageFactory';
-
-// Get page object by name
-const pageObject = getPageObject('Scheduled Group', page);
-
-// Use it immediately
-await pageObject.open();
-await pageObject.createScheduledGroup('testdata.json');
-await pageObject.verifyGroupVisible();
-```
-
-**How to Add New Pages:**
-
-```typescript
-// Step 1: Create page class
-// File: tests/ui/page/NP035/MyNewPage.ts
-export class MyNewPage {
-  constructor(private page: Page) {}
-  async open() { await this.page.goto('/my-page'); }
-}
-
-// Step 2: Register in pageFactory
-// File: tests/utils/pageFactory.ts
-import { MyNewPage } from '@pages/NP035/MyNewPage';
-
-const pageFactory = {
-  "Scheduled Group": (page: Page) => new ScheduledGroupPage(page),
-  "My New Page": (page: Page) => new MyNewPage(page),  // ← Add here
-};
-
-// Step 3: Use in feature
-// Feature file:
-Given user is on the "My New Page" page
-```
-
-## Module 5: `formFilledType.ts` - Type Definitions
-
-**Purpose:** TypeScript types for form fields (helps catch errors early).
-
-**Why It Matters:**
-```typescript
-// Without types: typo goes unnoticed
-const field = {
-  tpye: "text",  // ← Typo! But no error!
-  value: "test"
-};
-
-// With types: TypeScript CATCHES the error
-const field: FormField = {
-  tpye: "text",  // ← ERROR! Must be "type"
-  value: "test"
-};
-```
-
-**How It Works:**
-
-```typescript
-// File: tests/utils/formFilledType.ts
-export type FieldType = 'text' | 'textarea' | 'dropdown' | 'checkbox' | 'radio' | 'date' | 'button';
-
-export interface FormField {
-  type: FieldType;  // Must be one of the types above
-  value?: string | boolean | string[];  // Value to fill
-  selector?: string;  // CSS selector to find element
-  subValues?: string[];  // For multi-select
-}
-
-// In your test data JSON:
-const field: FormField = {
-  type: "text",  // ← TypeScript checks this is valid
-  value: "Test",
-  selector: "#group_name"
-};
-```
-
----
-
-# 9. Writing Your First Test - Step by Step
-
-## Complete Example: Creating a Scheduling Group Test
-
-### Step 1: Write the Feature File (What to test - Plain English)
-
-Create file: `tests/ui/features/NP035/my_first_test.feature`
-
-```gherkin
-@myFirstTest @ui
-Feature: My First Automation Test
-
-  Scenario: SystemAdmin creates a scheduling group
-    Given user 'systemAdmin' is on the "Scheduled Group" page
-    When the user creates a new scheduling group using "schdGroupCreate_SystemAdmin_UIdata"
-    Then the scheduling group is visible to 'systemAdmin'
-```
-
-**Explanation of Gherkin syntax:**
-- `@myFirstTest` = Tag to identify test (can run specific tests by tag)
-- `@ui` = Tag saying this is UI test
-- `Given` = Setup (what should be true before test)
-- `When` = Action (what your test does)
-- `Then` = Verification (what should be true after)
-- `{string}` = Parameter (gets passed to step definition)
-
-### Step 2: Create Step Definitions (How to test - TypeScript code)
-
-Create file: `tests/ui/steps/NP035/my_first_test.steps.ts`
-
-```typescript
-import { createBdd } from "playwright-bdd";
-import { test } from "@fixtures/pages.fixture";
-import { getPageObject } from '@helpers/pageFactory';
-import { scenarioContext, initializeScenarioContext } from '@helpers/scenarioContextManager';
-import users from '@core/data/users.json' with { type: 'json' };
-import { expect } from '@playwright/test';
-
-const { Given, When, Then } = createBdd(test);
-
-// Step 1: Given - Setup
-Given('user {string} is on the {string} page',
-  async ({ loginAs }, userAlias: string, pageName: string) => {
-    // Initialize context (important for parallel tests!)
-    initializeScenarioContext();
-    
-    // Login user using fixture
-    const page = await loginAs(userAlias as keyof typeof users);
-    
-    // Get page object using factory
-    const pageObject = getPageObject(pageName, page);
-    
-    // Navigate to page
-    await pageObject.open();
-    
-    // Store in context for use in later steps
-    scenarioContext.page = page;
-    scenarioContext.scheduledGroupPage = pageObject;
-    scenarioContext.currentUserAlias = userAlias;
-    
-    console.log(`✅ User '${userAlias}' is on '${pageName}' page`);
-  }
-);
-
-// Step 2: When - Action
-When('the user creates a new scheduling group using {string}',
-  async ({ }, filename: string) => {
-    // Get page object from context (stored in Given step)
-    const pageObject = scenarioContext.scheduledGroupPage;
-    if (!pageObject) {
-      throw new Error('ScheduledGroupPage not initialized');
-    }
-    
-    // Call page object method to create group
-    await pageObject.createScheduledGroup(filename);
-    
-    // Store group name for verification step
-    const groupName = pageObject.lastCreatedGroupName;
-    scenarioContext.lastCreatedGroupName = groupName;
-    
-    console.log(`✅ Created group: "${groupName}"`);
-  }
-);
-
-// Step 3: Then - Verify
-Then('the scheduling group is visible to {string}',
-  async ({ }, userName: string) => {
-    // Get data from context
-    const pageObject = scenarioContext.scheduledGroupPage;
-    const groupName = scenarioContext.lastCreatedGroupName;
-    
-    // Verify group exists in table
-    const groupRow = scenarioContext.page
-      .locator('table#scheduling-list-table tbody tr')
-      .filter({
-        has: scenarioContext.page.locator(`td:has-text("${groupName}")`)
-      });
-    
-    // Assert exactly 1 row found
-    await expect(groupRow).toHaveCount(1);
-    
-    console.log(`✅ Verified: Group "${groupName}" is visible to '${userName}'`);
-  }
-);
-```
-
-### Step 3: Create or Use Existing Page Object
-
-File: `tests/ui/page/NP035/ScheduledGroupPage.ts` (already exists, so we reuse it)
-
-```typescript
-export class ScheduledGroupPage {
-  private formData?: Record<string, FormField>;
-  static lastCreatedGroupName: string | undefined;
-
-  constructor(private page: Page) {}
-
-  async open() {
-    await this.page.goto('/mvc-app/admin/scheduling-group');
-    await this.page.waitForLoadState('networkidle');
-    await this.page.waitForSelector('table#scheduling-list-table');
-  }
-
-  async createScheduledGroup(filename: string = 'schdGroupData') {
-    // Click "Add Scheduling Group" button
-    await this.page.getByRole('button', { name: 'Add Scheduling Group' }).click();
-    
-    // Wait for modal
-    await this.page.locator('#facebox').waitFor({ state: 'visible' });
-    
-    // Load test data
-    const jsonPath = `workflows/schedulingGroup/data/${filename}.json`;
-    const jsonData = await readJSON(jsonPath);
-    
-    // Generate unique name
-    const timestamp = Date.now();
-    const randomNum = Math.floor(Math.random() * 10000);
-    jsonData['group_name'].value = `Test_SchdGrp_${timestamp}_${randomNum}`;
-    
-    // Store for later retrieval
-    ScheduledGroupPage.lastCreatedGroupName = jsonData['group_name'].value;
-    
-    // Fill form
-    await this.fill(jsonData);
-  }
-
-  private async fill(formData: Record<string, FormField>) {
-    this.formData = formData;
-    await fillForm(this.page, formData);
-  }
-}
-```
-
-### Step 4: Create Test Data JSON
-
-File: `workflows/schedulingGroup/data/schdGroupCreate_SystemAdmin_UIdata.json`
-
-```json
-{
-  "group_name": {
-    "type": "text",
-    "value": "Default Name",
-    "selector": "#group_name"
-  },
-  "division_id": {
-    "type": "dropdown",
-    "value": "1",
-    "selector": "#division_id"
-  },
-  "notes": {
-    "type": "textarea",
-    "value": "Test scheduling group",
-    "selector": "#notes"
-  },
-  "active": {
-    "type": "checkbox",
-    "value": true,
-    "selector": "#active"
-  },
-  "submit": {
-    "type": "button",
-    "selector": "button[type='submit']"
-  }
-}
-```
-
-### Step 5: Run Your Test
-
-```bash
-# Run your specific test
-npm run uidevtest -- --grep "My First Automation Test"
-
-# Or run all tests
-npm run uidevtest
-```
-
-### Step 6: View Results
-
-If passing:
-```
-✅ PASSED: user 'systemAdmin' is on the "Scheduled Group" page (2.1s)
-✅ PASSED: the user creates a new scheduling group using "schdGroupCreate_SystemAdmin_UIdata" (4.3s)
-✅ PASSED: the scheduling group is visible to 'systemAdmin' (1.8s)
-
-Total: 8.2 seconds - PASSED ✅
-```
-
-If failing:
-```
-❌ FAILED: the scheduling group is visible to 'systemAdmin' (0.5s)
-   Expected: 1
-   Received: 0
-   
-   The group was not found in the table. Possible reasons:
-   - Form submission failed silently
-   - Table didn't refresh after form submit
-   - Group name doesn't match exactly
-```
-
-**To debug:**
-1. Add `await page.pause();` in step definition to inspect
-2. Check browser devtools (F12)
-3. Look at screenshot in test report
-4. Check server logs for errors
-
----
-
-# 10. Page Objects Explained
-
-## What is a Page Object?
-
-A Page Object is a **class that represents a single page/screen** in your application. It encapsulates:
-- ✅ All selectors for that page
-- ✅ All interactions with that page
-- ✅ Helper methods for common actions
-
-**Benefits:**
-- Update one selector = all tests using it still work
-- Reuce code duplication
-- Makes tests more readable
-- Easier to maintain
-
-### Page Object Example
-
-```typescript
-// File: tests/ui/page/NP035/ScheduledGroupPage.ts
-
-import { expect, Page } from '@playwright/test';
-import { FormField } from '@helpers/formFilledType';
-import { fillForm } from '@helpers/formFiller';
-import { readJSON } from '@helpers/readJson';
-
-export class ScheduledGroupPage {
-  // Static property to store created group name
-  static lastCreatedGroupName: string | undefined;
-
-  // Constructor receives Playwright page object
-  constructor(private page: Page) {}
-
-  // Navigate to the page
-  async open() {
-    await this.page.goto('/mvc-app/admin/scheduling-group');
-    await this.page.waitForLoadState('networkidle');
-    await this.page.waitForSelector('table#scheduling-list-table');
-  }
-
-  // High-level action: Create a scheduling group
-  async createScheduledGroup(filename: string = 'schdGroupData') {
-    // Click Add button
-    await this.page.getByRole('button', { name: 'Add Scheduling Group' }).click();
-
-    // Wait for modal
-    await this.page.locator('#facebox').waitFor({ state: 'visible' });
-
-    // Load test data
-    const jsonPath = `workflows/schedulingGroup/data/${filename}.json`;
-    const jsonData = await readJSON(jsonPath);
-
-    // Generate unique name
-    const timestamp = Date.now();
-    const randomNum = Math.floor(Math.random() * 10000);
-    jsonData['group_name'].value = `Test_SchdGrp_${timestamp}_${randomNum}`;
-    
-    // Store for later verification
-    ScheduledGroupPage.lastCreatedGroupName = jsonData['group_name'].value;
-
-    // Fill form
-    await this.fill(jsonData);
-  }
-
-  // High-level action: Edit a scheduling group
-  async editScheduledGroup(newName: string) {
-    // Click first Edit button
-    await this.page.locator('.fas.fa-edit').first().click();
-
-    // Wait for modal
-    await this.page.locator('#facebox').waitFor({ state: 'visible' });
-
-    // Update name
-    const nameInput = this.page.locator('#group_name');
-    await nameInput.clear();
-    await nameInput.fill(newName);
-
-    // Save
-    await this.page.getByRole('button', { name: /Save|Update/ }).click();
-
-    // Wait for modal to close
-    await this.page.locator('#facebox').waitFor({ state: 'hidden' });
-  }
-
-  // High-level action: Delete a scheduling group
-  async deleteScheduledGroup() {
-    // Click Delete button
-    await this.page.locator('.fas.fa-trash-alt').first().click();
-
-    // Confirm deletion
-    await this.page.getByRole('button', { name: 'Confirm' }).click();
-
-    // Wait for delete to complete
-    await this.page.waitForTimeout(1000);
-  }
-
-  // Verification: Check if group is visible
-  async verifyScheduledGroupVisibleForUser() {
-    const groupName = ScheduledGroupPage.lastCreatedGroupName;
-    if (!groupName) throw new Error('No group name to verify');
-
-    const groupRow = this.page.locator('table#scheduling-list-table tbody tr').filter({
-      has: this.page.locator(`td.scheduling-group-name:has-text("${groupName}")`)
-    });
-
-    await expect(groupRow).toHaveCount(1);
-  }
-
-  // Verification: Check if group is NOT visible
-  async verifyScheduledGroupNotVisibleForUser() {
-    const groupName = ScheduledGroupPage.lastCreatedGroupName;
-    if (!groupName) throw new Error('No group name to verify');
-
-    const groupRow = this.page.locator('table#scheduling-list-table tbody tr').filter({
-      has: this.page.locator(`td.scheduling-group-name:has-text("${groupName}")`)
-    });
-
-    await expect(groupRow).toHaveCount(0);
-  }
-
-  // Private helper method
-  private async fill(formData: Record<string, FormField>) {
-    await fillForm(this.page, formData);
-  }
-}
-```
-
-### Using the Page Object in Tests
-
-```typescript
-// In your step definition:
-
-Given('user is on Scheduled Group page', async ({ loginAs }) => {
-  const page = await loginAs('systemAdmin');
-  const pageObject = new ScheduledGroupPage(page);
-  
-  await pageObject.open();  // Use page object!
-  
-  scenarioContext.page = page;
-  scenarioContext.scheduledGroupPage = pageObject;
-});
-
-When('user creates a group', async ({}) => {
-  const pageObject = scenarioContext.scheduledGroupPage;
-  
-  await pageObject.createScheduledGroup('testdata.json');  // Use method!
-});
-
-Then('group is visible', async ({}) => {
-  const pageObject = scenarioContext.scheduledGroupPage;
-  
-  await pageObject.verifyScheduledGroupVisibleForUser();  // Use method!
-});
-```
-
-## Page Object Best Practices
-
-✅ **DO:**
-- Create one Page Object per page
-- Keep selectors in Page Object (not in steps)
-- Use descriptive method names
-- Add helper methods for common actions
-
-❌ **DON'T:**
-- Put assertions in Page Object (only verify, don't assert)
-- Mix multiple pages in one Page Object
-- Use generic names like `clickButton()` (use `createGroup()` instead)
-- Hardcode selectors everywhere
-
----
-
-# 11. Test Data & Form Filling
-
-## Test Data File Organization
+**Purpose:** Centralized location for test data, context management, and business logic helpers.
 
 ```
 workflows/
-├── schedulingGroup/
-│   └── data/
-│       ├── schdGroupCreate_AreaAdminNews_UIdata.json      (UI data for AreaAdmin)
-│       ├── schdGroupCreate_SystemAdmin_UIdata.json        (UI data for SystemAdmin)
-│       └── schdGroupCreate_ApiRequestPayload.json         (API data)
-├── facility/
-│   └── data/
-│       └── facilityCreate_AreaAdminNewsUIdata.json
-└── schedulingTeam/
-    └── data/
-        └── schdTeamCreate_UIdata.json
+│
+├── integrated/                                 # API test workflows
+│   └── allocations/                            # Duty Allocation module
+│       ├── context/
+│       │   └── context.ts                      # AllocationContext DTO
+│       │                                        # Stores: dutyId, allocationsDutyId, dutyName, etc.
+│       │
+│       ├── data/
+│       │   ├── db/
+│       │   │   └── queries/
+│       │   │       └── allocations.queries.ts  # Database queries for allocations
+│       │   │
+│       │   └── requestPayload/
+│       │       └── allocationApi_PostParams.json  # API request payload template
+│       │                                           # Format: { "duty": {...}, "action": "..." }
+│       │
+│       └── helpers/
+│           └── dutyBuilder.ts                  # Helper functions for duty creation
+│                                                # - parseDataTableToMap()
+│                                                # - resolveTemplate()
+│                                                # - normalizeParameters()
+│
+└── ui/                                         # UI test workflows
+    ├── facility/
+    │   ├── context/
+    │   │   └── context.ts                      # FacilityContext DTO
+    │   └── data/
+    │       └── facilityCreate_AreaAdminNewsUIdata.json
+    │
+    ├── schedulingGroup/
+    │   ├── context/
+    │   │   └── context.ts                      # SchedulingGroupContext DTO
+    │   │                                        # Stores: page, scheduledGroupPage, groupName
+    │   │
+    │   └── data/
+    │       ├── schdGroupCreate_ApiRequestPayload.json       # API payload template for scheduling group creation
+    │       ├── schdGroupCreate_AreaAdminNews_UIdata.json    # Test data for Area Admin
+    │       └── schdGroupCreate_SystemAdmin_UIdata.json      # Test data for System Admin
+    │
+    └── schedulingTeam/
+        ├── context/
+        │   └── context.ts                      # SchedulingTeamContext DTO
+        └── data/
+            └── schdTeamCreate_UIdata.json
 ```
 
-**Why organize by feature?**
-- Easy to find test data
-- All Scheduling Group data in one place
-- Easy to update when feature changes
+**Key Folders:**
 
-## Form Data JSON Format
+- **`/workflows/{module}/context`**: Defines TypeScript interfaces (DTOs) for sharing data between steps
+  - Example: `SchedulingGroupContext` has `{ page, scheduledGroupPage, groupName, ... }`
+  - Each test scenario gets one context instance (per-test isolation)
 
-```json
+- **`/workflows/{module}/data`**: JSON files containing test data and API payloads
+  - UI data: Form field values, expected results
+  - API data: Request body templates with `{{paramName}}` placeholders
+
+- **`/workflows/{module}/helpers`**: Business logic and utility functions
+  - Parameter parsing, template variable substitution, request building
+
+---
+
+```
+.github/
+└── INSTRUCTIONS.md                      # Coding standards, commit guidelines, and best practices
+```
+
+---
+
+## Core Concepts & Components
+
+### Concept 1: BDD (Behavior Driven Development)
+
+Tests are written in **Gherkin language** (Given-When-Then format):
+
+```gherkin
+Scenario: User creates a scheduling group
+  Given user 'areaAdmin_News' is on the "Scheduled Group" page      # Setup
+  When the user creates a new scheduling group using "testData"     # Action
+  Then the scheduling group is visible                              # Assertion
+```
+
+**Why BDD?**
+- Non-technical stakeholders can read and understand tests
+- Clear separation between test data and test logic
+- Easy to maintain and scale
+
+---
+
+### Concept 2: Fixtures (Test Setup)
+
+Fixtures are **reusable test setup components** provided to every test. Think of them as "prerequisites" that run before each test.
+
+**For API Tests (`fixture.ts`):**
+```typescript
+// Automatically provided to every API test
 {
-  "fieldId": {
-    "type": "field_type",
-    "value": "field_value",
-    "selector": "#css_selector",
-    "subValues": ["optional", "for", "multi-select"]
+  request: APIRequestContext,      // Low-level HTTP client
+  apiClient: ApiClient,             // Enhanced wrapper with auth headers support
+  db: SQLConnectionPool,            // Database connection
+  authenticateAs: Function,         // Basic Auth setup
+  authenticateWithNtlm: Function,   // NTLM authentication via browser
+  ensureUserExists: Function        // Verify user exists in database
+}
+```
+
+**For UI Tests (`pages.fixture.ts`):**
+```typescript
+// Automatically provided to every UI test
+{
+  loginAs: Function,                // Login function (returns Page)
+  testContext: Object               // Shared data between steps (empty object initially)
+}
+```
+
+**Example Usage in Test:**
+```typescript
+When('the user logs in', async ({ loginAs }, role: string) => {
+  const page = await loginAs(role);  // Fixture provides loginAs
+  // page is now logged-in Playwright Page object
+});
+```
+
+---
+
+### Concept 3: Page Object Model (POM)
+
+Page Objects represent HTML pages and encapsulate all interactions with them.
+
+**Example: `ScheduledGroupPage.ts`**
+```typescript
+export class ScheduledGroupPage {
+  constructor(private page: Page) { }
+
+  // Encapsulate page navigation
+  async open() {
+    await this.page.goto('/mvc-app/admin/scheduling-group');
+  }
+
+  // Encapsulate business operations
+  async createScheduledGroup(filename: string) {
+    await this.page.getByRole('button', { name: 'Add Scheduling Group' }).click();
+    // ... fill form, submit, etc.
+  }
+
+  // Encapsulate assertions
+  async verifyScheduledGroupVisible() {
+    const groupRow = this.page.locator('table#scheduling-list-table tbody tr');
+    await expect(groupRow).toHaveCount(1);
   }
 }
 ```
 
-### Field Type Examples
+**Why POM?**
+- Maintainability: Selector changes only need updates in one place
+- Reusability: Multiple tests can use same page object
+- Readability: Test code focuses on "what" not "how"
 
-#### Text Input
+---
+
+### Concept 4: Test Context (Per-Test Isolation)
+
+Each test gets its own **context object** to share data between steps.
+
+**Example: `SchedulingGroupContext`**
+```typescript
+interface SchedulingGroupContext {
+  page: Page | null;                  // Current browser page
+  scheduledGroupPage: any;            // Page object instance
+  groupName: string;                  // Group created in this test
+  notes: string;                      // Additional test data
+}
+```
+
+**Usage in Steps:**
+```typescript
+// Given step: Initialize context
+Given('user is on the page', async ({ loginAs, testContext }) => {
+  const page = await loginAs('areaAdmin_News');
+  const scheduledGroupPage = new ScheduledGroupPage(page);
+  testContext.page = page;
+  testContext.scheduledGroupPage = scheduledGroupPage;
+});
+
+// Then step: Retrieve from context
+Then('verify group is created', async ({ testContext }) => {
+  const { scheduledGroupPage, groupName } = testContext as SchedulingGroupContext;
+  await scheduledGroupPage.verifyGroupVisibleByName(groupName);
+});
+```
+
+**Benefits:**
+- Data isolation: Each test has separate context (no test pollution)
+- Step communication: Steps can pass data through context
+- Parallel-safe: Multiple tests can run simultaneously
+
+---
+
+### Concept 5: Context DTOs (Data Transfer Objects)
+
+Each module (facility, schedulingGroup, allocations) has a **Context DTO** defining what data is shared.
+
+**Example: `AllocationContext`** (for API tests)
+```typescript
+interface AllocationContext {
+  allocationsDutyId: number | null;      // Captured from DB after creation
+  dutyName: string | null;               // Used in edit operations
+  dutyId: string | null;                 // Unique duty identifier
+  schedulingPersonId: string | null;     // Person assigned
+  schedulingTeamId: string | null;       // Team assigned
+  dutyDate: string | null;               // Duty date
+}
+```
+
+**Purpose:**
+- Type safety: TypeScript enforces what data exists
+- Documentation: Each field explains its purpose
+- Contract: Steps agree on what data they exchange
+
+---
+
+### Concept 6: Test Data Management
+
+Test data is stored in **JSON files** with **template variables**.
+
+**Example: `allocationApi_PostParams.json`**
+```json
+{
+  "duty": {
+    "DutyName": "{{dutyName|DefaultName}}",
+    "DutyID": "{{DutyID|0}}",
+    "SchedulingPersonID": "{{SchedulingPersonID|0}}",
+    "SchedulingTeamID": "{{SchedulingTeamID|0}}",
+    "DutyDate": "{{dutyDate|2026-01-01}}",
+    "action": "EDIT"
+  }
+}
+```
+
+**How It Works:**
+1. **Template Load**: Load JSON file
+2. **Variable Substitution**: Replace `{{paramName|defaultValue}}` with actual values
+3. **API Call**: Send filled payload
+
+**Example in Code:**
+```typescript
+// Load template
+let template = loadTestParameters('allocationApi_PostParams.json', 'duty');
+// { DutyName: "{{dutyName|DefaultName}}", ... }
+
+// Substitute variables with values from feature file
+let payload = resolveTemplate(template, {
+  dutyName: 'Duty_New',
+  DutyID: '35386',
+  // ... other parameters
+});
+// { DutyName: "Duty_New", DutyID: "35386", ... }
+
+// Send to API
+await makeApiRequest('POST', '/api/duty', payload);
+```
+
+---
+
+## Detailed UI Test Walkthrough
+
+### Test Scenario: "areaAdmin_News creates a scheduling group"
+
+Located in: [tests/ui/features/NP035/schedulinggroup_ui_create.feature](tests/ui/features/NP035/schedulinggroup_ui_create.feature)
+
+```gherkin
+Scenario Outline: <role> creates a scheduling group
+  Given user '<role>' is on the "Scheduled Group" page
+  When the user creates a new scheduling group using "<testDataFile>"
+  Then the scheduling group is visible
+  When the user clicks the Delete button for the scheduling group
+  Then the delete confirmation popup appears
+  And the user approves the deletion
+  Then the scheduling group is no longer visible in the list
+
+Examples:
+  | role           | testDataFile                        |
+  | areaAdmin_News | schdGroupCreate_AreaAdminNews_UIdata |
+```
+
+### Step-by-Step Execution
+
+#### **STEP 1: User Logs In** (Given step)
+
+**Gherkin:**
+```gherkin
+Given user 'areaAdmin_News' is on the "Scheduled Group" page
+```
+
+**File:** [tests/ui/steps/NP035/schedulinggroup_ui_common.steps.ts](tests/ui/steps/NP035/schedulinggroup_ui_common.steps.ts)
+
+```typescript
+Given("user {string} is on the {string} page", async ({ loginAs, testContext }, role: string, pageName: string) => {
+  // 1. Fixture loginAs() logs in the user
+  //    - Reads credentials from core/data/users.json for role 'areaAdmin_News'
+  //    - Gets password from environment variable AREA_ADMIN_PASSWORD
+  //    - Opens browser to UI_BASE_URL with credentials in URL
+  //    - Returns logged-in Playwright Page object
+  const page = await loginAs(role);
+
+  // 2. Create page object (from Page Object Model pattern)
+  const scheduledGroupPage = new ScheduledGroupPage(page);
+
+  // 3. Navigate to Scheduling Group page using page object
+  await scheduledGroupPage.open();
+  // Opens: https://username:password@systest-app.example.com/mvc-app/admin/scheduling-group
+
+  // 4. Store in testContext for reuse by When/Then steps
+  testContext.page = page;
+  testContext.scheduledGroupPage = scheduledGroupPage;
+  testContext.currentUserAlias = role;
+
+  console.log(`User 'areaAdmin_News' logged in and navigated to Scheduled Group page`);
+});
+```
+
+**What Happened:**
+- Browser opened to application with user credentials
+- User authenticated via URL-based credentials (NTLM/Basic Auth)
+- Page loaded and waited for network idle
+- Page object created to access page interactions
+
+**Console Output:**
+```
+Authenticating user: pandec01 (areaAdmin_News)
+Logged in as role: areaAdmin_News
+User 'areaAdmin_News' logged in and navigated to Scheduled Group page
+[Context] Initialized for test: areaAdmin_News creates a scheduling group
+```
+
+---
+
+#### **STEP 2: Create Scheduling Group** (When step)
+
+**Gherkin:**
+```gherkin
+When the user creates a new scheduling group using "schdGroupCreate_AreaAdminNews_UIdata"
+```
+
+**File:** [tests/ui/steps/NP035/schedulinggroup_ui_create.steps.ts](tests/ui/steps/NP035/schedulinggroup_ui_create.steps.ts)
+
+```typescript
+When("the user creates a new scheduling group using {string}", async ({ testContext }, filename: string) => {
+  // 1. Retrieve page object from context
+  const ctx = testContext as SchedulingGroupContext;
+  const scheduledGroupPage = ctx.scheduledGroupPage;
+
+  // 2. ScheduledGroupPage.createScheduledGroup() does the following:
+  await scheduledGroupPage.createScheduledGroup(filename);
+  //    a) Click "Add Scheduling Group" button
+  //    b) Wait for popup dialog (#facebox) to appear
+  //    c) Load form data from workflows/ui/schedulingGroup/data/{filename}.json
+  //    d) Generate unique group name (using timestamp + random to avoid duplicates)
+  //    e) Fill form with data:
+  //       - Group Name: Test_SchdGrp_1680123456_7890
+  //       - ... other fields from JSON
+  //    f) Submit form
+  //    g) Store groupName in static variable for later retrieval
+
+  // 3. Retrieve created group name from page object
+  const groupName = (scheduledGroupPage.constructor as any).lastCreatedGroupName;
+  ctx.groupName = groupName;  // Store in context for Then steps
+
+  console.log(`Created scheduling group using: ${filename}`);
+  console.log(`Group name stored in context: "${groupName}"`);
+});
+```
+
+**Test Data File:** [workflows/ui/schedulingGroup/data/schdGroupCreate_AreaAdminNews_UIdata.json](workflows/ui/schedulingGroup/data/schdGroupCreate_AreaAdminNews_UIdata.json)
+
 ```json
 {
   "group_name": {
-    "type": "text",
-    "value": "My Scheduling Group",
-    "selector": "#group_name"
-  }
-}
-```
-
-#### Dropdown/Select
-```json
-{
-  "division": {
-    "type": "dropdown",
-    "value": "1",
-    "selector": "#division_id"
-  }
-}
-```
-
-#### Multi-Select Dropdown
-```json
-{
-  "facilities": {
-    "type": "multiDropdown",
-    "value": "1",
-    "selector": "#facilities",
-    "subValues": ["1", "2", "3"]
-  }
-}
-```
-
-#### Checkbox
-```json
-{
-  "active": {
-    "type": "checkbox",
-    "value": true,
-    "selector": "#active"
-  }
-}
-```
-
-#### Date Picker
-```json
-{
-  "start_date": {
-    "type": "date",
-    "value": "2025-03-20",
-    "selector": "#start_date"
-  }
-}
-```
-
-#### TextArea
-```json
-{
-  "notes": {
-    "type": "textarea",
-    "value": "This is a\nmulti-line\ntext",
-    "selector": "#notes"
-  }
-}
-```
-
-#### Button
-```json
-{
-  "submit": {
-    "type": "button",
-    "selector": "button[type='submit']"
-  }
-}
-```
-
-## How Form Filler Works
-
-```typescript
-import { fillForm } from '@helpers/formFiller';
-import { readJSON } from '@helpers/readJson';
-
-async createGroup(filename: string) {
-  // Load data
-  const testData = await readJSON(`workflows/schedulingGroup/data/${filename}.json`);
-  
-  // Fill form - it handles all details!
-  await fillForm(page, testData);
-  
-  // Done!
-}
-```
-
-**Behind the scenes, fillForm does:**
-
-```typescript
-for (const [fieldId, field] of Object.entries(testData)) {
-  switch (field.type) {
-    case 'text':
-    case 'textarea':
-      // Find element and type value
-      await page.locator(field.selector).fill(field.value);
-      break;
-      
-    case 'dropdown':
-      // Select option by value
-      await page.locator(field.selector).selectOption(field.value);
-      break;
-      
-    case 'checkbox':
-      // Check/uncheck based on value
-      if (field.value) {
-        await page.locator(field.selector).check();
-      } else {
-        await page.locator(field.selector).uncheck();
-      }
-      break;
-      
-    case 'date':
-      // Open date picker and select
-      await pickDate(page, field.selector, field.value);
-      break;
-      
-    case 'button':
-      // Click button
-      await page.locator(field.selector).click();
-      break;
-  }
-}
-```
-
----
-
-# 12. Parallel Execution & Context Isolation
-
-## Why Parallel Execution Matters
-
-**Sequential Execution (Current):**
-- 100 tests × 10 seconds each = 1000 seconds = 16+ minutes
-
-**Parallel Execution (Goal):**
-- 100 tests / 4 workers = 25 batches × 10 seconds = 250 seconds = 4+ minutes
-
-**Savings: 12 minutes per run!**
-
-## How Context Isolation Works
-
-Without isolation:
-```typescript
-Test 1:
-  groupName = "Team A"
-
-Test 2 (runs at same time):
-  groupName = "Team B"  // ← OVERWRITES!
-
-Test 1 later:
-  Uses groupName  // ← Gets "Team B" instead of "Team A" ❌
-  Test FAILS!
-```
-
-With context isolation (our solution):
-```typescript
-Test 1:
-  contextStore[1].groupName = "Team A"  // ← Separate storage
-
-Test 2 (runs at same time):
-  contextStore[2].groupName = "Team B"  // ← Different storage
-
-Test 1 later:
-  Uses contextStore[1].groupName  // ← Gets correct value "Team A" ✅
-  Test PASSES!
-```
-
-## Implementing in Your Tests
-
-```typescript
-import { scenarioContext, initializeScenarioContext } from '@helpers/scenarioContextManager';
-
-Given('setup step', async () => {
-  // Always initialize context at start of test
-  initializeScenarioContext();  // ← Creates isolated storage
-  
-  const page = await loginAs('systemAdmin');
-  
-  // Store in context (not in global/shared variable)
-  scenarioContext.page = page;
-  scenarioContext.myData = "something";
-});
-
-When('action step', async () => {
-  // Retrieve from context
-  const myData = scenarioContext.myData;  // ← Gets correct value
-  
-  // Store more data
-  scenarioContext.createdId = "123";
-});
-
-Then('verify step', async () => {
-  // Retrieve all data
-  const myData = scenarioContext.myData;
-  const createdId = scenarioContext.createdId;
-  
-  // Use data for verification
-});
-```
-
-## Running Tests in Parallel (for CI/CD)
-
-By default, local tests run sequentially (1 worker).
-
-For CI/CD, tests run parallel with multiple workers:
-
-```bash
-# Local (sequential - 1 worker)
-npm run uidevtest
-# Each test waits for previous to complete
-# Good for debugging
-
-# CI (parallel - 4 workers)
-npm run test:ci
-# Multiple tests run at same time
-# Good for speed
-```
-
-**Result:** Tests run 4x faster without interfering with each other!
-
----
-
-# 13. Fixtures & Reusable Setup
-
-## What is a Fixture?
-
-A **Fixture** is reusable setup code that initializes test dependencies.
-
-Instead of repeating setup in every test, fixtures handle it once:
-
-```typescript
-// Without fixture: Repeat in every test
-it('should create group', async () => {
-  const page = await browser.newPage();
-  await page.goto(url);
-  // Login
-  await page.locator('[name=username]').fill('admin');
-  await page.locator('[name=password]').fill('pass');
-  await page.locator('button[type=submit]').click();
-  
-  // NOW you can test
-  // × 100 tests = 100 × login code!
-});
-
-// With fixture: Setup once, use everywhere
-it('should create group', async({ page, loginAs }) => {
-  await loginAs('systemAdmin');  // ← Fixture handles everything!
-  
-  // Start testing immediately
-});
-```
-
-## Available Fixtures
-
-### 1. `page` - Playwright Page Object
-
-```typescript
-Given('step', async ({ page }) => {
-  // page is already initialized Playwright Page
-  await page.goto('/someurl');
-  await page.locator('#button').click();
-});
-```
-
-### 2. `loginAs` - Login Fixture
-
-```typescript
-Given('user is logged in', async ({ loginAs }) => {
-  // Login as specific user
-  const page = await loginAs('systemAdmin');
-  // Now logged in and on homepage
-  
-  const page2 = await loginAs('areaAdmin_News');
-  // Different browser session, different user
-});
-```
-
-**How it works:**
-1. Loads user from `core/data/users.json`
-2. Gets password from environment (`.env.dev`)
-3. Constructs login URL with embedded credentials
-4. Navigates and verifies login successful
-
-### 3. `db` - Database Connection
-
-```typescript
-Given('group exists in database', async ({ db }) => {
-  // Execute SQL query
-  const result = await db.query('SELECT * FROM scheduling_groups WHERE name = ?', ['Team A']);
-  console.log(result);
-  
-  // Execute stored procedure
-  const spResult = await db.executeSp('SP_CREATE_GROUP', { name: 'Team A' });
-});
-```
-
-## Creating Your Own Fixture
-
-File: `tests/fixtures/pages.fixture.ts`
-
-```typescript
-import { test as base } from '@playwright/test';
-import { Page } from '@playwright/test';
-import loginUser from '@helpers/loginManager';
-
-// Define fixture interface
-interface TestFixtures {
-  loginAs: (userAlias: string) => Promise<Page>;
-  customSetup: () => Promise<void>;
-}
-
-// Create fixture
-export const test = base.extend<TestFixtures>({
-  // loginAs fixture
-  loginAs: async ({ page }, use) => {
-    // Provide function that can be called multiple times
-    await use(async (userAlias: string) => {
-      const page = await loginUser(userAlias);
-      return page;
-    });
+    "selector": "input[name='groupName']",
+    "value": "Default_Group",
+    "type": "input"
   },
-  
-  // Custom fixture
-  customSetup: async ({ page }, use) => {
-    // Setup before test
-    console.log('Setting up...');
-    
-    // Provide object/function to test
-    await use({});
-    
-    // Cleanup after test
-    console.log('Cleaning up...');
+  "description": {
+    "selector": "textarea[name='description']",
+    "value": "Test scheduling group for Area Admin",
+    "type": "textarea"
   },
+  "status": {
+    "selector": "select[name='status']",
+    "value": "Active",
+    "type": "select"
+  }
+}
+```
+
+**Form Filling Process** ([tests/utils/formFiller.ts](tests/utils/formFiller.ts)):
+```typescript
+// For each field in JSON:
+// 1. Find HTML element using selector
+// 2. Determine field type (input, textarea, select, checkbox, etc.)
+// 3. Fill with value using appropriate Playwright method:
+//    - input: playgrightPage.fill(selector, value)
+//    - select: playgrightPage.selectOption(selector, value)
+//    - checkbox: playgrightPage.check(selector)
+// 4. Move to next field
+// 5. Submit form
+```
+
+**What Happened:**
+- Dialog popup appeared with form
+- Form fields filled with test data
+- Unique group name generated and stored
+- Form submitted
+- Page refreshed showing created group in table
+
+**Console Output:**
+```
+Generated unique group name: "Test_SchdGrp_1680123456_7890"
+Created scheduling group using: schdGroupCreate_AreaAdminNews_UIdata
+Group name stored in context: "Test_SchdGrp_1680123456_7890"
+```
+
+---
+
+#### **STEP 3: Verify Group Created** (Then step)
+
+**Gherkin:**
+```gherkin
+Then the scheduling group is visible
+```
+
+**File:** [tests/ui/steps/NP035/schedulinggroup_ui_create.steps.ts](tests/ui/steps/NP035/schedulinggroup_ui_create.steps.ts)
+
+```typescript
+Then("the scheduling group is visible", async ({ testContext }) => {
+  // 1. Retrieve page object and group name from context
+  const ctx = testContext as SchedulingGroupContext;
+  const scheduledGroupPage = ctx.scheduledGroupPage;
+  const groupName = ctx.groupName;
+
+  // 2. Call page object verification method
+  await scheduledGroupPage.verifyScheduledGroupVisibleForUser();
+  //    a) Refresh table data (click refresh button / reload)
+  //    b) Find row in table with group name
+  //    c) Assert exactly 1 row found:
+  //       const groupRow = page.locator('table#scheduling-list-table tbody tr').filter({
+  //         has: page.locator(`td.scheduling-group-name:has-text("${groupName}")`)
+  //       });
+  //       await expect(groupRow).toHaveCount(1);
+
+  console.log('[VERIFY] ✓ Group found and visible');
 });
 ```
 
-## Using Fixtures in Tests
+**What Happened:**
+- Table refreshed to get latest data
+- Searched for group name in table rows
+- Assertion passed: group is visible to logged-in user
+- Test continues to deletion steps
+
+**Console Output:**
+```
+[VERIFY] Checking if scheduling group is visible in table...
+[VERIFY] Searching for group: "Test_SchdGrp_1680123456_7890"...
+[VERIFY] ✓ Group found and visible
+```
+
+---
+
+#### **STEP 4: Delete Scheduling Group** (When step)
+
+**Gherkin:**
+```gherkin
+When the user clicks the Delete button for the scheduling group
+```
 
 ```typescript
-import { test } from '@fixtures/pages.fixture';
-import { expect } from '@playwright/test';
+When("the user clicks the Delete button for the scheduling group", async ({ testContext }) => {
+  const ctx = testContext as SchedulingGroupContext;
+  const scheduledGroupPage = ctx.scheduledGroupPage;
 
-test('example', async ({ page, loginAs, customSetup }) => {
-  // All fixtures are available!
-  
-  const adminPage = await loginAs('systemAdmin');
-  await adminPage.goto('/dashboard');
-  
-  await expect(adminPage.locator('h1')).toContainText('Dashboard');
+  // Find the row with group name and click delete button
+  const groupRow = page.locator('table#scheduling-list-table tbody tr').filter({
+    has: page.locator(`td:has-text("${ctx.groupName}")`)
+  });
+
+  // Click delete button in that row
+  await groupRow.locator('button[aria-label="Delete"]').click();
+
+  console.log(`Clicked Delete for group: "${ctx.groupName}"`);
 });
 ```
 
 ---
 
-# 14. Common Workflows & Patterns
+#### **STEP 5: Confirm Deletion** (Then + And steps)
 
-## Pattern 1: Create-Verify-Delete (CRUD Test)
-
-```typescript
-Scenario: Complete CRUD lifecycle
-  Given user 'systemAdmin' is on the "Scheduled Group" page
-  
-  When the user creates a new scheduling group using "testdata.json"
-  Then the scheduling group is visible
-  
-  When the user edits the scheduling group name to "Updated Name"
-  Then the updated name is visible
-  
-  When the user deletes the scheduling group
-  Then the scheduling group is no longer visible
+**Gherkin:**
+```gherkin
+Then the delete confirmation popup appears with title "Delete Scheduling Group"
+And the user approves the deletion
 ```
 
-## Pattern 2: Permission Boundary Testing
-
 ```typescript
-Scenario: SystemAdmin can see all, AreaAdmin only their area
-  Given user 'systemAdmin' creates a group in "News" area
-  And the group is visible to 'systemAdmin'
-  
-  When user 'areaAdmin_Facilities' navigates to groups
-  Then the "News" area group is NOT visible to 'areaAdmin_Facilities'
-  
-  When user 'areaAdmin_News' navigates to groups
-  Then the "News" area group IS visible to 'areaAdmin_News'
-```
+Then("the delete confirmation popup appears with title {string}", async ({ testContext }, title: string) => {
+  const page = testContext.page;
 
-## Pattern 3: Data Validation (UI + Database)
+  // Wait for confirmation dialog and verify title
+  const dialog = page.locator('.modal-dialog, .dialog');
+  await expect(dialog).toBeVisible();
 
-```typescript
-Scenario: Data saved correctly in database
-  Given database is seeded with initial data
-  
-  When user creates a group via UI
-  And the group appears in UI table
-  
-  Then database contains the group with correct values
-  And audit trail records the creation
-  And timestamp is recent
-```
+  const titleElement = dialog.locator('h2, .modal-title');
+  await expect(titleElement).toContainText(title);
 
-## Pattern 4: API + UI Integration
+  console.log(`✓ Confirmation popup appeared with title: "${title}"`);
+});
 
-```typescript
-Scenario: API creates data, UI displays it
-  Given API endpoint is available
-  
-  When I POST to /api/groups with payload
-  And the response is 201 Created
-  
-  Then user navigates to groups page
-  And the created group appears in list
-  And all details match API response
+And("the user approves the deletion", async ({ testContext }) => {
+  const page = testContext.page;
+
+  // Click "Confirm" or "Yes" button in dialog
+  const confirmButton = page.locator('button:has-text("Delete"), button:has-text("Confirm")');
+  await confirmButton.click();
+
+  console.log('✓ User approved deletion');
+});
 ```
 
 ---
 
-# 15. Troubleshooting Guide
+#### **STEP 6: Verify Deletion** (Then step)
 
-## Problem: Test Fails Randomly
+**Gherkin:**
+```gherkin
+Then the scheduling group is no longer visible in the list
+```
 
-**Cause:** Race condition - waiting for element that might not be loaded
-
-**Solution:**
 ```typescript
-// ❌ Bad: Element not loaded yet
-await page.locator('table tr').count()  // Fast but unreliable
+Then("the scheduling group is no longer visible in the list", async ({ testContext }) => {
+  const ctx = testContext as SchedulingGroupContext;
+  const scheduledGroupPage = ctx.scheduledGroupPage;
 
-// ✅ Good: Wait for element first
-await page.locator('table').waitFor({ state: 'visible' });
-await page.waitForLoadState('networkidle');
-const count = await page.locator('table tr').count();
-```
+  // Verify group is removed from table
+  await scheduledGroupPage.verifyScheduledGroupNotVisibleForUser();
+  //    a) Refresh table
+  //    b) Search for group name
+  //    c) Assert 0 rows found (deleted)
 
-## Problem: Element Selector Broke (Test fails after UI change)
-
-**UI changed from:**
-```html
-<button id="submit">Submit</button>
-```
-
-**To:**
-```html
-<button class="primary-btn">Submit</button>
-```
-
-**Solution: Update Page Object**
-```typescript
-// Before:
-await page.locator('#submit').click();
-
-// After:
-await page.locator('button:has-text("Submit")').click();
-// OR use role (more reliable):
-await page.getByRole('button', { name: 'Submit' }).click();
-```
-
-## Problem: Tests Interfere (When running parallel)
-
-**Cause:** Shared state between tests
-
-**Solution:**
-```typescript
-// ❌ Bad: Global variable
-let User = null;
-Given('login', async () => {
-  User = 'admin';  // Shared between tests!
-});
-
-// ✅ Good: Context storage
-Given('login', async () => {
-  initializeScenarioContext();
-  scenarioContext.currentUser = 'admin';  // Isolated per test
+  console.log('[VERIFY] ✓ Group successfully deleted');
 });
 ```
-
-## Problem: Timeout - Test takes too long
-
-**Investigation:**
-```bash
-# Run with verbose output
-npm run uidevtest -- --reporter=verbose
-
-# See which step is slow
-```
-
-**Solution Options:**
-1. Reduce timeout for faster failure
-2. Speed up test setup (reuse credentials)
-3. Parallel workers (CI/CD)
-4. Optimize selectors (faster DOM queries)
-
-## Problem: Tests Run Against Wrong Environment
-
-**Symptoms:**
-- You run a test but it connects to STAGING database (not dev)
-- Tests fail with unfamiliar database names
-- Different password doesn't work
-
-**Root Cause:**
-You used `npm run _ui:run` or `npm run _api:run` (base scripts) instead of environment-specific commands.
-
-**Solution:**
-```bash
-# ❌ WRONG - uses .env.systest by default
-npm run _ui:run
-
-# ✅ CORRECT - explicitly uses .env.dev
-npm run uidevtest
-
-# ✅ ALSO CORRECT - for API tests
-npm run apitest
-```
-
-**How to verify which environment loaded:**
-1. Look at console output when test starts - it prints the environment
-2. Check the database host connecting - is it dev or staging?
-3. Check the URL - is it allocate-dev-wp or allocate-systest-wp?
-
-## Problem: Credentials Wrong
-
-**Error:**
-```
-401 Unauthorized
-or
-Login failed
-```
-
-**Solution:**
-1. Check `.env.dev` or `.env.systest` exists
-2. Verify credentials are correct
-3. Check user exists in `core/data/users.json`
-4. Verify environment variable is loaded:
-   ```typescript
-   console.log(process.env.SYS_ADMIN_PASSWORD);  // Should print password
-   ```
-
-## Problem: Database Connection Failed
-
-**Error:**
-```
-ECONNREFUSED: Connection refused 127.0.0.1:1433
-```
-
-**Solution:**
-1. Check database is running
-2. Verify host/port in `.env` file
-3. Test connection manually:
-   ```bash
-   sqlcmd -S yourserver -U youruser -P yourpassword
-   ```
-
-## Problem: Screenshot/Video Not Showing
-
-**Check:**
-1. Test actually failed (not passed)
-2. Report generated:
-   ```bash
-   npm run report  # Opens playwright-report/index.html
-   ```
-3. Look in `test-results/` folder
-4. Check `playwright.config.ts` for screenshot settings
 
 ---
 
-# 16. Best Practices
+### Complete UI Test Flow Diagram
 
-## Testing Best Practices
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                   Feature File (Gherkin)                         │
+├─────────────────────────────────────────────────────────────────┤
+│  Scenario: areaAdmin_News creates scheduling group              │
+└─────────────────┬───────────────────────────────────────────────┘
+                  │
+        ┌─────────▼──────────────────────────┐
+        │  Playwright-BDD Generator (bddgen) │
+        │  Converts .feature to .ts test     │
+        └─────────┬──────────────────────────┘
+                  │
+        ┌─────────▼──────────────────────────────────────────┐
+        │  Playwright Test Runner                             │
+        │  1. Setup fixtures (loginAs, testContext)           │
+        │  2. Execute Given step                              │
+        └─────────┬──────────────────────────────────────────┘
+                  │
+        ┌─────────▼──────────────────────────────────────────┐
+        │  GIVEN: User logs in (fixture: loginAs)             │
+        │  ✓ Load credentials from core/data/users.json       │
+        │  ✓ Open browser with credentials                    │
+        │  ✓ Returns logged-in Page object                    │
+        │  ✓ Create ScheduledGroupPage object                 │
+        │  ✓ Navigate to page                                 │
+        │  ✓ Store in testContext                             │
+        └─────────┬──────────────────────────────────────────┘
+                  │
+        ┌─────────▼──────────────────────────────────────────┐
+        │  WHEN: Create scheduling group                       │
+        │  ✓ Load form data from JSON                          │
+        │  ✓ Generate unique group name                        │
+        │  ✓ Fill form fields                                  │
+        │  ✓ Submit form                                       │
+        │  ✓ Store group name in context                       │
+        └─────────┬──────────────────────────────────────────┘
+                  │
+        ┌─────────▼──────────────────────────────────────────┐
+        │  THEN: Verify group created                          │
+        │  ✓ Refresh table data                                │
+        │  ✓ Search for group in table rows                    │
+        │  ✓ Assert 1 row found                                │
+        └─────────┬──────────────────────────────────────────┘
+                  │
+        ┌─────────▼──────────────────────────────────────────┐
+        │  WHEN: Click Delete button                           │
+        │  ✓ Find row with group name                          │
+        │  ✓ Click delete button                               │
+        └─────────┬──────────────────────────────────────────┘
+                  │
+        ┌─────────▼──────────────────────────────────────────┐
+        │  THEN: Verify confirmation popup                     │
+        │  ✓ Wait for dialog visible                           │
+        │  ✓ Verify title text                                 │
+        └─────────┬──────────────────────────────────────────┘
+                  │
+        ┌─────────▼──────────────────────────────────────────┐
+        │  AND: Approve deletion                               │
+        │  ✓ Click Confirm button                              │
+        └─────────┬──────────────────────────────────────────┘
+                  │
+        ┌─────────▼──────────────────────────────────────────┐
+        │  THEN: Verify deletion complete                      │
+        │  ✓ Refresh table                                     │
+        │  ✓ Assert group not found (0 rows)                   │
+        └─────────┬──────────────────────────────────────────┘
+                  │
+        ┌─────────▼──────────────────────────────────────────┐
+        │  Teardown                                            │
+        │  ✓ Close browser context                             │
+        │  ✓ Generate report                                   │
+        └─────────────────────────────────────────────────────┘
+```
 
-✅ **DO:**
-- One assertion per scenario (keep tests focused)
-- Use meaningful test names (describes what is tested, not HOW)
-- Keep tests independent (no test depends on another running first)
-- Use test data (don't hardcode values)
-- Add logging/comments (help future developers)
-- Use page objects (centralize UI selectors)
-- Clean up after tests (delete created data)
+---
 
-❌ **DON'T:**
-- Put multiple scenarios in one test
-- Use hardcoded wait times (use waits instead)
-- Make tests depend on each other
-- Ignore flaky tests (fix them!)
-- Use generic variable names (data vs. groupName)
-- Test implementation details (test behavior)
+## Detailed Integrated (API) Test Walkthrough
 
-## Code Organization
+### Test Scenario: "systemAdmin creates and edits a duty"
+
+Located in: [tests/integrated/features/NP035/allocations_api_edit.feature](tests/integrated/features/NP035/allocations_api_edit.feature)
+
+```gherkin
+@allocation-api
+Feature: Duty Allocation API Operations
+
+Scenario Outline: Create and Edit duty with different parameters for <user>
+  Given user '<user>' is authenticated
+  
+  When the user creates a duty from testDataFile "<testDataFile>" with parameters:
+    | dutyName           | <dutyName>          |
+    | DutyID             | <DutyID>            |
+    | SchedulingPersonID | <SchedulingPersonID>|
+    | SchedulingTeamID   | <SchedulingTeamID>  |
+    | dutyDate           | <dutyDate>          |
+  
+  And verify duty operation completed in database
+  
+  When the user edits the duty from testDataFile "<testDataFile>" with parameters:
+    | editDutyName       | <editDutyName>      |
+    | editStartTime      | <editStartTime>     |
+  
+  And verify duty operation completed in database
+  Then verify the edit operation is recorded in duty history
+  And verify the edit field changes are reflected in database
+
+Examples:
+  | user        | testDataFile                  | dutyName        | DutyID | SchedulingPersonID | ... |
+  | systemAdmin | allocationApi_PostParams.json | U_API_Create_P1 | 35386  | 9350               | ... |
+```
+
+### Step-by-Step Execution
+
+#### **STEP 1: User Authenticates** (Given step)
+
+**Gherkin:**
+```gherkin
+Given user 'systemAdmin' is authenticated
+```
+
+**File:** [tests/integrated/steps/NP035/allocations_api_common.steps.ts](tests/integrated/steps/NP035/allocations_api_common.steps.ts)
 
 ```typescript
-// ✅ Good structure
-When('user creates a group using {string}',
-  async ({ }, filename: string) => {
-    // 1. Setup
-    const pageObject = scenarioContext.scheduledGroupPage;
+Given("user {string} is authenticated", async ({ authenticateAs }, userAlias: string) => {
+  // 1. Fixture authenticateAs() sets up API authentication:
+  //    - Load credentials from core/data/users.json for role 'systemAdmin'
+  //    - Get password from environment variable SYS_ADMIN_PASSWORD
+  //    - Create Basic Auth header: "Basic " + base64(username:password)
+  //    - Set on apiClient for all subsequent requests
+  
+  await authenticateAs(userAlias);
+  // Now all API requests include: Authorization: Basic base64(patans01:password)
+
+  console.log(`Authenticated as user: ${userAlias}`);
+  // Output: Authenticated as user: systemAdmin
+  //         Using Basic Auth for user: systemAdmin
+  //         Authenticated as user 10773 (patans01)
+});
+```
+
+**What Happened:**
+- Credentials loaded from `core/data/users.json`:
+  ```json
+  { "systemAdmin": { "username": "patans01", "envKey": "SYS_ADMIN_PASSWORD" } }
+  ```
+- Password retrieved from `.env.systest`: `SYS_ADMIN_PASSWORD=actual_password`
+- Basic Auth header created: `Authorization: Basic cGF0YW5zMDE6YWN0dWFsX3Bhc3N3b3Jk`
+- No network call yet (just setup)
+
+---
+
+#### **STEP 2: Create Duty (API POST)** (When step)
+
+**Gherkin:**
+```gherkin
+When the user creates a duty from testDataFile "allocationApi_PostParams.json" with parameters:
+  | dutyName           | U_API_Create_P1  |
+  | DutyID             | 35386            |
+  | SchedulingPersonID | 9350             |
+  | SchedulingTeamID   | 275              |
+  | dutyDate           | 2026-04-04       |
+```
+
+**File:** [tests/integrated/steps/NP035/allocations_api_edit.steps.ts](tests/integrated/steps/NP035/allocations_api_edit.steps.ts)
+
+```typescript
+When("the user creates a duty from testDataFile {string} with parameters:", 
+  async ({}, testDataFile: string, dataTable: DataTable) => {
     
-    // 2. Action
-    await pageObject.createScheduledGroup(filename);
-    
-    // 3. Store result
-    scenarioContext.lastCreatedGroupName = pageObject.lastCreatedGroupName;
-    
-    // 4. Log
-    console.log(`✅ Created group: "${scenarioContext.lastCreatedGroupName}"`);
+    // 1. Get request context (from fixture)
+    const requestContext = getSharedContext();
+
+    // 2. Parse feature file parameters into map
+    //    Input: DataTable with rows | key | value |
+    //    Output: { dutyName: 'U_API_Create_P1', DutyID: '35386', ... }
+    const params = normalizeParameters(parseDataTableToMap(dataTable));
+
+    // 3. Load request payload template from JSON file
+    let template = loadTestParameters(
+      `allocationApi_PostParams.json`,
+      'duty'  // Use "duty" key in JSON
+    );
+    // Result: { DutyName: "{{dutyName|DefaultName}}", ... }
+
+    // 4. Substitute template variables with actual test parameters
+    //    Replaces {{dutyName|DefaultName}} with 'U_API_Create_P1', etc.
+    let payload = resolveTemplate(template, params);
+    // Result: { DutyName: 'U_API_Create_P1', DutyID: 35386, ... }
+
+    // 5. Set action to EDIT (backend uses this to determine create vs edit)
+    payload.action = API_CONFIG.actions.EDIT;
+
+    // 6. Store in scenario context for later steps (edit, verification)
+    scenarioContext.dutyName = payload.DutyName;
+    scenarioContext.schedulingPersonId = payload.SchedulingPersonID;
+    scenarioContext.schedulingTeamId = payload.SchedulingTeamID;
+    scenarioContext.dutyDate = payload.DutyDate;
+    scenarioContext.dutyId = payload.DutyID;
+
+    // 7. Send POST request to API
+    //    Method: makeApiRequest(context, 'POST', '/api/endpoint', payload, description)
+    await makeApiRequest(
+      requestContext,
+      'POST',
+      API_CONFIG.endpoints.markAction,  // /api/duty/markAction or similar
+      payload,
+      'API Operation - Create Duty'
+    );
+
+    console.log(`[CREATE-PAYLOAD] Request payload:\n${JSON.stringify(payload, null, 2)}`);
   }
 );
 ```
 
-## Error Messages
+**Request Payload Template:** [workflows/integrated/allocations/data/requestPayload/allocationApi_PostParams.json](workflows/integrated/allocations/data/requestPayload/allocationApi_PostParams.json)
 
-```typescript
-// ❌ Bad error message
-if (!page) {
-  throw new Error('Page not available');  // Too vague
-}
-
-// ✅ Good error message
-if (!page) {
-  throw new Error('Page object not initialized. Did you call "user is on..." step first?');
-}
-```
-
-## Documentation
-
-```typescript
-/**
- * Creates a new scheduling group and stores the name for later verification
- * 
- * @param filename - Test data file name (without .json extension)
- * @example
- * When('user creates group using {string}', async ({}, 'testdata.json') => {
- *   await pageObject.createScheduledGroup('testdata');  // Note: no .json
- * });
- */
-async createScheduledGroup(filename: string) {
-  // Implementation
-}
-```
-
----
-
-# 17. FAQ
-
-## General Questions
-
-### Q: Which command should I use to run tests locally?
-**A:** 
-- **For DEV environment:** `npm run uidevtest` (loads `.env.dev`)
-- **For STAGING environment:** `npm run uisystesttest` (loads `.env.systest`)
-- **Don't use:** `npm run _ui:run` - it defaults to SYSTEST!
-
-**Pro tip:** Always use environment-specific commands:
-```bash
-npm run uidevtest       # ✅ Local dev - uses .env.dev
-npm run apitest         # ✅ Local API - uses .env.dev
-npm run test:dev        # ✅ Full suite - uses .env.dev
-
-npm run _ui:run         # ❌ Defaults to .env.systest (confusing!)
-```
-
-### Q: How long does a test take?
-**A:** Typically 8-15 seconds per test. Simple tests (UI clicks only) = faster. Complex tests (form filling, waiting) = slower.
-
-### Q: Can I run just one test locally?
-**A:** Yes!
-```bash
-npm run uidevtest -- --grep "test name"
-```
-
-### Q: How do I skip a test temporarily?
-**A:** Add `@skip` tag to feature file:
-```gherkin
-@skip
-Scenario: This test is skipped
-```
-
-OR in code:
-```typescript
-test.skip('should do something', async () => {
-  // This test is skipped
-});
-```
-
-### Q: How do I debug a failing test?
-**A:** 
-```typescript
-// Add pause to inspect
-Given('step', async () => {
-  // ... test code ...
-  
-  await page.pause();  // ← Test stops here, inspect browser
-  
-  // ... more code ...
-});
-```
-
-Then run:
-```bash
-npm run uidevtest -- --debug
-```
-
-### Q: Can I run tests on different browsers?
-**A:** Yes, modify `playwright.config.ts`:
-```typescript
-use: {
-  channel: 'chrome',  // chrome, firefox, webkit
-}
-```
-
-## Framework Questions
-
-###Q: What if the test data JSON is wrong?
-**A:** formFiller will throw error:
-```
-Error: Cannot find element with selector #unknown_selector
-```
-
-Fix: Update JSON or check selector exists in HTML.
-
-### Q: How do I add a new page to the framework?
-**A:** 
-1. Create page object: `tests/ui/page/NP035/MyPage.ts`
-2. Register in pageFactory: `tests/utils/pageFactory.ts`
-3. Use in feature: `Given user is on the "My Page" page`
-
-### Q: How do I update test data?
-**A:** Edit the JSON file:
 ```json
-// workflows/schedulingGroup/data/mydata.json
 {
-  "group_name": {
-    "value": "New Value" ← Just change this
+  "duty": {
+    "DutyName": "{{dutyName|U_Default}}",
+    "DutyID": "{{DutyID|0}}",
+    "ID": "{{ID|0}}",
+    "SchedulingPersonID": "{{SchedulingPersonID|0}}",
+    "SchedulingTeamID": "{{SchedulingTeamID|0}}",
+    "DutyDate": "{{dutyDate|2026-01-01}}",
+    "allocationsSchPer": "{{allocationsSchPer|0}}",
+    "action": "EDIT"
   }
 }
 ```
 
-All tests using this file get updated data!
+**Template Variable Substitution:**
+```
+Template: { DutyName: "{{dutyName|DEFAULT}}", DutyID: "{{DutyID|0}}" }
+Params:   { dutyName: "U_API_Create_P1", DutyID: "35386" }
+Result:   { DutyName: "U_API_Create_P1", DutyID: "35386" }
 
-## Execution Questions
+// If parameter not provided, uses default:
+Template: { EndTime: "{{endTime|09:00}}" }
+Params:   { /* endTime not provided */ }
+Result:   { EndTime: "09:00" }
+```
 
-### Q: Why are my parallel tests failing when they pass sequentially?
-**A:** Shared state between tests. Use context manager:
+**API Request Made:**
+```
+POST https://api.systest.example.com/api/duty/markAction
+Headers:
+  Authorization: Basic cGF0YW5zMDE6YWN0dWFsX3Bhc3N3b3Jk
+  Content-Type: application/json
+
+Body:
+{
+  "DutyName": "U_API_Create_P1",
+  "DutyID": "35386",
+  "ID": "35386",
+  "SchedulingPersonID": "9350",
+  "SchedulingTeamID": "275",
+  "DutyDate": "2026-04-04",
+  "allocationsSchPer": "9350",
+  "action": "EDIT"
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "message": "Duty created successfully",
+  "data": { "AllocationsDutyID": 999888 }
+}
+```
+
+**What Happened:**
+- Test parameters extracted from feature file
+- Payload template loaded and filled
+- POST request sent to backend API with Basic Auth
+- Response captured for verification
+- Key IDs extracted and stored in scenario context
+
+**Console Output:**
+```
+Authenticated as user: systemAdmin
+Using Basic Auth for user: systemAdmin
+
+[CREATE-PAYLOAD] Request payload:
+{
+  "DutyName": "U_API_Create_P1",
+  "DutyID": "35386",
+  "SchedulingPersonID": "9350",
+  "SchedulingTeamID": "275",
+  "DutyDate": "2026-04-04",
+  "action": "EDIT"
+}
+```
+
+---
+
+#### **STEP 3: Verify Creation in Database** (And step)
+
+**Gherkin:**
+```gherkin
+And verify duty operation completed in database
+```
+
+**File:** [tests/integrated/steps/NP035/allocations_api_edit.steps.ts](tests/integrated/steps/NP035/allocations_api_edit.steps.ts)
+
 ```typescript
-// Initialize context (important!)
-initializeScenarioContext();
+Then("verify duty operation completed in database", async ({ db }) => {
+  // 1. Get request context (contains API response)
+  const requestContext = getSharedContext();
 
-// Store in context (not global)
-scenarioContext.data = value;
+  // 2. Verify API response was successful
+  const responseData = requestContext.body ? JSON.parse(requestContext.body) : {};
+  expect(requestContext.status).toBeGreaterThanOrEqual(200);
+  expect(requestContext.status).toBeLessThan(500);
+  expect(responseData.success).toBe(true);
+  // Assertion fails if API didn't return success
+
+  // 3. For CREATE operation: Query database to capture AllocationsDutyID
+  if (!scenarioContext.allocationsDutyId) {
+    // First time: extract ID from API response or query database
+    const result = await db.request()
+      .input('dutyName', sql.VarChar, scenarioContext.dutyName)
+      .input('dutyDate', sql.Date, scenarioContext.dutyDate)
+      .query(`
+        SELECT TOP 1 AD_AllocationsDutyID, AD_DutyName, AD_DutyDate
+        FROM AllocationsDuty
+        WHERE AD_DutyName = @dutyName AND AD_DutyDate = @dutyDate
+        ORDER BY AD_CreatedDate DESC
+      `);
+
+    if (result.recordset.length === 0) {
+      throw new Error('Duty not found in database after creation');
+    }
+
+    // Store ID for use in edit operation
+    scenarioContext.allocationsDutyId = result.recordset[0].AD_AllocationsDutyID;
+    console.log(`✓ Duty created in DB. AllocationsDutyID: ${scenarioContext.allocationsDutyId}`);
+  }
+  else {
+    // For EDIT operation: Verify changes were applied
+    const result = await db.request()
+      .input('allocationsDutyId', sql.Int, scenarioContext.allocationsDutyId)
+      .query(`
+        SELECT AD_DutyName, AD_StartTime, AD_EndTime, AD_ModifiedDate
+        FROM AllocationsDuty
+        WHERE AD_AllocationsDutyID = @allocationsDutyId
+      `);
+
+    if (result.recordset.length === 0) {
+      throw new Error(`Duty ${scenarioContext.allocationsDutyId} not found in database`);
+    }
+
+    const duty = result.recordset[0];
+    console.log(`✓ Duty verified in DB. Name: ${duty.AD_DutyName}`);
+  }
+});
 ```
 
-### Q: How do I see which tests are running in CI?
-**A:** Check GitHub Actions:
-1. Push to repository
-2. Go to GitHub repo → Actions tab
-3. Click on workflow run
-4. See test output in real-time
+**Database Query Execution:**
+```sql
+-- Query executed against MSSQL database
+SELECT TOP 1 AD_AllocationsDutyID, AD_DutyName, AD_DutyDate
+FROM AllocationsDuty
+WHERE AD_DutyName = 'U_API_Create_P1' AND AD_DutyDate = '2026-04-04'
+ORDER BY AD_CreatedDate DESC
 
-### Q: Can I rerun only failed tests?
-**A:** Not automatically, but you can manually:
-```bash
-npm run uidevtest -- --grep "test name"
+-- Result:
+AD_AllocationsDutyID | AD_DutyName       | AD_DutyDate
+==========================================
+999888               | U_API_Create_P1   | 2026-04-04
 ```
 
-Or filter by tag:
-```bash
-npm run uidevtest -- --grep "@myTag"
+**What Happened:**
+- API response verified (status 200, success: true)
+- Duty queried from database using name and date
+- AllocationsDutyID captured: 999888
+- Stored in scenario context for edit step
+
+**Console Output:**
 ```
-
-## Maintenance Questions
-
-### Q: How often should I update selectors?
-**A:** When UI changes.  Use `getByRole()` when possible (more stable than ID/class selectors that change).
-
-### Q: How long should test data be retained?
-**A:** Indefinitely. Keep all data versions for reproducibility.
-
-### Q: What happens if I delete a test?
-**A:** Just delete the feature file. CI will show fewer tests passing (which is fine).
+✓ Duty created in DB. AllocationsDutyID: 999888
+```
 
 ---
 
-## Additional Resources
+#### **STEP 4: Edit Duty (API POST with ID)** (When step)
 
-### Official Documentation
-- [Playwright Docs](https://playwright.dev)
-- [Cucumber/BDD Guide](https://cucumber.io)
-- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
+**Gherkin:**
+```gherkin
+When the user edits the duty from testDataFile "allocationApi_PostParams.json" with parameters:
+  | editDutyName     | U_API_Edit_P1_v2 |
+  | editStartTime    | 10:00            |
+  | editEndTime      | 11:30            |
+  | editDutyColorId  | 2                |
+```
 
-### Useful Links
-- VSCode Extensions:
-  - Gherkin Official (for .feature files)
-  - Playwright Test for VSCode (running tests)
-- GitHub Actions: `.github/workflows/ci.yml`
+**File:** [tests/integrated/steps/NP035/allocations_api_edit.steps.ts](tests/integrated/steps/NP035/allocations_api_edit.steps.ts)
 
-### Getting Help
-1. Check this README first (definitely has your answer)
-2. Search existing test code for similar patterns
-3. Check test report for error messages
-4. Add `console.log()` for debugging
+```typescript
+When("the user edits the duty from testDataFile {string} with parameters:", 
+  async ({}, testDataFile: string, dataTable: DataTable) => {
+    
+    // 1. Verify duty was created in previous step
+    const requestContext = getSharedContext();
+    if (!scenarioContext.allocationsDutyId) {
+      throw new Error('Cannot edit duty: allocationsDutyId not captured from creation step');
+    }
+
+    // 2. Parse edit parameters from feature file
+    const editParams = normalizeParameters(parseDataTableToMap(dataTable));
+    // { editDutyName: 'U_API_Edit_P1_v2', editStartTime: '10:00', ... }
+
+    // 3. Merge edit parameters with creation context (have full duty info)
+    const merged = { ...editParams };
+    // Add IDs from creation for reference
+    merged.allocationsDutyId = String(scenarioContext.allocationsDutyId);
+    merged.DutyID = scenarioContext.dutyId;
+    merged.SchedulingPersonID = scenarioContext.schedulingPersonId;
+    // ... etc
+
+    // 4. Load and fill template (same as create)
+    let template = loadTestParameters(`allocationApi_PostParams.json`, 'duty');
+    let payload = resolveTemplate(template, merged);
+
+    // 5. Mark as edited (backend uses this flag)
+    payload.isEdited = '1';
+    payload.AllocationsDutyID = scenarioContext.allocationsDutyId;
+    payload.action = API_CONFIG.actions.EDIT;
+
+    // 6. Send POST request (same endpoint, backend determines create vs edit by ID)
+    await makeApiRequest(
+      requestContext,
+      'POST',
+      API_CONFIG.endpoints.markAction,
+      payload,
+      `API Operation - Edit Duty (AllocationsDutyID: ${scenarioContext.allocationsDutyId})`
+    );
+
+    console.log(`[EDIT-PAYLOAD] Request payload:\n${JSON.stringify(payload, null, 2)}`);
+  }
+);
+```
+
+**API Request Made for Edit:**
+```
+POST https://api.systest.example.com/api/duty/markAction
+Headers:
+  Authorization: Basic cGF0YW5zMDE6YWN0dWFsX3Bhc3N3b3Jk
+  Content-Type: application/json
+
+Body:
+{
+  "AllocationsDutyID": 999888,          // Key difference: includes ID (triggers edit)
+  "DutyName": "U_API_Edit_P1_v2",       // Changed value
+  "StartTime": "10:00",                 // Changed value
+  "EndTime": "11:30",                   // Changed value
+  "DutyColorId": "2",                   // Changed value
+  "isEdited": "1",
+  "action": "EDIT"
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "message": "Duty updated successfully"
+}
+```
+
+**What Happened:**
+- Edit parameters from feature file parsed
+- Payload template filled with edit values
+- AllocationsDutyID included in payload (signals backend to UPDATE instead of INSERT)
+- POST request sent
+- Stored in scenario context for verification
 
 ---
 
-**Last Updated:** March 20, 2026
-**Framework Version:** 1.0.0
-**Maintained By:** Automation Team
+#### **STEP 5: Verify Edit in Database** (And step)
+
+**Gherkin:**
+```gherkin
+And verify duty operation completed in database
+Then verify the edit operation is recorded in duty history with change details
+And verify the edit field changes are reflected in database
+```
+
+**Verification Code:**
+```typescript
+Then("verify the edit operation is recorded in duty history with change details", async ({ db }) => {
+  // 1. Query audit/history table for edit record
+  const historyResult = await db.request()
+    .input('allocationsDutyId', sql.Int, scenarioContext.allocationsDutyId)
+    .query(`
+      SELECT TOP 1 * FROM AllocationsDutyHistory
+      WHERE ADH_AllocationsDutyID = @allocationsDutyId
+      ORDER BY ADH_CreatedDate DESC
+    `);
+
+  if (historyResult.recordset.length === 0) {
+    throw new Error('Edit not recorded in duty history');
+  }
+
+  const history = historyResult.recordset[0];
+  console.log(`✓ Edit recorded in history:`);
+  console.log(`  - Field Changed: ${history.ADH_FieldName}`);
+  console.log(`  - Old Value: ${history.ADH_OldValue}`);
+  console.log(`  - New Value: ${history.ADH_NewValue}`);
+  console.log(`  - Changed By: ${history.ADH_ChangedBy}`);
+});
+
+Then("verify the edit field changes are reflected in database", async ({ db }) => {
+  // 2. Query duty table to verify changes were applied
+  const dutyResult = await db.request()
+    .input('allocationsDutyId', sql.Int, scenarioContext.allocationsDutyId)
+    .query(`
+      SELECT AD_DutyName, AD_StartTime, AD_EndTime, AD_DutyColorId
+      FROM AllocationsDuty
+      WHERE AD_AllocationsDutyID = @allocationsDutyId
+    `);
+
+  const duty = dutyResult.recordset[0];
+  
+  // Assert edited values match what we sent
+  expect(duty.AD_DutyName).toBe('U_API_Edit_P1_v2');
+  expect(duty.AD_StartTime).toBe('10:00');
+  expect(duty.AD_EndTime).toBe('11:30');
+  expect(duty.AD_DutyColorId).toBe(2);
+
+  console.log('✓ All edit changes verified in database');
+});
+```
+
+**Database Queries Executed:**
+```sql
+-- Query 1: Verify history record
+SELECT TOP 1 * FROM AllocationsDutyHistory
+WHERE ADH_AllocationsDutyID = 999888
+ORDER BY ADH_CreatedDate DESC
+
+-- Result:
+ADH_FieldName | ADH_OldValue       | ADH_NewValue         | ADH_ChangedBy
+============================================================================
+DutyName      | U_API_Create_P1    | U_API_Edit_P1_v2     | patans01
+StartTime     | 09:00              | 10:00                | patans01
+EndTime       | 10:00              | 11:30                | patans01
+
+
+-- Query 2: Verify duty record updated
+SELECT AD_DutyName, AD_StartTime, AD_EndTime from AllocationsDuty
+WHERE AD_AllocationsDutyID = 999888
+
+-- Result:
+AD_DutyName       | AD_StartTime | AD_EndTime
+===============================================
+U_API_Edit_P1_v2  | 10:00        | 11:30
+```
+
+**What Happened:**
+- History table queried to confirm edit was logged
+- Duty table queried to verify changes applied
+- All assertions passed
+- Test complete
+
+**Console Output:**
+```
+✓ Duty verified in DB. Name: U_API_Edit_P1_v2
+✓ Edit recorded in history:
+  - Field Changed: DutyName
+  - Old Value: U_API_Create_P1
+  - New Value: U_API_Edit_P1_v2
+  - Changed By: patans01
+✓ All edit changes verified in database
+```
+
+---
+
+### Complete API Test Flow Diagram
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│              Feature File (Gherkin - Allocation)              │
+├──────────────────────────────────────────────────────────────┤
+│  Scenario: systemAdmin creates and edits duty                 │
+│  Examples: | dutyName | DutyID | SchedulingPersonID | ...    │
+└──────────────────┬───────────────────────────────────────────┘
+                   │
+         ┌─────────▼──────────────────┐
+         │  Playwright-BDD Generator   │
+         │  (bddgen command)           │
+         │  Converts .feature to .ts   │
+         └─────────┬──────────────────┘
+                   │
+         ┌─────────▼──────────────────────────────────────────┐
+         │  Playwright Test Runner                             │
+         │  1. Setup fixtures (db, apiClient, authenticateAs)  │
+         │  2. No browser opened (pure API test)               │
+         └─────────┬──────────────────────────────────────────┘
+                   │
+         ┌─────────▼──────────────────────────────────────────┐
+         │  GIVEN: User authenticated (fixture: authenticateAs)│
+         │  ✓ Load credentials from core/data/users.json       │
+         │  ✓ Get password from .env.systest                   │
+         │  ✓ Create Basic Auth header                         │
+         │  ✓ Set on apiClient for all requests                │
+         │  ✗ No actual network call yet                       │
+         └─────────┬──────────────────────────────────────────┘
+                   │
+         ┌─────────▼──────────────────────────────────────────┐
+         │  WHEN: Create duty (API POST)                        │
+         │  ✓ Parse parameters from feature file               │
+         │  ✓ Load payload template from JSON                  │
+         │  ✓ Substitute {{variables}} with test values        │
+         │  ✓ Send POST to /api/duty/markAction                │
+         │  ✓ With Authorization header (Basic Auth)           │
+         │  ✓ Store response and captured IDs in context       │
+         └─────────┬──────────────────────────────────────────┘
+                   │
+         ┌─────────▼──────────────────────────────────────────┐
+         │  AND: Verify in database                             │
+         │  ✓ Connect to database (fixture: db)                │
+         │  ✓ Query AllocationsDuty table                       │
+         │  ✓ Verify duty record exists                        │
+         │  ✓ Extract AllocationsDutyID (needed for edit)       │
+         │  ✓ Store ID in scenario context                     │
+         └─────────┬──────────────────────────────────────────┘
+                   │
+         ┌─────────▼──────────────────────────────────────────┐
+         │  WHEN: Edit duty (API POST with ID)                  │
+         │  ✓ Parse edit parameters from feature file          │
+         │  ✓ Merge with creation context (have duty info)     │
+         │  ✓ Load payload template (same file)                │
+         │  ✓ Include AllocationsDutyID in payload             │
+         │  ✓ Backend sees ID → UPDATE instead of INSERT       │
+         │  ✓ Send POST to /api/duty/markAction                │
+         │  ✓ With Authorization header                        │
+         └─────────┬──────────────────────────────────────────┘
+                   │
+         ┌─────────▼──────────────────────────────────────────┐
+         │  AND: Verify edit in database                        │
+         │  ✓ Query AllocationsDutyHistory table               │
+         │  ✓ Verify edit was logged with field changes        │
+         │  ✓ Query AllocationsDuty table                       │
+         │  ✓ Verify all fields updated correctly              │
+         │  ✓ Assert old → new value changes                   │
+         └─────────┬──────────────────────────────────────────┘
+                   │
+         ┌─────────▼──────────────────────────────────────────┐
+         │  Teardown                                            │
+         │  ✓ Close database connection                        │
+         │  ✓ Rollback any transactions (test cleanup)         │
+         │  ✓ Generate HTML report                             │
+         └────────────────────────────────────────────────────┘
+```
+
+---
+
+## End-to-End Test Execution Flow
+
+### Complete Flow from Console Command to Results
+
+#### **Phase 1: Command Execution in Console**
+
+```bash
+# User types in console:
+npm run uisystesttest
+
+# This resolves to package.json script:
+"uisystesttest": "cross-env ENVIRONMENT=systest TEST_TYPE=ui npm run _ui:run"
+
+# Which executes:
+"_ui:run": "npx bddgen && npx playwright test --project=uitest"
+```
+
+**Environment Variables Set:**
+```
+ENVIRONMENT=systest    → loads .env.systest (UI_BASE_URL, credentials)
+TEST_TYPE=ui           → tells playwright to run UI tests only
+LOADED_ENVIRONMENT=systest → cached to avoid reloading
+```
+
+---
+
+#### **Phase 2: BDD Generator (bddgen)**
+
+```bash
+npx bddgen
+```
+
+This command:
+1. **Reads:** `tests/ui/features/NP035/*.feature` (Gherkin files)
+2. **Reads:** `tests/ui/steps/NP035/*.steps.ts` (Step definitions)
+3. **Generates:** Compiled test files (TypeScript)
+4. **Output:** For each feature file, creates a .spec.ts file
+
+**Example Generated File Structure:**
+
+```typescript
+// THIS FILE IS AUTO-GENERATED by bddgen
+import { test, BDD } from 'playwright-bdd';
+
+test.describe('Feature: Scheduling Group CRUD - Create', () => {
+  
+  test('Scenario: areaAdmin_News creates a scheduling group', async () => {
+    // Scenario name from feature file
+    // Maps to step definitions in schedulinggroup_ui_create.steps.ts
+
+    // GIVEN: user 'areaAdmin_News' is on the "Scheduled Group" page
+    await Given('user \'areaAdmin_News\' is on the "Scheduled Group" page');
+
+    // WHEN: the user creates a new scheduling group using "schdGroupCreate_AreaAdminNews_UIdata"
+    await When('the user creates a new scheduling group using "schdGroupCreate_AreaAdminNews_UIdata"');
+
+    // THEN: the scheduling group is visible
+    await Then('the scheduling group is visible');
+
+    // ... more steps for delete ...
+  });
+
+  test('Scenario: systemAdmin creates a scheduling group', async () => {
+    // Similar for second example
+  });
+});
+```
+
+---
+
+#### **Phase 3: Playwright Test Execution**
+
+```bash
+npx playwright test --project=uitest
+```
+
+**Playwright config (`playwright.config.ts`) specifies:**
+- Which browsers to run on: Chrome, Firefox, WebKit
+- Timeout: 60 seconds per test
+- Retry logic: 0 retries (unless CI=true)
+
+**Execution Flow Per Test:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Playwright finds test files (.spec.ts)                 │
+└────────────────┬────────────────────────────────────────┘
+                 │
+       ┌─────────▼──────────────────────┐
+       │  For each scenario (test case)  │
+       └────────────┬────────────────────┘
+                    │
+       ┌────────────▼──────────────────────────┐
+       │  1. Initialize Fixtures               │
+       │  ✓ Request context (HTTP)             │
+       │  ✓ API client with auth              │
+       │  ✓ Database connection               │
+       │  ✓ loginAs function                  │
+       │  ✓ testContext (empty object)        │
+       └────────────┬──────────────────────────┘
+                    │
+       ┌────────────▼──────────────────────────┐
+       │  2. Execute GIVEN steps               │
+       │  ✓ Match "user 'areaAdmin_News'..."  │
+       │  ✓ Call matching step function       │
+       │  ✓ Step uses fixtures (loginAs, ctx)│
+       │  ✓ Sets up test preconditions       │
+       └────────────┬──────────────────────────┘
+                    │
+       ┌────────────▼──────────────────────────┐
+       │  3. Execute WHEN steps                │
+       │  ✓ Match "user creates group..."     │
+       │  ✓ Call matching step function       │
+       │  ✓ Performs test actions             │
+       │  ✓ Stores results in testContext    │
+       └────────────┬──────────────────────────┘
+                    │
+       ┌────────────▼──────────────────────────┐
+       │  4. Execute THEN steps                │
+       │  ✓ Match "scheduling group visible..."│
+       │  ✓ Call matching step function       │
+       │  ✓ Retrieves from testContext        │
+       │  ✓ Verifies expected outcomes        │
+       │  ✓ expect(condition).toBeTruthy()   │
+       └────────────┬──────────────────────────┘
+                    │
+       ┌────────────▼──────────────────────────┐
+       │  5. Test Result Determination         │
+       │  ✓ PASSED: All steps succeeded        │
+       │  ✓ FAILED: Any assertion failed      │
+       │  ✓ SKIPPED: Tagged with @skip       │
+       └────────────┬──────────────────────────┘
+                    │
+       ┌────────────▼──────────────────────────┐
+       │  6. Capture Artifacts                 │
+       │  ✓ Screenshots (on failure)           │
+       │  ✓ Video recording                    │
+       │  ✓ Traces (browser timeline)         │
+       │  ✓ Test logs and console output      │
+       └────────────┬──────────────────────────┘
+                    │
+       ┌────────────▼──────────────────────────┐
+       │  7. Cleanup                           │
+       │  ✓ Close browser context              │
+       │  ✓ Rollback database transactions    │
+       │  ✓ Close database connection         │
+       │  ✓ Release resources                 │
+       └────────────┬──────────────────────────┘
+                    │
+       ┌────────────▼──────────────────────────┐
+       │  Next Scenario...                     │
+       └────────────────────────────────────────┘
+```
+
+---
+
+### Complete Command-to-Result Timeline
+
+```
+Time: 0s
+└─ npm run uisystesttest
+   ├─ Set ENVIRONMENT=systest
+   │  └─ Load .env.systest (UI_BASE_URL, DB credentials, etc.)
+   │
+   ├─ Set TEST_TYPE=ui
+   │  └─ Configure to run UI tests only (skip API tests)
+   │
+   ├─ Time: 0.5s - npx bddgen
+   │  ├─ Compile .feature files to .spec.ts
+   │  ├─ Parse step definitions
+   │  └─ Generate compiled test files
+   │
+   └─ Time: 2s - npx playwright test --project=uitest
+      ├─ Load playwright.config.ts
+      ├─ Find all compiled .spec.ts test files
+      │
+      ├─ Time: 3s - Scenario 1: areaAdmin_News creates group
+      │  ├─ Time: 3.2s - Initialize browser
+      │  ├─ Time: 3.5s - GIVEN: Login as areaAdmin_News
+      │  │  ├─ Read credentials from core/data/users.json
+      │  │  ├─ Get password from .env: AREA_ADMIN_PASSWORD
+      │  │  ├─ Navigate to UI_BASE_URL with credentials
+      │  │  └─ Wait for page loaded
+      │  ├─ Time: 5s - WHEN: Create scheduling group
+      │  │  ├─ Click "Add Scheduling Group"
+      │  │  ├─ Load form data from JSON
+      │  │  ├─ Generate unique name: Test_SchdGrp_1680123456_7890
+      │  │  ├─ Fill form fields
+      │  │  └─ Submit
+      │  ├─ Time: 6s - THEN: Verify group visible
+      │  │  ├─ Query table
+      │  │  ├─ Assert group found
+      │  │  └─ ✓ PASSED
+      │  ├─ Time: 7s - WHEN: Delete group
+      │  ├─ Time: 8s - THEN: Verify deleted
+      │  │  └─ ✓ PASSED
+      │  └─ Time: 9s - Cleanup (close browser)
+      │
+      ├─ Time: 10s - Scenario 2: systemAdmin creates group
+      │  ├─ Time: 11s - ... (similar execution)
+      │  └─ Time: 15s - ✓ PASSED
+      │
+      └─ Time: 16s - All tests complete
+         └─ Console output:
+            ✓ 2 passed (16.2s)
+```
+
+---
+
+## Running Tests from Console
+
+### Available Commands
+
+**Package.json defines these commands:**
+
+```json
+{
+  "scripts": {
+    "uidevtest": "cross-env ENVIRONMENT=dev TEST_TYPE=ui npm run _ui:run",
+    "uisystesttest": "cross-env ENVIRONMENT=systest TEST_TYPE=ui npm run _ui:run",
+    "apitest": "cross-env ENVIRONMENT=dev TEST_TYPE=api npm run _api:run",
+    "apitest:systest": "cross-env ENVIRONMENT=systest TEST_TYPE=api npm run _api:run",
+    "test": "npm run test:systest",
+    "test:systest": "npm run apitest:systest && npm run uisystesttest",
+    "test:dev": "npm run apitest && npm run uidevtest",
+    "report": "npx playwright show-report"
+  }
+}
+```
+
+---
+
+### Command Reference
+
+#### **1. Run UI Tests on Dev Environment**
+```bash
+npm run uidevtest
+
+# Execution:
+# - Loads .env.dev
+# - Runs only UI tests in tests/ui/
+# - Browsers: Chrome, Firefox, WebKit
+# - Environment: Dev
+```
+
+#### **2. Run UI Tests on System Test Environment**
+```bash
+npm run uisystesttest
+
+# Execution:
+# - Loads .env.systest
+# - Runs only UI tests
+# - Environment: System Test
+```
+
+#### **3. Run API Tests on Dev Environment**
+```bash
+npm run apitest
+
+# Execution:
+# - Loads .env.dev
+# - Runs only API tests in tests/integrated/
+# - No browser needed
+# - Makes direct HTTP requests
+```
+
+#### **4. Run API Tests on Systest Environment**
+```bash
+npm run apitest:systest
+
+# Execution:
+# - Loads .env.systest
+# - Runs API tests against systest backend
+```
+
+#### **5. Run All Tests (API + UI) on Systest**
+```bash
+npm run test:systest
+# OR
+npm run test
+
+# Execution:
+# - apitest:systest (runs all API tests)
+# - uisystesttest (runs all UI tests)
+# - Sequential: API first, then UI
+```
+
+#### **6. Run All Tests (API + UI) on Dev**
+```bash
+npm run test:dev
+
+# Execution:
+# - apitest (API tests on dev)
+# - uidevtest (UI tests on dev)
+```
+
+#### **7. Run Specific Feature File**
+```bash
+npm run _ui:run -- --grep "Scheduling Group CRUD - Create"
+
+# Runs only scenarios matching the pattern
+```
+
+#### **8. Run Tests in Headed Mode (Visible Browser)**
+```bash
+npm run _ui:run -- --headed
+
+# Browser window opens showing test execution
+# Useful for debugging
+```
+
+#### **9. Run Tests in Debug Mode**
+```bash
+npm run _ui:run -- --debug
+
+# Opens Playwright Inspector
+# Step through test line-by-line
+# Inspect DOM, evaluate expressions
+```
+
+#### **10. Run Single Test File**
+```bash
+npm run _ui:run -- tests/ui/features/NP035/schedulinggroup_ui_create.feature
+
+# Runs only scenarios in this feature file
+```
+
+#### **11. CI/CD Pipeline (Recommended for CI)**
+```bash
+npm run test:ci
+
+# Execution:
+# - ENVIRONMENT=systest
+# - Runs API tests: bddgen + playwright test --project=apitest
+# - Runs UI tests: bddgen + playwright test --project=uitest
+# - Used in CI/CD pipelines
+```
+
+---
+
+### Command Examples with Explanations
+
+**Scenario 1: Quick smoke test during development**
+```bash
+npm run uidevtest -- --headed
+# - Runs UI tests on dev environment
+# - Browser visible (can see what's happening)
+# - Quick sanity check before committing
+```
+
+**Scenario 2: Full regression on systest before release**
+```bash
+npm run test:systest
+# - Runs all API tests on systest
+# - Runs all UI tests on systest
+# - Takes ~5-10 minutes (depending on number of tests)
+# - Ensures everything works on actual test environment
+```
+
+**Scenario 3: Debug failing test**
+```bash
+npm run _ui:run -- --debug --grep "creates a scheduling group"
+# - Opens Playwright Inspector
+# - Only runs tests matching pattern
+# - Can step through, inspect elements, see console
+```
+
+**Scenario 4: Verify specific feature works**
+```bash
+npm run _ui:run -- tests/ui/features/NP035/schedulinggroup_ui_edit.feature --headed
+# - Runs only edit scenarios
+# - Browser visible
+# - Verify edit functionality works
+```
+
+---
+
+## Key Files Reference
+
+### Core Files You'll Frequently Edit/Reference
+
+| File | Purpose | When to Edit |
+|------|---------|-------------|
+| [tests/ui/features/**/*.feature](tests/ui/features/) | Gherkin test scenarios (behavior specs) | Add new test cases, update existing cases |
+| [tests/ui/steps/**/*.steps.ts](tests/ui/steps/) | Step implementations (what each step does) | Implement new steps, modify step logic |
+| [tests/ui/page/**/*Page.ts](tests/ui/page/) | Page Object Models (encapsulate page interactions) | Add new page objects, update selectors |
+| [tests/utils/*.ts](tests/utils/) | UI helper functions (reusable utilities) | Add helpers for form filling, data reading |
+| [tests/integrated/features/**/*.feature](tests/integrated/features/) | API test scenarios (behavior specs) | Add new API test cases |
+| [tests/integrated/steps/**/*.steps.ts](tests/integrated/steps/) | API step implementations | Implement API steps, add validations |
+| [workflows/{module}/context/context.ts](workflows/) | Define what data is shared between steps | Add new context properties when needed |
+| [workflows/{module}/data/*.json](workflows/) | Test data (forms, payloads, expectations) | Update/add test data for scenarios |
+| [core/data/users.json](core/data/users.json) | User credentials and roles | Add new test users, update IDs/usernames |
+| [core/db/queries.ts](core/db/queries.ts) | Database queries used in tests | Add new DB queries for verification |
+| [.env.systest](.env.systest) | Environment configuration (secrets) | Update passwords, URLs for different environments |
+
+---
+
+### Architecture Files (Reference Only)
+
+| File | Purpose | Typical Usage |
+|------|---------|---------------|
+| [playwright.config.ts](playwright.config.ts) | Playwright configuration | Usually doesn't need changes after setup |
+| [tests/fixtures/fixture.ts](tests/fixtures/fixture.ts) | API test fixtures (db, apiClient) | Reference to understand available fixtures |
+| [tests/fixtures/pages.fixture.ts](tests/fixtures/pages.fixture.ts) | UI test fixtures (loginAs, testContext) | Reference to understand available fixtures |
+| [core/config/envConfig.ts](core/config/envConfig.ts) | Environment loading | Reference to understand config management |
+| [core/api/apiClient.ts](core/api/apiClient.ts) | API client wrapper | Reference to understand API structure |
+| [core/db/connection.ts](core/db/connection.ts) | Database connection pooling | Reference to understand DB setup |
+| [tsconfig.json](tsconfig.json) | TypeScript configuration | Rarely needs changes |
+| [package.json](package.json) | Dependencies and scripts | Update when adding new npm packages |
+
+---
+
+## Common Workflows
+
+### Workflow 1: Writing a New UI Test Scenario
+
+1. **Create Feature File**
+```gherkin
+# File: tests/ui/features/NP035/my_new_feature.feature
+@my-feature @ui @smoke
+Feature: My New Feature
+
+  Scenario: New functionality works
+    Given user 'systemAdmin' is on the "Dashboard" page
+    When user performs action
+    Then system shows confirmation
+```
+
+2. **Create Step Definitions**
+```typescript
+// File: tests/ui/steps/NP035/my_new_feature.steps.ts
+import { createBdd } from 'playwright-bdd';
+import { test } from '@fixtures/pages.fixture';
+
+const { Given, When, Then } = createBdd(test);
+
+Given('user {string} is on the "Dashboard" page', async ({ loginAs, testContext }, role: string) => {
+  const page = await loginAs(role);
+  // ... step implementation
+});
+
+When('user performs action', async ({ testContext }) => {
+  // ... step implementation
+});
+
+Then('system shows confirmation', async ({ testContext }) => {
+  // ... step implementation
+});
+```
+
+3. **Create Test Data (if needed)**
+```json
+// File: workflows/ui/myFeature/data/myData.json
+{
+  "field1": { "selector": "input[name='field1']", "value": "test", "type": "input" }
+}
+```
+
+4. **Run the Test**
+```bash
+npm run uidevtest -- --grep "New functionality works" --headed
+```
+
+---
+
+### Workflow 2: Writing a New API Test Scenario
+
+1. **Create Feature File**
+```gherkin
+# File: tests/integrated/features/NP035/my_api_feature.feature
+@my-api @api @smoke
+Feature: My API Feature
+
+  Scenario: API creates resource
+    Given user 'systemAdmin' is authenticated
+    When user creates resource with parameters:
+      | resourceName | Test_Resource |
+      | status       | Active        |
+    And verify operation completed in database
+    Then verify resource exists in database
+```
+
+2. **Create Step Definitions**
+```typescript
+// File: tests/integrated/steps/NP035/my_api_feature.steps.ts
+import { createBdd, DataTable } from 'playwright-bdd';
+import { createAPIFixture, expect } from '@fixtures/api.fixture';
+import { MyModuleContext } from '@workflows/integrated/mymodule/context/context';
+
+// Create extended test with module-specific context (once per module)
+const test = createAPIFixture<MyModuleContext>(() => ({
+  resourceId: null,
+  resourceName: null,
+  // ... other context properties
+}));
+
+// Export for bddgen
+export { test };
+
+const { When, Then } = createBdd(test);
+
+When('user creates resource with parameters:', async ({ scenarioContext, requestContext }, dataTable: DataTable) => {
+  const params = parseDataTableToMap(dataTable);
+  
+  // Get payload template and resolve variables
+  const payload = buildPayload(resourceTemplate, params);
+  
+  // Make API call
+  const response = await fetch('https://api.example.com/resource', {
+    method: 'POST',
+    body: JSON.stringify(params),
+    headers: { 'Authorization': 'Bearer token' }
+  });
+  
+  requestContext.response = response;
+});
+
+Then('verify resource exists in database', async ({ db }) => {
+  const result = await db.request().query('SELECT * FROM Resources');
+  expect(result.recordset.length).toBeGreaterThan(0);
+});
+```
+
+3. **Run the Test**
+```bash
+npm run apitest -- --grep "API creates resource" --headed
+```
+
+---
+
+### Workflow 3: Debugging a Failed Test
+
+1. **Run the test in debug mode**
+```bash
+npm run _ui:run -- --debug --grep "Test scenario name"
+```
+
+2. **In Playwright Inspector:**
+   - Step through code line-by-line
+   - Inspect DOM elements
+   - Check console logs
+   - View network requests
+
+3. **Common Debugging Techniques**
+```typescript
+// Add a pause to manually inspect state
+await page.pause();
+
+// Log values
+console.log('Current URL:', page.url());
+console.log('Element text:', await page.locator('selector').textContent());
+
+// Take screenshot to see what's displayed
+await page.screenshot({ path: 'debug.png' });
+
+// Check if element exists
+const element = await page.$(selector);
+console.log('Element exists:', !!element);
+```
+
+---
+
+### Workflow 4: Adding a New User Role
+
+1. **Update users.json**
+```json
+{
+  "myNewRole": {
+    "id": 10999,
+    "username": "mynewuser01",
+    "envKey": "MY_NEW_ROLE_PASSWORD"
+  }
+}
+```
+
+2. **Add password to .env files**
+```bash
+# .env.systest
+MY_NEW_ROLE_PASSWORD=actual_password_here
+```
+
+3. **Use in test**
+```gherkin
+Given user 'myNewRole' is on the page
+```
+
+---
+
+### Workflow 5: Updating Database Queries
+
+1. **Check AllocationQueries**
+```typescript
+// workflows/integrated/allocations/data/db/queries/allocations.queries.ts
+export class AllocationQueries {
+  static async getLatestDuty(db: sql.ConnectionPool, dutyName: string) {
+    const result = await db.request()
+      .input('dutyName', sql.VarChar, dutyName)
+      .query(`
+        SELECT TOP 1 * FROM AllocationsDuty
+        WHERE DutyName = @dutyName
+        ORDER BY CreatedDate DESC
+      `);
+    return result.recordset[0];
+  }
+}
+```
+
+2. **Use in step**
+```typescript
+Then('verify duty created', async ({ db }) => {
+  const duty = await AllocationQueries.getLatestDuty(db, 'MyDuty');
+  expect(duty).toBeTruthy();
+});
+```
+
+---
+
+## Tips & Best Practices
+
+### Performance Tips
+
+1. **Run specific tests, not all**
+   ```bash
+   npm run _ui:run -- --grep "your-tag" # Faster than running all
+   ```
+
+2. **Use headed mode sparingly**
+   ```bash
+   npm run _ui:run # Headless (faster, less resource)
+   npm run _ui:run -- --headed # Visible (slower, for debugging)
+   ```
+
+3. **Parallelize tests in CI**
+   ```bash
+   npm run test:ci # Already parallelizes across browsers
+   ```
+
+### Maintainability Tips
+
+1. **Use Page Objects** - Don't repeat selectors in steps
+2. **Use Context DTOs** - Define what data each module shares
+3. **Use Test Data JSON** - Don't hardcode values in steps
+4. **Use Meaningful Tags** - `@smoke`, `@regression`, `@critical`
+5. **Keep Steps Simple** - One concern per step
+
+### Debugging Tips
+
+1. **Check Console Logs**
+   - Every step prints what it's doing
+   - Monitor for errors/warnings
+
+2. **Use Playwright Inspector**
+   ```bash
+   npm run _ui:run -- --debug
+   ```
+
+---
+
+## Troubleshooting
+
+### Problem: Test can't find element
+
+**Solution:**
+```typescript
+// Add explicit wait
+await page.waitForSelector('selector', { timeout: 5000 });
+
+// Or use retry
+await expect(page.locator('selector')).toBeVisible({ timeout: 10000 });
+```
+
+### Problem: Environment variables not loading
+
+**Solution:**
+```bash
+# Verify .env file exists
+ls .env.systest
+
+# Check file is readable
+cat .env.systest | grep "UI_BASE_URL"
+
+# Reload shell
+source ~/.bashrc  (macOS/Linux)
+# or
+exit and reopen terminal (Windows)
+```
+
+### Problem: Database connection fails
+
+**Solution:**
+```bash
+# Check DB credentials in .env
+cat .env.systest | grep "DB_"
+
+# Test connection
+sqlcmd -S server_name -U sa_user -P password -d TestDatabase -Q "SELECT 1"
+```
+
+### Problem: Authentication fails
+
+**Solution:**
+```typescript
+// Verify user exists in users.json
+console.log(JSON.stringify(users, null, 2));
+
+// Verify password in .env
+echo $SYS_ADMIN_PASSWORD
+
+// Check auth header generation
+const creds = btoa('username:password');
+console.log('Auth header:', `Basic ${creds}`);
+```
+
+---
+
+## Next Steps for New Developers
+
+1. ✅ **Run a existing UI test** → `npm run uidevtest`
+2. ✅ **Read a feature file** → Open [schedulinggroup_ui_create.feature](tests/ui/features/NP035/schedulinggroup_ui_create.feature)
+3. ✅ **Read the corresponding steps** → Open [schedulinggroup_ui_create.steps.ts](tests/ui/steps/NP035/schedulinggroup_ui_create.steps.ts)
+4. ✅  **Read a Page Object** → Open [ScheduledGroupPage.ts](tests/ui/page/NP035/ScheduledGroupPage.ts)
+5. ✅ **Run an API test** → `npm run apitest`
+6. ✅ **Write a simple test** → Follow Workflow 1 above
+7. ✅ **Ask questions** → Check this guide first
+
+---
+
+## Quick Reference Cheat Sheet
+
+```bash
+# Setup
+npm install                          # Install dependencies
+npx playwright install               # Install browsers
+
+# Run Tests
+npm run test                         # Run all tests on systest
+npm run test:dev                     # Run all tests on dev
+npm run uidevtest                    # UI tests on dev
+npm run uisystesttest                # UI tests on systest
+npm run apitest                      # API tests on dev
+npm run apitest:systest              # API tests on systest
+
+# Debug
+npm run _ui:run -- --headed          # Show browser
+npm run _ui:run -- --debug           # Playwright Inspector
+
+# Filter Tests
+npm run _ui:run -- --grep "pattern"  # Run matching tests
+npm run _ui:run -- tests/ui/features/...feature  # Run specific file
+```
+
+---
+
+## Coding Standards
+
+This framework follows comprehensive coding standards and best practices documented in:
+
+- **[.github/INSTRUCTIONS.md](.github/INSTRUCTIONS.md)** - Complete coding standards, commit guidelines, and team conventions
+
+**Key Standards Include:**
+- File naming conventions and organization
+- Comment and documentation requirements  
+- Test file structure and implementation patterns
+- Git workflow and commit message standards
+- Code review checklists
+- LLM usage guidelines for consistent code generation
+
+**All team members and LLMs must follow these standards** for code quality, maintainability, and consistency.
+
+---
+
+## Document Version & Maintenance
+
+- **Version:** 1.2
+- **Last Updated:** 2026-04-07
+- **Maintained By:** QA Automation Team
+- **Next Review:** 2026-07-07
+
+---
+

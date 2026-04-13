@@ -8,13 +8,13 @@ Feature: Scheduling Group CRUD - Create
     Given user '<role>' is on the "Scheduled Group" page
     When the user creates a new scheduling group using "<testDataFile>"
     Then the scheduling group is visible
-    
+
     When the user clicks the Delete button for the scheduling group
     Then the delete confirmation popup appears with title "Delete Scheduling Group"
     And the user approves the deletion
     Then the scheduling group is no longer visible in the list
 
     Examples:
-      | role           | testDataFile                        |
+      | role           | testDataFile                         |
       | areaAdmin_News | schdGroupCreate_AreaAdminNews_UIdata |
-      | systemAdmin    | schdGroupCreate_SystemAdmin_UIdata  |
+      | systemAdmin    | schdGroupCreate_SystemAdmin_UIdata   |
