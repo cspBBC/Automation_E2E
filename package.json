@@ -9,7 +9,7 @@
     "_api:run": "cross-env TEST_TYPE=api npx bddgen && npx playwright test --project=apitest",
     "uidevtest": "cross-env ENVIRONMENT=dev TEST_TYPE=ui npm run _ui:run",
     "uisystesttest": "cross-env ENVIRONMENT=systest TEST_TYPE=ui npm run _ui:run",
-    "apitest": "cross-env ENVIRONMENT=dev TEST_TYPE=api npm run _api:run",
+    "apitest:dev": "cross-env ENVIRONMENT=dev TEST_TYPE=api npm run _api:run",
     "apitest:systest": "cross-env ENVIRONMENT=systest TEST_TYPE=api npm run _api:run",
     "test": "npm run test:systest",
     "test:systest": "npm run apitest:systest && npm run uisystesttest",

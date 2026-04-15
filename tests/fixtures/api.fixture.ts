@@ -6,7 +6,6 @@ import {
 } from '@playwright/test';
 import sql from 'mssql';
 import { getDbPool } from '@core/db/connection'
-import { getSharedContext } from '@helpers/apiHelper';
 import { ApiClient } from '@core/api/apiClient';
 import { readJSON } from '@helpers/readJson';
 
@@ -129,7 +128,17 @@ export function createAPIFixture<T>(contextFactory: () => T) {
     },
 
     requestContext: async ({}, use: (value: any) => Promise<void>) => {
-      await use(getSharedContext());
+      // Create fresh request context per scenario to prevent context bleeding between parallel scenarios
+      const freshContext: any = {
+        authenticatedPage: null,
+        method: '',
+        url: '',
+        params: {},
+        response: null,
+        status: 0,
+        body: ''
+      };
+      await use(freshContext);
     },
   });
 }
