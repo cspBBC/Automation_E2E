@@ -35,4 +35,5 @@ Feature: Duty Allocation API Operations
         Examples:
             | user        | testDataFile                  | DutyName        | DutyID | ID    | allocationsSchPer | SchedulingPersonID | SchedulingTeamID | DutyDate   | allocationsDate | editDutyName        | editStartTime | editEndTime | editdutyColorId | editbreakTimeHour | editbreakTimeMinute | editcurrDurationVal |
             | systemAdmin | allocationApi_PostParams.json | U_API_Create_P1 | 35387  | 35387 | 8577              | 8577               | 275              | 2026-04-17 | 2026-04-17      | U_API_Edit_P1_35387 | 10:00         | 11:30       | 5               | 0                 | 30                  | 00:30               |
-            | systemAdmin | allocationApi_PostParams.json | U_API_Create_P2 | 35318  | 35318 | 8577              | 8577               | 275              | 2026-04-18 | 2026-04-18      | U_API_Edit_P2_35318 | 11:00         | 12:30       | 6               | 1                 | 0                   | 01:00               |
+            | systemAdmin | allocationApi_PostParams.json | U_API_Create_P2 | 35318  | 35318 | 8577              | 8577               | 275              | 2026-04-19 | 2026-04-19     | U_API_Edit_P2_35318 | 11:00         | 12:30       | 6               | 1                 | 0                   | 01:00               |
+           
