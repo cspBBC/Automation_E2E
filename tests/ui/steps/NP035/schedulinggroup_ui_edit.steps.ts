@@ -1,4 +1,9 @@
-﻿import { createBdd } from "playwright-bdd";
+﻿/**
+ * STEP DEFINITIONS: Scheduling Group Edit Scenario  
+ * Maps Gherkin steps (When/Then) for edit operations: locate group, update fields, verify changes.
+ */
+
+import { createBdd } from "playwright-bdd";
 import { test } from "@fixtures/pages.fixture";
 import { expect } from '@playwright/test';
 import type { SchedulingGroupContext } from '@workflows/ui/schedulingGroup/context/context';

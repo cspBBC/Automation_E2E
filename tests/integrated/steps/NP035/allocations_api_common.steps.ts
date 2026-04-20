@@ -1,3 +1,8 @@
+/**
+ * STEP DEFINITIONS: Allocations API Common Setup
+ * Handles Given steps for API tests: database prep, API context setup, data initialization for allocation scenarios.
+ */
+
 import { createBdd } from 'playwright-bdd';
 import { createAPIFixture } from '@fixtures/api.fixture';
 import { AllocationContext } from '@workflows/integrated/allocations/context/context';

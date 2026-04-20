@@ -1,4 +1,9 @@
-﻿import { expect } from '@playwright/test';
+﻿/**
+ * STEP DEFINITIONS: Scheduling Group Permission Boundary Scenario
+ * Maps Gherkin steps (When/Then) for role-based access: verify visibility by role, permission enforcement.
+ */
+
+import { expect } from '@playwright/test';
 import { createBdd } from "playwright-bdd";
 import { test } from "@fixtures/pages.fixture";
 

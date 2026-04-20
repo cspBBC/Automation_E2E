@@ -1,3 +1,8 @@
+/**
+ * DATABASE CONNECTION: MSSQL Server Pool Manager
+ * Establishes connection to test database. Provides methods for executing queries and managing transactions.
+ */
+
 import sql from 'mssql';
 
 const config: sql.config = {

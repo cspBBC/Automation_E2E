@@ -1,3 +1,8 @@
+/**
+ * FIXTURE: API & Database Access
+ * Provides authenticated API client and database pool for integrated tests. Handles setup/teardown for each test.
+ */
+
 import { test as bddTest} from 'playwright-bdd';
 import { expect } from '@playwright/test';
 import {

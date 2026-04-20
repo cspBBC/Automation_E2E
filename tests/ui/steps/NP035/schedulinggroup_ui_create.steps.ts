@@ -1,3 +1,8 @@
+/**
+ * STEP DEFINITIONS: Scheduling Group Create Scenario
+ * Maps Gherkin steps (When/Then) to page object methods. Manages state via testContext.
+ */
+
 import { createBdd } from "playwright-bdd";
 import { test } from "@fixtures/pages.fixture";
 import type { SchedulingGroupContext } from '@workflows/ui/schedulingGroup/context/context';

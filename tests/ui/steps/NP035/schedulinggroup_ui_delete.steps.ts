@@ -1,4 +1,9 @@
-﻿import { createBdd } from "playwright-bdd";
+﻿/**
+ * STEP DEFINITIONS: Scheduling Group Delete Scenario
+ * Maps Gherkin steps (When/Then) for delete operations: button click, confirmation, verification.
+ */
+
+import { createBdd } from "playwright-bdd";
 import { test } from "@fixtures/pages.fixture";
 import { expect } from '@playwright/test';
 import type { SchedulingGroupContext } from '@workflows/ui/schedulingGroup/context/context';

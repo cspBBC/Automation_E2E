@@ -1,4 +1,7 @@
-// [GENERIC API HELPER] Reusable across all API endpoints and modules
+/**
+ * API HELPER: Common API Utilities
+ * Reusable functions for authenticated API calls, response validation, and error handling.
+ */
 
 import * as fs from 'fs';
 import * as path from 'path';

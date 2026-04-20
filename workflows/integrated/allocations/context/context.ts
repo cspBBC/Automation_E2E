@@ -1,4 +1,9 @@
 /**
+ * TEST CONTEXT: Allocations API Feature
+ * Stores allocation-specific test data from API responses: duty IDs, names, dates, person/team identifiers.
+ */
+
+/**
  * Allocation Context - DTO
  *
  * Stores duty allocation data shared between steps in the same scenario.

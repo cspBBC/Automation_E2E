@@ -1,3 +1,8 @@
+/**
+ * FORM FIELD TYPES: TypeScript Definitions
+ * Defines interfaces for all form field types (text, dropdown, checkbox, etc.) used throughout the framework.
+ */
+
 export type FieldType =
   | 'text'
   | 'number'

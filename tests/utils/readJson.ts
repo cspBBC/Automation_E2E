@@ -1,3 +1,8 @@
+/**
+ * JSON READER: Test Data File Loader
+ * Reads and parses JSON test data files from workflow directories. Returns typed form field objects.
+ */
+
 import fs from 'fs';
 import path from 'path';
 import { FormField } from './formFilledType'

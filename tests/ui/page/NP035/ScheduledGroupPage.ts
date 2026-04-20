@@ -1,3 +1,9 @@
+/**
+ * PAGE OBJECT: Scheduled Group UI Page
+ * Encapsulates all locators and interactions for the Scheduling Group page.
+ * Used by step definitions to perform UI actions (create, read, update, delete groups).
+ */
+
 import { expect, Page } from '@playwright/test';
 import { FormField } from '@helpers/formFilledType';
 import { fillForm } from '@helpers/formFiller';

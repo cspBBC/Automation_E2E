@@ -1,3 +1,9 @@
+/**
+ * FIXTURE: Page Setup & Authentication
+ * Provides loginAs() to authenticate users with NTLM, and testContext for sharing state between steps.
+ * Every test automatically gets fresh browser context and isolated test data.
+ */
+
 import { test as base} from 'playwright-bdd';
 import { expect, BrowserContext, Page } from '@playwright/test';
 import users from '@core/data/users.json' with { type: "json" };

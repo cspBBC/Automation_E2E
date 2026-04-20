@@ -1,3 +1,9 @@
+/**
+ * FORM FILLER: Intelligent Form Field Completion
+ * Handles any form type (text, dropdowns, chosen.js, date pickers, checkboxes, availability grids).
+ * Automatically waits for stability and handles async field dependencies.
+ */
+
 import { Page } from "@playwright/test";
 import { FormField, WeekDayAvailability } from "./formFilledType";
 

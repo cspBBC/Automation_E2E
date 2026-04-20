@@ -1,3 +1,8 @@
+/**
+ * PAGE FACTORY: Central Registry for Page Objects
+ * Maps page names (strings from features) to page object instances. Single place to register new pages.
+ */
+
 import { Page } from '@playwright/test';
 import { ScheduledGroupPage } from '@pages/NP035/ScheduledGroupPage';
 

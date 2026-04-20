@@ -1,3 +1,8 @@
+/**
+ * API CLIENT: Authenticated HTTP Request Handler
+ * Wrapper for Playwright's APIRequestContext. Handles auth headers, base URLs, request/response handling.
+ */
+
 import type { APIRequestContext, APIResponse } from "@playwright/test";
 
 /**

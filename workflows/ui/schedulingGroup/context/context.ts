@@ -1,4 +1,9 @@
 /**
+ * TEST CONTEXT: Scheduling Group Feature
+ * Stores test scenario data shared between Given/When/Then steps. Enables state persistence and parallel-safe execution.
+ */
+
+/**
  * Scheduling Group Context - DTO
  * 
  * Stores test data shared between multiple steps in the same scenario.

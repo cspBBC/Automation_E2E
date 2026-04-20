@@ -1,3 +1,8 @@
+/**
+ * STEP DEFINITIONS: Scheduling Group History Scenario
+ * Maps Gherkin steps (When/Then) for history view: access history, verify audit trail and timestamps.
+ */
+
 import { createBdd } from "playwright-bdd";
 import { test } from "@fixtures/pages.fixture";
 import { expect } from '@playwright/test';

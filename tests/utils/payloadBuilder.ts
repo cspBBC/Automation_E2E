@@ -1,7 +1,6 @@
 /**
- * GENERIC PAYLOAD BUILDER - Universal Utility
- * Works for ANY module without custom code
- * Core: Parse → Resolve Template → Merge → Build
+ * PAYLOAD BUILDER: Dynamic API Request Constructor
+ * Builds JSON request bodies from DataTables. Supports templates, merging, and dynamic value injection.
  */
 
 import { DataTable } from 'playwright-bdd';
